@@ -6,8 +6,16 @@ public static class Runner
     public static void Run()
     {
         const string jsFilesDir = "/Users/nikitak/Proj/LightJS/LightJS/js";
-        
-        var jsString = File.ReadAllText($"{jsFilesDir}/simpleTest.js");
+
+        var chars = new char[128];
+
+        for (var i = 0; i < chars.Length; i++)
+        {
+            var c = (char)i;
+            Console.WriteLine($"char {c} code {i}");
+        }
+
+        /*var jsString = File.ReadAllText($"{jsFilesDir}/simpleTest.js");
 
         var ljsReader = new LjsReader(jsString);
 
@@ -35,7 +43,7 @@ public static class Runner
                 // Console.Write($"[{col}]");
                 ++col;
             }
-        }
+        }*/
     }
     
 }

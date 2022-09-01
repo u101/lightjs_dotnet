@@ -1,6 +1,6 @@
 namespace LightJS;
 
-public class LjsReader : ILjsReader
+public class LjsReader 
 {
     private readonly string _sourceCode;
     private readonly int _sourceCodeLn;
@@ -27,6 +27,16 @@ public class LjsReader : ILjsReader
 
         ++_currentIndex;
         return _sourceCode[_currentIndex];
+    }
+
+    public char GetNextChar()
+    {
+        if (!HasNextChar())
+        {
+            throw new Exception("str end");
+        }
+
+        return _sourceCode[_currentIndex + 1];
     }
 
     public bool HasNextChar()
