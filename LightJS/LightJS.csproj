@@ -7,4 +7,9 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Content Include="js\simpleTest.js" />
+      <Content Include="obj\test0.js" />
+    </ItemGroup>
+
 </Project>

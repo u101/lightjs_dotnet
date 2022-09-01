@@ -1,24 +1,29 @@
 namespace LightJS;
 
-public static class Runner
+public class LjsTokenizer
 {
+    private readonly ILjsReader _reader;
+    private readonly List<LjsToken> _tokens = new List<LjsToken>();
 
-    public static void Run()
+    private int _line = 0;
+    private int _col = 0;
+
+    public LjsTokenizer(ILjsReader reader)
     {
-        const string jsFilesDir = "/Users/nikitak/Proj/LightJS/LightJS/js";
-        
-        var jsString = File.ReadAllText($"{jsFilesDir}/simpleTest.js");
+        _reader = reader;
+    }
 
-        var ljsReader = new LjsReader(jsString);
+    public List<LjsToken> ReadTokens()
+    {
 
         var line = 0;
         var col = 0;
 
         Console.Write("line 0:");
 
-        while (ljsReader.HasNextChar())
+        while (_reader.HasNextChar())
         {
-            var c = ljsReader.ReadNextChar();
+            var c = _reader.ReadNextChar();
 
             if (c == '\r') continue;
             
@@ -36,6 +41,10 @@ public static class Runner
                 ++col;
             }
         }
+        
+        return _tokens;
     }
+
     
+
 }
