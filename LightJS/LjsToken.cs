@@ -2,25 +2,30 @@ namespace LightJS;
 
 public readonly struct LjsToken
 {
+    public static readonly LjsToken Null = new LjsToken();
+    
     public LjsTokenType TokenType { get; }
-    public int Line { get; }
-    public int Col { get; }
     public int StringStartIndex { get; }
-    public int StringEndIndex { get; }
+    public int StringLength { get; }
 
-    public LjsToken(LjsTokenType tokenType, int line, int col, int stringStartIndex, int stringEndIndex)
+    /// <summary>
+    /// LjsToken contructor
+    /// </summary>
+    /// <param name="tokenType"> type of this token </param>
+    /// <param name="stringStartIndex">starting char index of this token from source code string (inclusive)</param>
+    /// <param name="stringLength">length of string of this token from source code string</param>
+    public LjsToken(LjsTokenType tokenType, int stringStartIndex, int stringLength)
     {
         TokenType = tokenType;
-        Line = line;
-        Col = col;
         StringStartIndex = stringStartIndex;
-        StringEndIndex = stringEndIndex;
+        StringLength = stringLength;
     }
     
 }
 
 public enum LjsTokenType
 {
+    Null,
     Word,
     Int,
     Float,

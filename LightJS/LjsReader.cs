@@ -7,6 +7,9 @@ public class LjsReader
 
     private int _currentIndex = -1;
     
+    private int _currentLine = 0;
+    private int _currentCol = 0;
+    
     public LjsReader(string sourceCode)
     {
         if (string.IsNullOrEmpty(sourceCode))
@@ -18,30 +21,58 @@ public class LjsReader
         _sourceCodeLn = sourceCode.Length;
     }
 
-    public char ReadNextChar()
+    public int CurrentIndex => _currentIndex;
+
+    public int CurrentLine => _currentLine;
+
+    public int CurrentCol => _currentCol;
+
+    public char CurrentChar => 
+        _currentIndex != -1 ? _sourceCode[_currentIndex] : (char) 0;
+
+    public char NextChar => 
+        _currentIndex + 1 < _sourceCodeLn ? _sourceCode[_currentIndex + 1] : (char)0;
+
+    public char PrevChar => 
+        _currentIndex > 0 ? _sourceCode[_currentIndex - 1] : (char)0;
+
+    public bool HasNextChar => _currentIndex + 1 < _sourceCodeLn;
+
+    public string GetCodeString(int startIndex, int length)
     {
-        if (!HasNextChar())
+        if (startIndex < 0 || startIndex >= _sourceCodeLn)
+            throw new ArgumentException($"invalid start index {startIndex}");
+        
+        if (length <= 0)
+            throw new ArgumentException($"invalid length {length}");
+
+        if (startIndex + length > _sourceCodeLn)
+            throw new ArgumentException(
+                $"invalid length {length} with start index {startIndex} > code ln {_sourceCodeLn}");
+        
+        return _sourceCode.Substring(startIndex, length);
+    }
+
+    public void MoveForward()
+    {
+        if (!HasNextChar)
         {
             throw new Exception("str end");
         }
-
+        
         ++_currentIndex;
-        return _sourceCode[_currentIndex];
-    }
+        
+        var c = _sourceCode[_currentIndex];
 
-    public char GetNextChar()
-    {
-        if (!HasNextChar())
+        if (c == '\n')
         {
-            throw new Exception("str end");
+            ++_currentLine;
+            _currentCol = 0;
         }
-
-        return _sourceCode[_currentIndex + 1];
-    }
-
-    public bool HasNextChar()
-    {
-        return _currentIndex + 1 < _sourceCodeLn;
+        else
+        {
+            ++_currentCol;
+        }
     }
     
     

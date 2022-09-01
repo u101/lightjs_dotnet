@@ -3,6 +3,21 @@ namespace LightJS;
 public static class Runner
 {
 
+    public static void TestTokenizer()
+    {
+        const string jsFilesDir = "/Users/nikitak/Proj/LightJS/LightJS/js";
+
+        var jsString = File.ReadAllText($"{jsFilesDir}/simpleTest.js");
+
+        var ljsReader = new LjsReader(jsString);
+
+        var ljsTokenizer = new LjsTokenizer(ljsReader);
+
+        var tokens = ljsTokenizer.ReadTokens();
+        
+        Console.WriteLine("DONE");
+    }
+    
     public static void PrintJsSourceCodeWithLineNumbers()
     {
         const string jsFilesDir = "/Users/nikitak/Proj/LightJS/LightJS/js";
@@ -11,14 +26,12 @@ public static class Runner
 
         var ljsReader = new LjsReader(jsString);
 
-        var line = 0;
-        var col = 0;
 
         Console.Write("line 0:");
 
-        while (ljsReader.HasNextChar())
+        while (ljsReader.HasNextChar)
         {
-            var c = ljsReader.ReadNextChar();
+            var c = ljsReader.CurrentChar;
 
             if (c == '\r') continue;
             
@@ -26,15 +39,10 @@ public static class Runner
             
             if (c == '\n')
             {
-                ++line;
-                col = 0;
-                Console.Write($"line {line}:");
+                Console.Write($"line {ljsReader.CurrentLine}:");
             }
-            else
-            {
-                // Console.Write($"[{col}]");
-                ++col;
-            }
+            
+            ljsReader.MoveForward();
         }
     }
 
