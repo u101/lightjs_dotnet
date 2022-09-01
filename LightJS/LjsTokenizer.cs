@@ -97,28 +97,6 @@ public class LjsTokenizer
                 AddToken(new LjsToken(
                     LjsTokenType.String, startIndex, ln));
             }
-            // dot operator
-            else if (c == Dot)
-            {
-                // here we need to check if dot here is legal
-                var prevToken = _tokens.Count > 0 ? 
-                    _tokens[_tokens.Count - 1] : LjsToken.Null;
-                
-                var prevTokenType = prevToken.TokenType;
-                var prevTokenIsValid = prevTokenType == LjsTokenType.Word ||
-                                       prevTokenType == LjsTokenType.String ||
-                                       prevTokenType == LjsTokenType.BracketClose ||
-                                       prevTokenType == LjsTokenType.SquareBracketClose;
-
-                if (!prevTokenIsValid)
-                {
-                    throw new LjsTokenizerError(_reader.CurrentIndex);
-                }
-                
-                AddToken(new LjsToken(
-                    LjsTokenType.Dot, _reader.CurrentIndex, 1));
-
-            }
             // key word or identifier
             else if (IsLetterChar(c))
             {

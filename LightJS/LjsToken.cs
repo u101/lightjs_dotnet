@@ -33,8 +33,6 @@ public enum LjsTokenType
     Int,
     Float,
     String,
-    Dot,
-    Comma,
     Operator,
     BraceOpen,
     BraceClose,
