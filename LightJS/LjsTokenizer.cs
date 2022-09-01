@@ -94,9 +94,7 @@ public class LjsTokenizer
 
                 var ln = _reader.CurrentIndex - startIndex; // end index is exclusive
                 
-                Console.WriteLine($"string token |{_reader.GetCodeString(startIndex, ln)}|");
-                
-                _tokens.Add(new LjsToken(
+                AddToken(new LjsToken(
                     LjsTokenType.String, startIndex, ln));
             }
             // dot operator
@@ -117,7 +115,7 @@ public class LjsTokenizer
                     throw new LjsTokenizerError(_reader.CurrentIndex);
                 }
                 
-                _tokens.Add(new LjsToken(
+                AddToken(new LjsToken(
                     LjsTokenType.Dot, _reader.CurrentIndex, 1));
 
             }
@@ -133,10 +131,8 @@ public class LjsTokenizer
                 }
 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
-
-                Console.WriteLine($"word token |{_reader.GetCodeString(startIndex, ln)}|");
                 
-                _tokens.Add(new LjsToken(
+                AddToken(new LjsToken(
                     LjsTokenType.Word, startIndex, ln));
             }
             // number
@@ -154,56 +150,47 @@ public class LjsTokenizer
                 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
 
-                if (isFloat)
-                {
-                    Console.WriteLine($"float number token |{_reader.GetCodeString(startIndex, ln)}|");
-                
-                    _tokens.Add(new LjsToken(
-                        LjsTokenType.Float, startIndex, ln));
-                }
-                else
-                {
-                    Console.WriteLine($"int number token |{_reader.GetCodeString(startIndex, ln)}|");
-                
-                    _tokens.Add(new LjsToken(
-                        LjsTokenType.Int, startIndex, ln));
-                }
+                AddToken(new LjsToken(
+                    isFloat ? LjsTokenType.Float : LjsTokenType.Int, startIndex, ln));
             }
             else if (IsOperator(c))
             {
-                var startIndex = _reader.CurrentIndex;
-                
-                Console.WriteLine($"operator token |{_reader.GetCodeString(startIndex, 1)}|");
-                
-                _tokens.Add(new LjsToken(LjsTokenType.Operator, startIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.Operator, _reader.CurrentIndex, 1));
             }
             else if (c == '(')
             {
-                _tokens.Add(new LjsToken(LjsTokenType.BracketOpen, _reader.CurrentIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.BracketOpen, _reader.CurrentIndex, 1));
             }
             else if (c == ')')
             {
-                _tokens.Add(new LjsToken(LjsTokenType.BracketClose, _reader.CurrentIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.BracketClose, _reader.CurrentIndex, 1));
             }
             else if (c == '{')
             {
-                _tokens.Add(new LjsToken(LjsTokenType.BraceOpen, _reader.CurrentIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.BraceOpen, _reader.CurrentIndex, 1));
             }
             else if (c == '}')
             {
-                _tokens.Add(new LjsToken(LjsTokenType.BraceClose, _reader.CurrentIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.BraceClose, _reader.CurrentIndex, 1));
             }
             else if (c == '[')
             {
-                _tokens.Add(new LjsToken(LjsTokenType.SquareBracketOpen, _reader.CurrentIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.SquareBracketOpen, _reader.CurrentIndex, 1));
             }
             else if (c == ']')
             {
-                _tokens.Add(new LjsToken(LjsTokenType.SquareBracketClose, _reader.CurrentIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.SquareBracketClose, _reader.CurrentIndex, 1));
             }
             
 
         }
+    }
+
+    private void AddToken(LjsToken token)
+    {
+        Console.WriteLine($"token {token.TokenType} |{_reader.GetCodeString(token.StringStartIndex, token.StringLength)}|");
+        
+        _tokens.Add(token);
     }
 
     private static bool IsOperator(char c)
