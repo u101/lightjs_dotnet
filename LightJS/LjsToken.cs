@@ -25,6 +25,9 @@ public readonly struct LjsToken
 
 public enum LjsTokenType
 {
+    /// <summary>
+    /// Non existing token type
+    /// </summary>
     Null,
     Word,
     Int,
@@ -32,9 +35,7 @@ public enum LjsTokenType
     String,
     Dot,
     Comma,
-    OperatorPlus,
-    OperatorMinus,
-    OperatorEqual,
+    Operator,
     BraceOpen,
     BraceClose,
     BracketOpen,

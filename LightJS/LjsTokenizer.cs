@@ -4,8 +4,7 @@ public class LjsTokenizer
 {
     private readonly LjsReader _reader;
     private readonly List<LjsToken> _tokens = new List<LjsToken>();
-
-    private const char End = (char)0;
+    
     private const char DoubleQuotes = '"';
     private const char SingleQuotes = '\'';
     private const char NewLine = '\n';
@@ -35,21 +34,16 @@ public class LjsTokenizer
             var c = _reader.CurrentChar;
 
             // check if we have space, line break, tabulation at this point
-            if (IsEmptyChar(c))
+            if (IsSpaceOrSpecialAnsiiChar(c))
             {
                 // just skip it
                 continue;
             }
 
             // if we have slash - it is either a single line or multiline comment
-            if (c == Slash)
+            if (c == Slash && _reader.HasNextChar && 
+                (_reader.NextChar == Slash || _reader.NextChar == Asterisk))
             {
-                // check we are not at the end of file
-                if (!_reader.HasNextChar)
-                {
-                    throw new LjsTokenizerError(_reader.CurrentIndex);
-                }
-                
                 var nextChar = _reader.NextChar;
 
                 if (nextChar == Slash)
@@ -175,33 +169,69 @@ public class LjsTokenizer
                         LjsTokenType.Int, startIndex, ln));
                 }
             }
+            else if (IsOperator(c))
+            {
+                var startIndex = _reader.CurrentIndex;
+                
+                Console.WriteLine($"operator token |{_reader.GetCodeString(startIndex, 1)}|");
+                
+                _tokens.Add(new LjsToken(LjsTokenType.Operator, startIndex, 1));
+            }
+            else if (c == '(')
+            {
+                _tokens.Add(new LjsToken(LjsTokenType.BracketOpen, _reader.CurrentIndex, 1));
+            }
+            else if (c == ')')
+            {
+                _tokens.Add(new LjsToken(LjsTokenType.BracketClose, _reader.CurrentIndex, 1));
+            }
+            else if (c == '{')
+            {
+                _tokens.Add(new LjsToken(LjsTokenType.BraceOpen, _reader.CurrentIndex, 1));
+            }
+            else if (c == '}')
+            {
+                _tokens.Add(new LjsToken(LjsTokenType.BraceClose, _reader.CurrentIndex, 1));
+            }
+            else if (c == '[')
+            {
+                _tokens.Add(new LjsToken(LjsTokenType.SquareBracketOpen, _reader.CurrentIndex, 1));
+            }
+            else if (c == ']')
+            {
+                _tokens.Add(new LjsToken(LjsTokenType.SquareBracketClose, _reader.CurrentIndex, 1));
+            }
+            
 
         }
     }
 
+    private static bool IsOperator(char c)
+    {
+        return c == '>' ||
+               c == '<' ||
+               c == '=' ||
+               c == '+' ||
+               c == '-' ||
+               c == '*' ||
+               c == '/' ||
+               c == '&' ||
+               c == '|' ||
+               c == '!' ||
+               c == ',' ||
+               c == '.' ||
+               c == ':' ||
+               c == ';';
+    }
+
     /// <summary>
-    /// check if char with specified char code is space, newline, tabulation or special ansii code
+    /// check if char is space, newline, tabulation or special ansii code at the beginning of ansii table
     /// </summary>
-    private static bool IsEmptyChar(char c)
+    private static bool IsSpaceOrSpecialAnsiiChar(char c)
     {
         var charCode = (int)c;
         
         return charCode <= 32;
-    }
-
-    private static bool IsUnsupportedChar(char c)
-    {
-        return c >= 127;
-    }
-
-    private static bool IsSymbolChar(char c)
-    {
-        var charCode = (int)c;
-        
-        return (charCode >= 33 && charCode <= 47) ||
-               (charCode >= 58 && charCode <= 64) ||
-               (charCode >= 91 && charCode <= 96) ||
-               (charCode >= 123 && charCode <= 126);
     }
 
     private static bool IsLetterChar(char c)
