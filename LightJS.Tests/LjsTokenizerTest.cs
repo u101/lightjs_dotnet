@@ -21,7 +21,9 @@ public class LjsTokenizerTest
      {
           var text = TestUtils.LoadJsFile(scriptFileName);
 
-          var ljsTokenizer = new LjsTokenizer(new LjsReader(text));
+          var sourceCode = new LjsSourceCode(text);
+          var ljsReader = new LjsReader(sourceCode);
+          var ljsTokenizer = new LjsTokenizer(ljsReader);
           return ljsTokenizer;
      }
      
