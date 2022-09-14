@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightJS", "LightJS\LightJS.csproj", "{71B67725-33A8-4410-B291-AD3DA4ED0124}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightJS.Tests", "LightJS.Tests\LightJS.Tests.csproj", "{3B5B0DB0-B7B8-4B07-91B8-F4DE69628785}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{71B67725-33A8-4410-B291-AD3DA4ED0124}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71B67725-33A8-4410-B291-AD3DA4ED0124}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71B67725-33A8-4410-B291-AD3DA4ED0124}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B5B0DB0-B7B8-4B07-91B8-F4DE69628785}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B5B0DB0-B7B8-4B07-91B8-F4DE69628785}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B5B0DB0-B7B8-4B07-91B8-F4DE69628785}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B5B0DB0-B7B8-4B07-91B8-F4DE69628785}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
