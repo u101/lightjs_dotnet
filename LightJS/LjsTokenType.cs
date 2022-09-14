@@ -10,11 +10,5 @@ public enum LjsTokenType
     Int,
     Float,
     String,
-    Operator,
-    BraceOpen,
-    BraceClose,
-    BracketOpen,
-    BracketClose,
-    SquareBracketOpen,
-    SquareBracketClose
+    Operator
 }

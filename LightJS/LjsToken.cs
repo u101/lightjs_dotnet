@@ -7,6 +7,7 @@ public readonly struct LjsToken
     public LjsTokenType TokenType { get; }
     public int StringStartIndex { get; }
     public int StringLength { get; }
+    public int LineIndex { get; }
 
     /// <summary>
     /// LjsToken contructor
@@ -14,11 +15,13 @@ public readonly struct LjsToken
     /// <param name="tokenType"> type of this token </param>
     /// <param name="stringStartIndex">starting char index of this token from source code string (inclusive)</param>
     /// <param name="stringLength">length of string of this token from source code string</param>
-    public LjsToken(LjsTokenType tokenType, int stringStartIndex, int stringLength)
+    /// <param name="lineIndex">token line index in source code</param>
+    public LjsToken(LjsTokenType tokenType, int stringStartIndex, int stringLength, int lineIndex)
     {
         TokenType = tokenType;
         StringStartIndex = stringStartIndex;
         StringLength = stringLength;
+        LineIndex = lineIndex;
     }
     
 }

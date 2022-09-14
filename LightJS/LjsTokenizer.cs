@@ -12,6 +12,9 @@ public class LjsTokenizer
     private const char Asterisk = '*';
     private const char Dot = '.';
 
+    private int _currentLine;
+    private int _currentCol;
+    
     public LjsTokenizer(LjsReader reader)
     {
         _reader = reader;
@@ -24,17 +27,35 @@ public class LjsTokenizer
         return _tokens;
     }
 
+    private void ReadNextChar()
+    {
+        _reader.MoveForward();
+
+        var c = _reader.CurrentChar;
+
+        if (c == '\n')
+        {
+            ++_currentLine;
+            _currentCol = 0;
+        }
+        else
+        {
+            ++_currentCol;
+        }
+    }
+
     private void ReadMain()
     {
-        // start reading source code text
+        var lineIndex = 0;
+        
         while (_reader.HasNextChar)
         {
-            _reader.MoveForward();
+            ReadNextChar();
             
             var c = _reader.CurrentChar;
 
             // check if we have space, line break, tabulation at this point
-            if (IsSpaceOrSpecialAnsiiChar(c))
+            if (IsEmptySpace(c))
             {
                 // just skip it
                 continue;
@@ -51,19 +72,19 @@ public class LjsTokenizer
                     // single line comment
                     while (_reader.NextChar != '\n')
                     {
-                        _reader.MoveForward();
+                        ReadNextChar();
                         // check if we reached the end of file
                         if (!_reader.HasNextChar) return;
                     }
                 }
                 else if (nextChar == Asterisk)
                 {
-                    _reader.MoveForward(); // current char is asterisk here
-                    _reader.MoveForward();
+                    ReadNextChar(); // current char is asterisk here
+                    ReadNextChar();
 
                     while (_reader.HasNextChar)
                     {
-                        _reader.MoveForward();
+                        ReadNextChar();
                         
                         if (_reader.CurrentChar == Slash && _reader.PrevChar == Asterisk)
                         {
@@ -79,85 +100,73 @@ public class LjsTokenizer
                 // todo process escape characters (quotes escape, line breaks, etc..)
                 
                 var startIndex = _reader.CurrentIndex + 1; // we ignore quotes (+1)
+
+                lineIndex = _currentLine; 
                 
-                _reader.MoveForward();
+                ReadNextChar();
                 
                 while (_reader.CurrentChar != c)
                 {
                     if (!_reader.HasNextChar)
                     {
+                        // todo string is not closed error
                         throw new LjsTokenizerError(_reader.CurrentIndex);
                     }
                     
-                    _reader.MoveForward();
+                    ReadNextChar();
                 }
 
                 var ln = _reader.CurrentIndex - startIndex; // end index is exclusive
                 
                 AddToken(new LjsToken(
-                    LjsTokenType.String, startIndex, ln));
+                    LjsTokenType.String, startIndex, ln, lineIndex));
             }
             // key word or identifier
             else if (IsLetterChar(c))
             {
                 var startIndex = _reader.CurrentIndex;
 
+                lineIndex = _currentLine;
+
                 while (_reader.HasNextChar && 
                        (IsLetterChar(_reader.NextChar) || IsNumberChar(_reader.NextChar)))
                 {
-                    _reader.MoveForward();
+                    ReadNextChar();
                 }
 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
                 
                 AddToken(new LjsToken(
-                    LjsTokenType.Word, startIndex, ln));
+                    LjsTokenType.Word, startIndex, ln, lineIndex));
             }
             // number
             else if (IsNumberChar(c))
             {
                 var startIndex = _reader.CurrentIndex;
                 var isFloat = false;
+
+                lineIndex = _currentLine;
                 
                 while (_reader.HasNextChar && 
                        (IsNumberChar(_reader.NextChar) || (!isFloat && _reader.NextChar == Dot)))
                 {
                     isFloat = isFloat || _reader.NextChar == Dot;
-                    _reader.MoveForward();
+                    ReadNextChar();
                 }
                 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
 
                 AddToken(new LjsToken(
-                    isFloat ? LjsTokenType.Float : LjsTokenType.Int, startIndex, ln));
+                    isFloat ? LjsTokenType.Float : LjsTokenType.Int, startIndex, ln, lineIndex));
             }
             else if (IsOperator(c))
             {
-                AddToken(new LjsToken(LjsTokenType.Operator, _reader.CurrentIndex, 1));
+                AddToken(new LjsToken(LjsTokenType.Operator, _reader.CurrentIndex, 1, _currentLine));
             }
-            else if (c == '(')
+            else
             {
-                AddToken(new LjsToken(LjsTokenType.BracketOpen, _reader.CurrentIndex, 1));
-            }
-            else if (c == ')')
-            {
-                AddToken(new LjsToken(LjsTokenType.BracketClose, _reader.CurrentIndex, 1));
-            }
-            else if (c == '{')
-            {
-                AddToken(new LjsToken(LjsTokenType.BraceOpen, _reader.CurrentIndex, 1));
-            }
-            else if (c == '}')
-            {
-                AddToken(new LjsToken(LjsTokenType.BraceClose, _reader.CurrentIndex, 1));
-            }
-            else if (c == '[')
-            {
-                AddToken(new LjsToken(LjsTokenType.SquareBracketOpen, _reader.CurrentIndex, 1));
-            }
-            else if (c == ']')
-            {
-                AddToken(new LjsToken(LjsTokenType.SquareBracketClose, _reader.CurrentIndex, 1));
+                // todo unknown token exception
+                throw new LjsTokenizerError(_reader.CurrentIndex);
             }
             
 
@@ -166,8 +175,6 @@ public class LjsTokenizer
 
     private void AddToken(LjsToken token)
     {
-        Console.WriteLine($"token {token.TokenType} |{_reader.GetCodeString(token.StringStartIndex, token.StringLength)}|");
-        
         _tokens.Add(token);
     }
 
@@ -186,13 +193,16 @@ public class LjsTokenizer
                c == ',' ||
                c == '.' ||
                c == ':' ||
-               c == ';';
+               c == ';' ||
+               c == '{' || c == '}' ||
+               c == '(' || c == ')' ||
+               c == '[' || c == ']';
     }
 
     /// <summary>
     /// check if char is space, newline, tabulation or special ansii code at the beginning of ansii table
     /// </summary>
-    private static bool IsSpaceOrSpecialAnsiiChar(char c)
+    private static bool IsEmptySpace(char c)
     {
         var charCode = (int)c;
         

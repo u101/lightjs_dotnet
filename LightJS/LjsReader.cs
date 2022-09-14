@@ -7,9 +7,6 @@ public class LjsReader
 
     private int _currentIndex = -1;
     
-    private int _currentLine = 0;
-    private int _currentCol = 0;
-    
     public LjsReader(string sourceCode)
     {
         if (string.IsNullOrEmpty(sourceCode))
@@ -22,10 +19,6 @@ public class LjsReader
     }
 
     public int CurrentIndex => _currentIndex;
-
-    public int CurrentLine => _currentLine;
-
-    public int CurrentCol => _currentCol;
 
     public char CurrentChar => 
         _currentIndex != -1 ? _sourceCode[_currentIndex] : (char) 0;
@@ -61,18 +54,6 @@ public class LjsReader
         }
         
         ++_currentIndex;
-        
-        var c = _sourceCode[_currentIndex];
-
-        if (c == '\n')
-        {
-            ++_currentLine;
-            _currentCol = 0;
-        }
-        else
-        {
-            ++_currentCol;
-        }
     }
     
     
