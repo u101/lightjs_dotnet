@@ -56,6 +56,7 @@ public class LjsTokenizerTest
 
           tokens.Should().NotContain(x => x.TokenType == LjsTokenType.Null);
      }
+
      
      // todo write tests to see how invalid scripts are handled
      
