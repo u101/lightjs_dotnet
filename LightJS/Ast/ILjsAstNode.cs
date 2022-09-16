@@ -1,4 +1,4 @@
-namespace LightJS;
+namespace LightJS.Ast;
 
 public interface ILjsAstNode
 {

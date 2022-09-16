@@ -1,4 +1,6 @@
-namespace LightJS;
+using LightJS.Tokenizer;
+
+namespace LightJS.Ast;
 
 /// <summary>
 /// Abstract syntax tree builder

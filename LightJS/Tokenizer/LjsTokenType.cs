@@ -1,4 +1,4 @@
-namespace LightJS;
+namespace LightJS.Tokenizer;
 
 public enum LjsTokenType
 {

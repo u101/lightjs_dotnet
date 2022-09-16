@@ -1,8 +1,7 @@
 using FluentAssertions;
+using LightJS.Tokenizer;
 
 namespace LightJS.Tests;
-
-using LightJS;
 
 [TestFixture]
 public class LjsTokenizerTest
