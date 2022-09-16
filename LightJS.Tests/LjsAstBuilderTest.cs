@@ -33,7 +33,7 @@ public class LjsAstBuilderTest
     }
     
     [Test]
-    public void Build_ShouldReturnIntNode_WhenGivenIntNumber()
+    public void Build_ShouldReturnIntNode_WhenGivenIntLiteral()
     {
         var (builder, tokens) = CreateBuilderWithStringInput("123456789");
 
@@ -43,6 +43,34 @@ public class LjsAstBuilderTest
 
         astModel.RootNodes[0].Should().BeEquivalentTo(new LjsAstValue<int>(123456789));
         astModel.RootNodes[0].Should().NotBeEquivalentTo(new LjsAstValue<int>(1));
+    }
+    
+    [Test]
+    public void Build_ShouldReturnDoubleNode_WhenGivenDoubleLiteral()
+    {
+        
+        var (builder, tokens) = CreateBuilderWithStringInput("3.14");
+
+        var astModel = builder.Build(tokens);
+
+        astModel.RootNodes.Should().HaveCount(1);
+
+        astModel.RootNodes[0].Should().BeEquivalentTo(new LjsAstValue<double>(3.14));
+        astModel.RootNodes[0].Should().NotBeEquivalentTo(new LjsAstValue<double>(3.141));
+    }
+    
+    [Test]
+    public void Build_ShouldReturnStringNode_WhenGivenStringLiteral()
+    {
+        const string someString = "Hello world";
+        
+        var (builder, tokens) = CreateBuilderWithStringInput($"\"{someString}\"");
+
+        var astModel = builder.Build(tokens);
+
+        astModel.RootNodes.Should().HaveCount(1);
+
+        astModel.RootNodes[0].Should().BeEquivalentTo(new LjsAstValue<string>(someString));
     }
 
     /*[Test]
