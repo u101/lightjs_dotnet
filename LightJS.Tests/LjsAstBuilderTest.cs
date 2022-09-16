@@ -42,6 +42,7 @@ public class LjsAstBuilderTest
         astModel.RootNodes.Should().HaveCount(1);
 
         astModel.RootNodes[0].Should().BeEquivalentTo(new LjsAstValue<int>(123456789));
+        astModel.RootNodes[0].Should().NotBeEquivalentTo(new LjsAstValue<int>(1));
     }
 
     /*[Test]
