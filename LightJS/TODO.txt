@@ -1,0 +1,2 @@
+1) string literal in source code - /n line breaks, characters and quotes escaping
+2) numbers in exponential notation support 

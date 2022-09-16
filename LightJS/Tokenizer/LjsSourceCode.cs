@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace LightJS.Tokenizer;
 
 public class LjsSourceCode
@@ -18,7 +20,7 @@ public class LjsSourceCode
 
     public char this[int index] => _sourceCode[index];
 
-    public string Substring(int startIndex, int length)
+    private void ThrowIfOutOfRange(int startIndex, int length)
     {
         if (startIndex < 0 || startIndex >= Length)
             throw new ArgumentException($"invalid start index {startIndex}");
@@ -29,8 +31,31 @@ public class LjsSourceCode
         if (startIndex + length > Length)
             throw new ArgumentException(
                 $"invalid length {length} with start index {startIndex} > code ln {Length}");
+    }
+    
+    public string Substring(int startIndex, int length)
+    {
+        ThrowIfOutOfRange(startIndex, length);
         
         return _sourceCode.Substring(startIndex, length);
+    }
+
+    public int ReadInt(int startIndex, int length)
+    {
+        ThrowIfOutOfRange(startIndex, length);
+
+        var substring = _sourceCode.Substring(startIndex, length);
+
+        return int.Parse(substring, NumberStyles.Integer, NumberFormatInfo.InvariantInfo);
+    }
+
+    public double ReadDouble(int startIndex, int length)
+    {
+        ThrowIfOutOfRange(startIndex, length);
+
+        var substring = _sourceCode.Substring(startIndex, length);
+
+        return double.Parse(substring, NumberStyles.Float, NumberFormatInfo.InvariantInfo);
     }
     
     

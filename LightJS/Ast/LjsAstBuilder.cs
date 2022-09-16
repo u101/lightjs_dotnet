@@ -41,23 +41,35 @@ public class LjsAstBuilder
 
         switch (token.TokenType)
         {
-            case LjsTokenType.Null:
-                break;
             case LjsTokenType.Word:
+                throw new NotImplementedException();
                 break;
+            
             case LjsTokenType.Int:
-                break;
+                ++currentIndex;
+                return new LjsAstValue<int>(
+                    _sourceCode.ReadInt(token.StringStartIndex, token.StringLength));
+            
             case LjsTokenType.Float:
-                break;
+                ++currentIndex;
+                return new LjsAstValue<double>(
+                    _sourceCode.ReadDouble(token.StringStartIndex, token.StringLength));
+            
             case LjsTokenType.String:
-                break;
+                ++currentIndex;
+                return new LjsAstValue<string>(
+                    _sourceCode.Substring(token.StringStartIndex, token.StringLength));
+                
             case LjsTokenType.Operator:
+                
+                throw new NotImplementedException();
                 break;
+            
             default:
                 throw new ArgumentOutOfRangeException();
         }
 
-        throw new NotImplementedException();
+        
     }
     
 }

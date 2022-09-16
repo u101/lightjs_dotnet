@@ -45,15 +45,12 @@ public class LjsTokenizerTest
 
           var tokens = ljsTokenizer.ReadTokens();
 
-          var ljsTokenTypes = Enum.GetValues<LjsTokenType>().
-               Where(v => v != LjsTokenType.Null);
+          var ljsTokenTypes = Enum.GetValues<LjsTokenType>();
 
           foreach (var tokenType in ljsTokenTypes)
           {
                tokens.Should().Contain(x => x.TokenType == tokenType);
           }
-
-          tokens.Should().NotContain(x => x.TokenType == LjsTokenType.Null);
      }
 
      
