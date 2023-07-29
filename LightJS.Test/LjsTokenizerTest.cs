@@ -6,19 +6,44 @@ namespace LightJS.Tests;
 [TestFixture]
 public class LjsTokenizerTest
 {
+
+     [Test]
+     public void ReadValidSingleLineComment()
+     {
+          var sourceCode = new LjsSourceCode("// asd asd");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var tokens = ljsTokenizer.ReadTokens();
+          
+          Assert.That(tokens, Is.Empty);
+     }
+     
+     [Test]
+     public void ReadValidMultiLineComment()
+     {
+          var sourceCode = new LjsSourceCode("/* asd asd \n */");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var tokens = ljsTokenizer.ReadTokens();
+          
+          Assert.That(tokens, Is.Empty);
+     }
+     
      [Test]
      public void ReadValidStringLiteralTest()
      {
           var sourceCode = new LjsSourceCode("\"abc\"");
           var ljsTokenizer = new LjsTokenizer(sourceCode);
           var tokens = ljsTokenizer.ReadTokens();
+
+          Assert.That(tokens, Has.Count.EqualTo(1));
           
-          Assert.That(tokens.Count, Is.EqualTo(1));
-          Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.String));
-          Assert.That(tokens[0].StringLength, Is.EqualTo(3));
+          Assert.Multiple(() =>
+          {
+               Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.String));
+               Assert.That(tokens[0].StringLength, Is.EqualTo(3));
+          });
      }
-     
-     [Test]
+
+    [Test]
      public void ReadInvalidUnclosedStringLiteralTest()
      {
           var sourceCode = new LjsSourceCode("\"abc");
