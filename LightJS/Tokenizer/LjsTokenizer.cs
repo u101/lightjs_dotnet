@@ -184,6 +184,40 @@ public class LjsTokenizer
                 
                 AddToken(new LjsToken(LjsTokenType.HexInt, tokenPos, ln));
             }
+            // binary int
+            else if (c == '0' && _reader.HasNextChar && _reader.NextChar == 'b')
+            {
+                var startIndex = _reader.CurrentIndex;
+                var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
+
+                ReadNextChar(); // skip char b
+
+                if (!_reader.HasNextChar || !IsBinaryDigitChar(_reader.NextChar))
+                {
+                    // error
+                    throw new LjsTokenizerError(
+                        "invalid number format", 
+                        new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                }
+
+                while (_reader.HasNextChar && 
+                       !IsEmptySpace(_reader.NextChar) && 
+                       !IsOperator(_reader.NextChar))
+                {
+                    ReadNextChar();
+
+                    if (!IsBinaryDigitChar(_reader.CurrentChar))
+                    {
+                        throw new LjsTokenizerError(
+                            "invalid number format", 
+                            new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                    }
+                }
+                
+                var ln = (_reader.CurrentIndex + 1) - startIndex;
+                
+                AddToken(new LjsToken(LjsTokenType.BinaryInt, tokenPos, ln));
+            }
             
             // number
             else if (IsNumberChar(c))
@@ -270,6 +304,11 @@ public class LjsTokenizer
     {
         var charCode = (int)c;
         return charCode >= 48 && charCode <= 57;
+    }
+
+    private static bool IsBinaryDigitChar(char c)
+    {
+        return c == '0' || c == '1';
     }
 
     private static bool IsHexChar(char c)

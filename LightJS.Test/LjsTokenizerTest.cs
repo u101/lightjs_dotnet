@@ -132,6 +132,23 @@ public class LjsTokenizerTest
           ReadInvalidToken("0x");
           ReadInvalidToken("0xCGH");
      }
+     
+     [Test]
+     public void ReadValidBinaryInt()
+     {
+          ReadValidToken("0b0", LjsTokenType.BinaryInt);
+          ReadValidToken("0b1010101010101", LjsTokenType.BinaryInt);
+          ReadValidToken("0b01", LjsTokenType.BinaryInt);
+     }
+     
+     [Test]
+     public void ReadInvalidBinaryInt()
+     {
+          ReadInvalidToken("0b");
+          ReadInvalidToken("0b777");
+          ReadInvalidToken("0bAX");
+          ReadInvalidToken("0b000101ef");
+     }
 
      private static void ReadValidToken(string testString, LjsTokenType expectedTokenType)
      {
