@@ -24,7 +24,7 @@ public class LjsAstBuilderTest
     private static (LjsAstBuilder, List<LjsToken>) CreateBuilderWithStringInput(string sourceCodeString)
     {
         var sourceCode = new LjsSourceCode(sourceCodeString);
-        var tokenizer = new LjsTokenizer(new LjsReader(sourceCode));
+        var tokenizer = new LjsTokenizer(sourceCode);
         var tokens = tokenizer.ReadTokens();
 
         var astBuilder = new LjsAstBuilder(sourceCode);

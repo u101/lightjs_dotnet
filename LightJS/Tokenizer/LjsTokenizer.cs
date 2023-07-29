@@ -2,7 +2,7 @@ namespace LightJS.Tokenizer;
 
 public class LjsTokenizer
 {
-    private readonly LjsReader _reader;
+    private readonly SourceCodeCharsReader _reader;
     private readonly List<LjsToken> _tokens = new List<LjsToken>();
     
     private const char DoubleQuotes = '"';
@@ -15,9 +15,9 @@ public class LjsTokenizer
     private int _currentLine;
     private int _currentCol;
     
-    public LjsTokenizer(LjsReader reader)
+    public LjsTokenizer(LjsSourceCode sourceCode)
     {
-        _reader = reader;
+        _reader = new SourceCodeCharsReader(sourceCode);
     }
 
     public List<LjsToken> ReadTokens()
@@ -223,6 +223,41 @@ public class LjsTokenizer
     {
         var charCode = (int)c;
         return charCode >= 48 && charCode <= 57;
+    }
+    
+    private class SourceCodeCharsReader
+    {
+        private readonly LjsSourceCode _sourceCode;
+
+        private int _currentIndex = -1;
+    
+        public SourceCodeCharsReader(LjsSourceCode sourceCode)
+        {
+            _sourceCode = sourceCode;
+        }
+
+        public int CurrentIndex => _currentIndex;
+
+        public char CurrentChar => 
+            _currentIndex != -1 ? _sourceCode[_currentIndex] : (char) 0;
+
+        public char NextChar => 
+            _currentIndex + 1 < _sourceCode.Length ? _sourceCode[_currentIndex + 1] : (char)0;
+
+        public char PrevChar => 
+            _currentIndex > 0 ? _sourceCode[_currentIndex - 1] : (char)0;
+
+        public bool HasNextChar => _currentIndex + 1 < _sourceCode.Length;
+
+        public void MoveForward()
+        {
+            if (!HasNextChar)
+            {
+                throw new Exception("str end");
+            }
+        
+            ++_currentIndex;
+        }
     }
 
 }

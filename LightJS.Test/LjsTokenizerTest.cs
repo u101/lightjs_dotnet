@@ -6,6 +6,27 @@ namespace LightJS.Tests;
 [TestFixture]
 public class LjsTokenizerTest
 {
+     [Test]
+     public void ReadValidStringLiteralTest()
+     {
+          var sourceCode = new LjsSourceCode("\"abc\"");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var tokens = ljsTokenizer.ReadTokens();
+          
+          Assert.That(tokens.Count, Is.EqualTo(1));
+          Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.String));
+          Assert.That(tokens[0].StringLength, Is.EqualTo(3));
+     }
+     
+     [Test]
+     public void ReadInvalidUnclosedStringLiteralTest()
+     {
+          var sourceCode = new LjsSourceCode("\"abc");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+
+          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
+     }
+     
 
      [Test]
      public void TestLoadScript()
@@ -21,33 +42,11 @@ public class LjsTokenizerTest
           var text = TestUtils.LoadJsFile(scriptFileName);
 
           var sourceCode = new LjsSourceCode(text);
-          var ljsReader = new LjsReader(sourceCode);
-          var ljsTokenizer = new LjsTokenizer(ljsReader);
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
           return ljsTokenizer;
      }
 
-     [Test]
-     public void ReadValidStringLiteralTest()
-     {
-          var sourceCode = new LjsSourceCode("\"abc\"");
-          var ljsReader = new LjsReader(sourceCode);
-          var ljsTokenizer = new LjsTokenizer(ljsReader);
-          var tokens = ljsTokenizer.ReadTokens();
-          
-          Assert.That(tokens.Count, Is.EqualTo(1));
-          Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.String));
-          Assert.That(tokens[0].StringLength, Is.EqualTo(3));
-     }
      
-     [Test]
-     public void ReadInvalidUnclosedStringLiteralTest()
-     {
-          var sourceCode = new LjsSourceCode("\"abc");
-          var ljsReader = new LjsReader(sourceCode);
-          var ljsTokenizer = new LjsTokenizer(ljsReader);
-
-          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
-     }
 
 
      [Test]
