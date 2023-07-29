@@ -1,4 +1,5 @@
 using LightJS.Tokenizer;
+using LightJS.Utils;
 
 namespace LightJS.Ast;
 
@@ -7,11 +8,16 @@ namespace LightJS.Ast;
 /// </summary>
 public class LjsAstBuilder
 {
-    private readonly LjsSourceCode _sourceCode;
+    private readonly string _sourceCodeString;
 
-    public LjsAstBuilder(LjsSourceCode sourceCode)
+    public LjsAstBuilder(string sourceCodeString)
     {
-        _sourceCode = sourceCode ?? throw new ArgumentNullException(nameof(sourceCode));
+        if (string.IsNullOrEmpty(sourceCodeString))
+        {
+            throw new ArgumentException("input string is null or empty");
+        }
+        
+        _sourceCodeString = sourceCodeString;
     }
 
     public LjsAstModel Build(List<LjsToken> tokens)
@@ -49,17 +55,17 @@ public class LjsAstBuilder
             case LjsTokenType.Int:
                 ++currentIndex;
                 return new LjsAstValue<int>(
-                    _sourceCode.ReadInt(tokenPosition.CharIndex, token.StringLength));
+                    _sourceCodeString.ReadInt(tokenPosition.CharIndex, token.StringLength));
             
             case LjsTokenType.Float:
                 ++currentIndex;
                 return new LjsAstValue<double>(
-                    _sourceCode.ReadDouble(tokenPosition.CharIndex, token.StringLength));
+                    _sourceCodeString.ReadDouble(tokenPosition.CharIndex, token.StringLength));
             
             case LjsTokenType.String:
                 ++currentIndex;
                 return new LjsAstValue<string>(
-                    _sourceCode.Substring(tokenPosition.CharIndex, token.StringLength));
+                    _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength));
                 
             case LjsTokenType.Operator:
                 

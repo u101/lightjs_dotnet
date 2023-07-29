@@ -10,8 +10,7 @@ public class LjsTokenizerTest
      [Test]
      public void ReadValidSingleLineComment()
      {
-          var sourceCode = new LjsSourceCode("// asd asd");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var ljsTokenizer = new LjsTokenizer("// asd asd");
           var tokens = ljsTokenizer.ReadTokens();
           
           Assert.That(tokens, Is.Empty);
@@ -20,8 +19,7 @@ public class LjsTokenizerTest
      [Test]
      public void ReadValidMultiLineComment()
      {
-          var sourceCode = new LjsSourceCode("/* asd asd \n */");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var ljsTokenizer = new LjsTokenizer("/* asd asd \n */");
           var tokens = ljsTokenizer.ReadTokens();
           
           Assert.That(tokens, Is.Empty);
@@ -38,9 +36,8 @@ public class LjsTokenizerTest
 
      private static void ReadValidStringLiteralTest(string testString, char quoteMark)
      {
-          
-          var sourceCode = new LjsSourceCode($"{quoteMark}{testString}{quoteMark}");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var sourceCodeString = $"{quoteMark}{testString}{quoteMark}";
+          var ljsTokenizer = new LjsTokenizer(sourceCodeString);
           var tokens = ljsTokenizer.ReadTokens();
 
           Assert.That(tokens, Has.Count.EqualTo(1));
@@ -49,7 +46,7 @@ public class LjsTokenizerTest
           
           Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
 
-          var str = sourceCode.Substring(
+          var str = sourceCodeString.Substring(
                token.Position.CharIndex, token.StringLength);
           
           Assert.That(str, Is.EqualTo(testString));
@@ -67,8 +64,8 @@ public class LjsTokenizerTest
 
           foreach (var testString in testStrings)
           {
-               var sourceCode = new LjsSourceCode($"\"{testString}\"");
-               var ljsTokenizer = new LjsTokenizer(sourceCode);
+               var sourceCodeString = $"\"{testString}\"";
+               var ljsTokenizer = new LjsTokenizer(sourceCodeString);
                var tokens = ljsTokenizer.ReadTokens();
 
                Assert.That(tokens, Has.Count.EqualTo(1));
@@ -77,7 +74,7 @@ public class LjsTokenizerTest
           
                Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
 
-               var str = sourceCode.Substring(
+               var str = sourceCodeString.Substring(
                     token.Position.CharIndex, token.StringLength);
           
                Assert.That(str, Is.EqualTo(testString));
@@ -87,26 +84,19 @@ public class LjsTokenizerTest
     [Test]
      public void ReadInvalidUnclosedStringLiteralTest()
      {
-          var sourceCode = new LjsSourceCode("\"abc");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
-
-          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
+          ReadInvalidToken("\"abc");
      }
      
      [Test]
      public void ReadInvalidMultilineStringLiteralTest()
      {
-          var sourceCode = new LjsSourceCode("\"abc\nxyz\"");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
-
-          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
+          ReadInvalidToken("\"abc\nxyz\"");
      }
 
      [Test]
      public void ReadValidSimpleExpression()
      {
-          var sourceCode = new LjsSourceCode("a = b + c");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var ljsTokenizer = new LjsTokenizer("a = b + c");
           
           var tokens = ljsTokenizer.ReadTokens();
           
@@ -165,8 +155,8 @@ public class LjsTokenizerTest
 
      private static void ReadValidToken(string testString, LjsTokenType expectedTokenType)
      {
-          var sourceCode = new LjsSourceCode($"// valid token next \n {testString}");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var sourceCodeString = $"// valid token next \n {testString}";
+          var ljsTokenizer = new LjsTokenizer(sourceCodeString);
           
           var tokens = ljsTokenizer.ReadTokens();
           
@@ -176,7 +166,7 @@ public class LjsTokenizerTest
 
           Assert.That(token.TokenType, Is.EqualTo(expectedTokenType));
           
-          var str = sourceCode.Substring(
+          var str = sourceCodeString.Substring(
                token.Position.CharIndex, token.StringLength);
           
           Assert.That(str, Is.EqualTo(testString));
@@ -184,8 +174,7 @@ public class LjsTokenizerTest
      
      private static void ReadInvalidToken(string testString)
      {
-          var sourceCode = new LjsSourceCode($"// invalid token next \n {testString}");
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var ljsTokenizer = new LjsTokenizer($"// invalid token next \n {testString}");
           
           Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
      }
@@ -220,10 +209,8 @@ public class LjsTokenizerTest
 
      private static LjsTokenizer CreateLjsTokenizer(string scriptFileName)
      {
-          var text = TestUtils.LoadJsFile(scriptFileName);
-
-          var sourceCode = new LjsSourceCode(text);
-          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          var sourceCodeString = TestUtils.LoadJsFile(scriptFileName);
+          var ljsTokenizer = new LjsTokenizer(sourceCodeString);
           return ljsTokenizer;
      }
 

@@ -8,12 +8,6 @@ namespace LightJS.Tests;
 public class LjsAstBuilderTest
 {
     
-    private static LjsSourceCode LoadSourceCode(string scriptFileName)
-    {
-        var text = TestUtils.LoadJsFile(scriptFileName);
-
-        return new LjsSourceCode(text);
-    }
 
     private static (LjsAstBuilder, List<LjsToken>) CreateBuilderWithExternalScriptFile(string scriptFileName)
     {
@@ -23,11 +17,10 @@ public class LjsAstBuilderTest
 
     private static (LjsAstBuilder, List<LjsToken>) CreateBuilderWithStringInput(string sourceCodeString)
     {
-        var sourceCode = new LjsSourceCode(sourceCodeString);
-        var tokenizer = new LjsTokenizer(sourceCode);
+        var tokenizer = new LjsTokenizer(sourceCodeString);
         var tokens = tokenizer.ReadTokens();
 
-        var astBuilder = new LjsAstBuilder(sourceCode);
+        var astBuilder = new LjsAstBuilder(sourceCodeString);
         
         return (astBuilder, tokens);
     }

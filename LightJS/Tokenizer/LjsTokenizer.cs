@@ -1,13 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace LightJS.Tokenizer;
 
 public class LjsTokenizer
 {
-    private readonly LjsSourceCode _sourceCode;
+    private readonly string _sourceCodeString;
     
-    [AllowNull] private SourceCodeCharsReader _reader;
-    [AllowNull] private List<LjsToken> _tokens;
+    private SourceCodeCharsReader _reader;
+    private List<LjsToken> _tokens;
     
     private const char DoubleQuotes = '"';
     private const char SingleQuotes = '\'';
@@ -20,9 +18,14 @@ public class LjsTokenizer
     private int _currentLine;
     private int _currentCol;
     
-    public LjsTokenizer(LjsSourceCode sourceCode)
+    public LjsTokenizer(string sourceCodeString)
     {
-        _sourceCode = sourceCode;
+        if (string.IsNullOrEmpty(sourceCodeString))
+        {
+            throw new ArgumentException("input string is null or empty");
+        }
+        
+        _sourceCodeString = sourceCodeString;
     }
 
     public List<LjsToken> ReadTokens()
@@ -30,7 +33,7 @@ public class LjsTokenizer
         _currentCol = 0;
         _currentLine = 0;
         
-        _reader = new SourceCodeCharsReader(_sourceCode);
+        _reader = new SourceCodeCharsReader(_sourceCodeString);
         _tokens = new List<LjsToken>();
         
         ReadMain();
@@ -366,27 +369,27 @@ public class LjsTokenizer
     
     private class SourceCodeCharsReader
     {
-        private readonly LjsSourceCode _sourceCode;
+        private readonly string _sourceCodeString;
 
         private int _currentIndex = -1;
     
-        public SourceCodeCharsReader(LjsSourceCode sourceCode)
+        public SourceCodeCharsReader(string sourceCodeString)
         {
-            _sourceCode = sourceCode;
+            _sourceCodeString = sourceCodeString;
         }
 
         public int CurrentIndex => _currentIndex;
 
         public char CurrentChar => 
-            _currentIndex != -1 ? _sourceCode[_currentIndex] : (char) 0;
+            _currentIndex != -1 ? _sourceCodeString[_currentIndex] : (char) 0;
 
         public char NextChar => 
-            _currentIndex + 1 < _sourceCode.Length ? _sourceCode[_currentIndex + 1] : (char)0;
+            _currentIndex + 1 < _sourceCodeString.Length ? _sourceCodeString[_currentIndex + 1] : (char)0;
 
         public char PrevChar => 
-            _currentIndex > 0 ? _sourceCode[_currentIndex - 1] : (char)0;
+            _currentIndex > 0 ? _sourceCodeString[_currentIndex - 1] : (char)0;
 
-        public bool HasNextChar => _currentIndex + 1 < _sourceCode.Length;
+        public bool HasNextChar => _currentIndex + 1 < _sourceCodeString.Length;
 
         public void MoveForward()
         {
