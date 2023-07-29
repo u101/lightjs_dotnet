@@ -56,7 +56,6 @@ public class LjsTokenizer
 
     private void ReadMain()
     {
-        var lineIndex = 0;
         
         while (_reader.HasNextChar)
         {
@@ -110,9 +109,8 @@ public class LjsTokenizer
                 // todo process escape characters (quotes escape, line breaks, etc..)
                 
                 var startIndex = _reader.CurrentIndex + 1; // we ignore quotes (+1)
+                var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
 
-                lineIndex = _currentLine; 
-                
                 ReadNextChar();
                 
                 while (_reader.CurrentChar != c)
@@ -130,14 +128,13 @@ public class LjsTokenizer
                 var ln = _reader.CurrentIndex - startIndex; // end index is exclusive
                 
                 AddToken(new LjsToken(
-                    LjsTokenType.String, startIndex, ln, lineIndex));
+                    LjsTokenType.String, tokenPos, ln));
             }
             // key word or identifier
             else if (IsLetterChar(c))
             {
                 var startIndex = _reader.CurrentIndex;
-
-                lineIndex = _currentLine;
+                var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
 
                 while (_reader.HasNextChar && 
                        (IsLetterChar(_reader.NextChar) || IsNumberChar(_reader.NextChar)))
@@ -148,15 +145,14 @@ public class LjsTokenizer
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
                 
                 AddToken(new LjsToken(
-                    LjsTokenType.Word, startIndex, ln, lineIndex));
+                    LjsTokenType.Word, tokenPos, ln));
             }
             // number
             else if (IsNumberChar(c))
             {
                 var startIndex = _reader.CurrentIndex;
+                var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
                 var isFloat = false;
-
-                lineIndex = _currentLine;
                 
                 while (_reader.HasNextChar && 
                        (IsNumberChar(_reader.NextChar) || (!isFloat && _reader.NextChar == Dot)))
@@ -168,11 +164,12 @@ public class LjsTokenizer
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
 
                 AddToken(new LjsToken(
-                    isFloat ? LjsTokenType.Float : LjsTokenType.Int, startIndex, ln, lineIndex));
+                    isFloat ? LjsTokenType.Float : LjsTokenType.Int, tokenPos, ln));
             }
             else if (IsOperator(c))
             {
-                AddToken(new LjsToken(LjsTokenType.Operator, _reader.CurrentIndex, 1, _currentLine));
+                AddToken(new LjsToken(LjsTokenType.Operator, 
+                    new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol), 1));
             }
             else
             {

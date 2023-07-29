@@ -38,6 +38,7 @@ public class LjsAstBuilder
     private ILjsAstNode ReadMain(List<LjsToken> tokens, ref int currentIndex)
     {
         var token = tokens[currentIndex];
+        var tokenPosition = token.TokenPosition;
 
         switch (token.TokenType)
         {
@@ -48,17 +49,17 @@ public class LjsAstBuilder
             case LjsTokenType.Int:
                 ++currentIndex;
                 return new LjsAstValue<int>(
-                    _sourceCode.ReadInt(token.StringStartIndex, token.StringLength));
+                    _sourceCode.ReadInt(tokenPosition.CharIndex, token.StringLength));
             
             case LjsTokenType.Float:
                 ++currentIndex;
                 return new LjsAstValue<double>(
-                    _sourceCode.ReadDouble(token.StringStartIndex, token.StringLength));
+                    _sourceCode.ReadDouble(tokenPosition.CharIndex, token.StringLength));
             
             case LjsTokenType.String:
                 ++currentIndex;
                 return new LjsAstValue<string>(
-                    _sourceCode.Substring(token.StringStartIndex, token.StringLength));
+                    _sourceCode.Substring(tokenPosition.CharIndex, token.StringLength));
                 
             case LjsTokenType.Operator:
                 
