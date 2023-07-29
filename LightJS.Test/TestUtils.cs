@@ -1,4 +1,4 @@
-namespace LightJS.Tests;
+namespace LightJS.Test;
 
 public static class TestUtils
 {
