@@ -25,7 +25,7 @@ public class LjsSourceCode
         if (startIndex < 0 || startIndex >= Length)
             throw new ArgumentException($"invalid start index {startIndex}");
         
-        if (length <= 0)
+        if (length < 0)
             throw new ArgumentException($"invalid length {length}");
 
         if (startIndex + length > Length)

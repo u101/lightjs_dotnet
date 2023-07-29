@@ -30,9 +30,16 @@ public class LjsTokenizerTest
      [Test]
      public void ReadValidStringLiteralTest()
      {
-          const string testString = "abc";
+          ReadValidStringLiteralTest("abc", '"');
+          ReadValidStringLiteralTest("defg", '\'');
+          ReadValidStringLiteralTest("", '"');
+          ReadValidStringLiteralTest("", '\'');
+     }
+
+     private static void ReadValidStringLiteralTest(string testString, char quoteMark)
+     {
           
-          var sourceCode = new LjsSourceCode($"\"{testString}\"");
+          var sourceCode = new LjsSourceCode($"{quoteMark}{testString}{quoteMark}");
           var ljsTokenizer = new LjsTokenizer(sourceCode);
           var tokens = ljsTokenizer.ReadTokens();
 
@@ -41,7 +48,6 @@ public class LjsTokenizerTest
           var token = tokens[0];
           
           Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
-          Assert.That(token.StringLength, Is.EqualTo(3));
 
           var str = sourceCode.Substring(
                token.Position.CharIndex, token.StringLength);
