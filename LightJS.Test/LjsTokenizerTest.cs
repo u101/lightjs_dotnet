@@ -52,6 +52,14 @@ public class LjsTokenizerTest
           Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
      }
      
+     [Test]
+     public void ReadInvalidMultilineStringLiteralTest()
+     {
+          var sourceCode = new LjsSourceCode("\"abc\nxyz\"");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+
+          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
+     }
 
      [Test]
      public void TestLoadScript()

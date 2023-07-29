@@ -2,11 +2,14 @@ namespace LightJS.Tokenizer;
 
 public class LjsTokenizerError : Exception
 {
-    public int CharIndex { get; }
+    public string ErrorMessage { get; }
+    public LjsTokenPosition TokenPosition { get; }
     
-    public LjsTokenizerError(int charIndex):base($"syntax error at char {charIndex}")
+    public LjsTokenizerError(string errorMessage, LjsTokenPosition tokenPosition):
+        base($"syntax error at line:{tokenPosition.Line} col:{tokenPosition.Column}. {errorMessage}")
     {
-        CharIndex = charIndex;
+        ErrorMessage = errorMessage;
+        TokenPosition = tokenPosition;
     }
     
 }

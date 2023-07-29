@@ -1,9 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace LightJS.Tokenizer;
 
 public class LjsTokenizer
 {
-    private readonly SourceCodeCharsReader _reader;
-    private readonly List<LjsToken> _tokens = new List<LjsToken>();
+    private readonly LjsSourceCode _sourceCode;
+    
+    [AllowNull] private SourceCodeCharsReader _reader;
+    [AllowNull] private List<LjsToken> _tokens;
     
     private const char DoubleQuotes = '"';
     private const char SingleQuotes = '\'';
@@ -17,11 +21,17 @@ public class LjsTokenizer
     
     public LjsTokenizer(LjsSourceCode sourceCode)
     {
-        _reader = new SourceCodeCharsReader(sourceCode);
+        _sourceCode = sourceCode;
     }
 
     public List<LjsToken> ReadTokens()
     {
+        _currentCol = 0;
+        _currentLine = 0;
+        
+        _reader = new SourceCodeCharsReader(_sourceCode);
+        _tokens = new List<LjsToken>();
+        
         ReadMain();
         
         return _tokens;
@@ -107,10 +117,11 @@ public class LjsTokenizer
                 
                 while (_reader.CurrentChar != c)
                 {
-                    if (!_reader.HasNextChar)
+                    if (!_reader.HasNextChar || _reader.NextChar == NewLine)
                     {
-                        // todo string is not closed error
-                        throw new LjsTokenizerError(_reader.CurrentIndex);
+                        throw new LjsTokenizerError(
+                            "unterminated string literal", 
+                            new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
                     }
                     
                     ReadNextChar();
@@ -165,8 +176,9 @@ public class LjsTokenizer
             }
             else
             {
-                // todo unknown token exception
-                throw new LjsTokenizerError(_reader.CurrentIndex);
+                throw new LjsTokenizerError(
+                    "unknown token",
+                    new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
             }
             
 
