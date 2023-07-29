@@ -11,11 +11,11 @@ public class LjsTokenizerTest
      public void TestLoadScript()
      {
           var text = TestUtils.LoadJsFile("simpleTest.js");
-        
+
           Assert.That(text, Is.Not.Null);
           Assert.That(text, Is.Not.Empty);
      }
-     
+
      private static LjsTokenizer CreateLjsTokenizer(string scriptFileName)
      {
           var text = TestUtils.LoadJsFile(scriptFileName);
@@ -25,7 +25,31 @@ public class LjsTokenizerTest
           var ljsTokenizer = new LjsTokenizer(ljsReader);
           return ljsTokenizer;
      }
+
+     [Test]
+     public void ReadValidStringLiteralTest()
+     {
+          var sourceCode = new LjsSourceCode("\"abc\"");
+          var ljsReader = new LjsReader(sourceCode);
+          var ljsTokenizer = new LjsTokenizer(ljsReader);
+          var tokens = ljsTokenizer.ReadTokens();
+          
+          Assert.That(tokens.Count, Is.EqualTo(1));
+          Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.String));
+          Assert.That(tokens[0].StringLength, Is.EqualTo(3));
+     }
      
+     [Test]
+     public void ReadInvalidUnclosedStringLiteralTest()
+     {
+          var sourceCode = new LjsSourceCode("\"abc");
+          var ljsReader = new LjsReader(sourceCode);
+          var ljsTokenizer = new LjsTokenizer(ljsReader);
+
+          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
+     }
+
+
      [Test]
      public void ReadTokens_ShouldReturnTokens_WhenJsScriptIsValid()
      {
