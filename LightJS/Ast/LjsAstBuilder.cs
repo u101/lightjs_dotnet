@@ -9,6 +9,7 @@ namespace LightJS.Ast;
 public class LjsAstBuilder
 {
     private readonly string _sourceCodeString;
+    private readonly List<LjsToken> _tokens;
 
     public LjsAstBuilder(string sourceCodeString)
     {
@@ -17,24 +18,38 @@ public class LjsAstBuilder
             throw new ArgumentException("input string is null or empty");
         }
         
+        var ljsTokenizer = new LjsTokenizer(sourceCodeString);
+        
         _sourceCodeString = sourceCodeString;
+        _tokens = ljsTokenizer.ReadTokens();
     }
-
-    public LjsAstModel Build(List<LjsToken> tokens)
+    
+    public LjsAstBuilder(string sourceCodeString, List<LjsToken> tokens)
     {
+        if (string.IsNullOrEmpty(sourceCodeString))
+        {
+            throw new ArgumentException("input string is null or empty");
+        }
+        
         if (tokens == null)
             throw new ArgumentNullException(nameof(tokens));
 
         if (tokens.Count == 0)
             throw new ArgumentException("empty tokens list");
         
+        _sourceCodeString = sourceCodeString;
+        _tokens = tokens;
+    }
+
+    public LjsAstModel Build()
+    {
         var topLevelNodes = new List<ILjsAstNode>();
 
         var tokenIndex = 0;
 
-        while (tokenIndex < tokens.Count)
+        while (tokenIndex < _tokens.Count)
         {
-            var node = ReadMain(tokens, ref tokenIndex);
+            var node = ReadMain(_tokens, ref tokenIndex);
             topLevelNodes.Add(node);
         }
         

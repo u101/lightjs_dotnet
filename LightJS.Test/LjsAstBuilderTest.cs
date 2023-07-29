@@ -8,29 +8,11 @@ namespace LightJS.Tests;
 public class LjsAstBuilderTest
 {
     
-
-    private static (LjsAstBuilder, List<LjsToken>) CreateBuilderWithExternalScriptFile(string scriptFileName)
-    {
-        var text = TestUtils.LoadJsFile(scriptFileName);
-        return CreateBuilderWithStringInput(text);
-    }
-
-    private static (LjsAstBuilder, List<LjsToken>) CreateBuilderWithStringInput(string sourceCodeString)
-    {
-        var tokenizer = new LjsTokenizer(sourceCodeString);
-        var tokens = tokenizer.ReadTokens();
-
-        var astBuilder = new LjsAstBuilder(sourceCodeString);
-        
-        return (astBuilder, tokens);
-    }
-    
     [Test]
     public void Build_ShouldReturnIntNode_WhenGivenIntLiteral()
     {
-        var (builder, tokens) = CreateBuilderWithStringInput("123456789");
-
-        var astModel = builder.Build(tokens);
+        var astBuilder = new LjsAstBuilder("123456789");
+        var astModel = astBuilder.Build();
 
         astModel.RootNodes.Should().HaveCount(1);
 
@@ -41,10 +23,8 @@ public class LjsAstBuilderTest
     [Test]
     public void Build_ShouldReturnDoubleNode_WhenGivenDoubleLiteral()
     {
-        
-        var (builder, tokens) = CreateBuilderWithStringInput("3.14");
-
-        var astModel = builder.Build(tokens);
+        var astBuilder = new LjsAstBuilder("3.14");
+        var astModel = astBuilder.Build();
 
         astModel.RootNodes.Should().HaveCount(1);
 
@@ -56,10 +36,10 @@ public class LjsAstBuilderTest
     public void Build_ShouldReturnStringNode_WhenGivenStringLiteral()
     {
         const string someString = "Hello world";
+        const string sourceCodeString = $"\"{someString}\"";
         
-        var (builder, tokens) = CreateBuilderWithStringInput($"\"{someString}\"");
-
-        var astModel = builder.Build(tokens);
+        var astBuilder = new LjsAstBuilder(sourceCodeString);
+        var astModel = astBuilder.Build();
 
         astModel.RootNodes.Should().HaveCount(1);
 
