@@ -160,10 +160,7 @@ public class LjsTokenizer
 
                 if (!_reader.HasNextChar || !IsHexChar(_reader.NextChar))
                 {
-                    // error
-                    throw new LjsTokenizerError(
-                        "invalid number format", 
-                        new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                    ThrowInvalidNumberFormatError();
                 }
 
                 while (_reader.HasNextChar && 
@@ -174,9 +171,7 @@ public class LjsTokenizer
 
                     if (!IsHexChar(_reader.CurrentChar))
                     {
-                        throw new LjsTokenizerError(
-                            "invalid number format", 
-                            new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                        ThrowInvalidNumberFormatError();
                     }
                 }
                 
@@ -194,10 +189,7 @@ public class LjsTokenizer
 
                 if (!_reader.HasNextChar || !IsBinaryDigitChar(_reader.NextChar))
                 {
-                    // error
-                    throw new LjsTokenizerError(
-                        "invalid number format", 
-                        new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                    ThrowInvalidNumberFormatError();
                 }
 
                 while (_reader.HasNextChar && 
@@ -208,9 +200,7 @@ public class LjsTokenizer
 
                     if (!IsBinaryDigitChar(_reader.CurrentChar))
                     {
-                        throw new LjsTokenizerError(
-                            "invalid number format", 
-                            new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                        ThrowInvalidNumberFormatError();
                     }
                 }
                 
@@ -224,19 +214,56 @@ public class LjsTokenizer
             {
                 var startIndex = _reader.CurrentIndex;
                 var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
-                var isFloat = false;
-                
+
+                var hasDot = false;
+                var hasExponentMark = false;
+
                 while (_reader.HasNextChar && 
-                       (IsNumberChar(_reader.NextChar) || (!isFloat && _reader.NextChar == Dot)))
+                       !IsEmptySpace(_reader.NextChar) && 
+                       (_reader.NextChar == Dot || !IsOperator(_reader.NextChar)))
                 {
-                    isFloat = isFloat || _reader.NextChar == Dot;
                     ReadNextChar();
+
+                    if (_reader.CurrentChar == Dot)
+                    {
+                        if (hasDot || hasExponentMark || 
+                            !_reader.HasNextChar || !IsNumberChar(_reader.NextChar))
+                        {
+                            ThrowInvalidNumberFormatError();
+                        }
+
+                        hasDot = true;
+                    }
+                    else if (_reader.CurrentChar == 'e')
+                    {
+                        if (hasExponentMark || !_reader.HasNextChar)
+                        {
+                            ThrowInvalidNumberFormatError();
+                        }
+                        
+                        ReadNextChar();
+
+                        if (_reader.CurrentChar != '+' && _reader.CurrentChar != '-')
+                        {
+                            ThrowInvalidNumberFormatError();
+                        }
+
+                        if (!_reader.HasNextChar || !IsNumberChar(_reader.NextChar))
+                        {
+                            ThrowInvalidNumberFormatError();
+                        }
+
+                        hasExponentMark = true;
+                    }
+                    else if (!IsNumberChar(_reader.CurrentChar))
+                    {
+                        ThrowInvalidNumberFormatError();
+                    }
                 }
                 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
 
-                AddToken(new LjsToken(
-                    isFloat ? LjsTokenType.Float : LjsTokenType.Int, tokenPos, ln));
+                AddToken(new LjsToken(GetNumberTokenType(hasDot, hasExponentMark), tokenPos, ln));
             }
             else if (IsOperator(c))
             {
@@ -254,6 +281,19 @@ public class LjsTokenizer
         }
     }
 
+    private void ThrowInvalidNumberFormatError()
+    {
+        throw new LjsTokenizerError(
+            "invalid number format", 
+            new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+    }
+
+    private static LjsTokenType GetNumberTokenType(bool hasDot, bool hasExponentMark)
+    {
+        if (hasExponentMark) return LjsTokenType.FloatE;
+        return hasDot ? LjsTokenType.Float : LjsTokenType.Int;
+    }
+    
     private void AddToken(LjsToken token)
     {
         _tokens.Add(token);

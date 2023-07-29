@@ -178,15 +178,21 @@ public class LjsTokenizerTest
      }
      
      [Test]
-     public void ReadValidSimpleFloat()
+     public void ReadValidFloat()
      {
           ReadValidToken("123.456", LjsTokenType.Float);
+          ReadValidToken("1.4", LjsTokenType.Float);
+          ReadValidToken("1.4e+8", LjsTokenType.FloatE);
+          ReadValidToken("0.5e-9", LjsTokenType.FloatE);
+          ReadValidToken("1e+2", LjsTokenType.FloatE);
+          ReadValidToken("1e-4", LjsTokenType.FloatE);
      }
      
      [Test]
-     public void ReadInvalidSimpleFloat()
+     public void ReadInvalidFloat()
      {
           ReadInvalidToken("12.3.456");
+          ReadInvalidToken("1e+2.45");
      }
      
 

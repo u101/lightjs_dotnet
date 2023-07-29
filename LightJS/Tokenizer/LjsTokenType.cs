@@ -7,6 +7,7 @@ public enum LjsTokenType
     HexInt,
     BinaryInt,
     Float,
+    FloatE,
     String,
     Operator
 }
