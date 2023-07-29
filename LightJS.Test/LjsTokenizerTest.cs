@@ -119,6 +119,13 @@ public class LjsTokenizerTest
      {
           ReadValidToken("123456", LjsTokenType.Int);
      }
+     
+     [Test]
+     public void ReadInvalidDecimalInt()
+     {
+          ReadInvalidToken("12ex");
+          ReadInvalidToken("12foo");
+     }
 
      [Test]
      public void ReadValidHexInt()
