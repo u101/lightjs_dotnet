@@ -95,6 +95,24 @@ public class LjsTokenizerTest
      }
 
      [Test]
+     public void ReadValidSimpleExpression()
+     {
+          var sourceCode = new LjsSourceCode("a = b + c");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          
+          var tokens = ljsTokenizer.ReadTokens();
+          
+          Assert.That(tokens, Has.Count.EqualTo(5));
+          
+          Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.Word));
+          Assert.That(tokens[2].TokenType, Is.EqualTo(LjsTokenType.Word));
+          Assert.That(tokens[4].TokenType, Is.EqualTo(LjsTokenType.Word));
+          
+          Assert.That(tokens[1].TokenType, Is.EqualTo(LjsTokenType.Operator));
+          Assert.That(tokens[3].TokenType, Is.EqualTo(LjsTokenType.Operator));
+     }
+
+     [Test]
      public void TestLoadScript()
      {
           var text = TestUtils.LoadJsFile("simpleTest.js");
