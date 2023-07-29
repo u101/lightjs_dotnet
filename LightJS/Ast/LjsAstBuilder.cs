@@ -38,7 +38,7 @@ public class LjsAstBuilder
     private ILjsAstNode ReadMain(List<LjsToken> tokens, ref int currentIndex)
     {
         var token = tokens[currentIndex];
-        var tokenPosition = token.TokenPosition;
+        var tokenPosition = token.Position;
 
         switch (token.TokenType)
         {

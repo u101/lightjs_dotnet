@@ -30,7 +30,9 @@ public class LjsTokenizerTest
      [Test]
      public void ReadValidStringLiteralTest()
      {
-          var sourceCode = new LjsSourceCode("\"abc\"");
+          const string testString = "abc";
+          
+          var sourceCode = new LjsSourceCode($"\"{testString}\"");
           var ljsTokenizer = new LjsTokenizer(sourceCode);
           var tokens = ljsTokenizer.ReadTokens();
 
@@ -42,9 +44,9 @@ public class LjsTokenizerTest
           Assert.That(token.StringLength, Is.EqualTo(3));
 
           var str = sourceCode.Substring(
-               token.TokenPosition.CharIndex, token.StringLength);
+               token.Position.CharIndex, token.StringLength);
           
-          Assert.That(str, Is.EqualTo("abc"));
+          Assert.That(str, Is.EqualTo(testString));
      }
      
      [Test]
@@ -70,7 +72,7 @@ public class LjsTokenizerTest
                Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
 
                var str = sourceCode.Substring(
-                    token.TokenPosition.CharIndex, token.StringLength);
+                    token.Position.CharIndex, token.StringLength);
           
                Assert.That(str, Is.EqualTo(testString));
           }
@@ -111,6 +113,65 @@ public class LjsTokenizerTest
           Assert.That(tokens[1].TokenType, Is.EqualTo(LjsTokenType.Operator));
           Assert.That(tokens[3].TokenType, Is.EqualTo(LjsTokenType.Operator));
      }
+
+     [Test]
+     public void ReadValidDecimalInt()
+     {
+          ReadValidToken("123456", LjsTokenType.Int);
+     }
+
+     [Test]
+     public void ReadValidHexInt()
+     {
+          ReadValidToken("0x0eF45ab", LjsTokenType.HexInt);
+     }
+     
+     [Test]
+     public void ReadInvalidHexInt()
+     {
+          ReadInvalidToken("0x");
+          ReadInvalidToken("0xCGH");
+     }
+
+     private static void ReadValidToken(string testString, LjsTokenType expectedTokenType)
+     {
+          var sourceCode = new LjsSourceCode($"// valid token next \n {testString}");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          
+          var tokens = ljsTokenizer.ReadTokens();
+          
+          Assert.That(tokens, Has.Count.EqualTo(1));
+
+          var token = tokens[0];
+
+          Assert.That(token.TokenType, Is.EqualTo(expectedTokenType));
+          
+          var str = sourceCode.Substring(
+               token.Position.CharIndex, token.StringLength);
+          
+          Assert.That(str, Is.EqualTo(testString));
+     }
+     
+     private static void ReadInvalidToken(string testString)
+     {
+          var sourceCode = new LjsSourceCode($"// invalid token next \n {testString}");
+          var ljsTokenizer = new LjsTokenizer(sourceCode);
+          
+          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
+     }
+     
+     [Test]
+     public void ReadValidSimpleFloat()
+     {
+          ReadValidToken("123.456", LjsTokenType.Float);
+     }
+     
+     [Test]
+     public void ReadInvalidSimpleFloat()
+     {
+          ReadInvalidToken("12.3.456");
+     }
+     
 
      [Test]
      public void TestLoadScript()
@@ -159,10 +220,5 @@ public class LjsTokenizerTest
                tokens.Should().Contain(x => x.TokenType == tokenType);
           }
      }
-
-     
-     // todo write tests to see how invalid scripts are handled
-     
-     // MethodName_Should_When
     
 }

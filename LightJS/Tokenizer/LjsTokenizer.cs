@@ -150,6 +150,41 @@ public class LjsTokenizer
                 AddToken(new LjsToken(
                     LjsTokenType.Word, tokenPos, ln));
             }
+            // hex int
+            else if (c == '0' && _reader.HasNextChar && _reader.NextChar == 'x')
+            {
+                var startIndex = _reader.CurrentIndex;
+                var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
+
+                ReadNextChar(); // skip char x
+
+                if (!_reader.HasNextChar || !IsHexChar(_reader.NextChar))
+                {
+                    // error
+                    throw new LjsTokenizerError(
+                        "invalid number format", 
+                        new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                }
+
+                while (_reader.HasNextChar && 
+                       !IsEmptySpace(_reader.NextChar) && 
+                       !IsOperator(_reader.NextChar))
+                {
+                    ReadNextChar();
+
+                    if (!IsHexChar(_reader.CurrentChar))
+                    {
+                        throw new LjsTokenizerError(
+                            "invalid number format", 
+                            new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
+                    }
+                }
+                
+                var ln = (_reader.CurrentIndex + 1) - startIndex;
+                
+                AddToken(new LjsToken(LjsTokenType.HexInt, tokenPos, ln));
+            }
+            
             // number
             else if (IsNumberChar(c))
             {
@@ -235,6 +270,19 @@ public class LjsTokenizer
     {
         var charCode = (int)c;
         return charCode >= 48 && charCode <= 57;
+    }
+
+    private static bool IsHexChar(char c)
+    {
+        var charCode = (int)c;
+        
+        return 
+            // 0-9
+            (charCode >= 48 && charCode <= 57) ||
+            // A-F
+            (charCode >= 65 && charCode <= 70) ||
+            // a-f
+            (charCode >= 97 && charCode <= 102);
     }
     
     private class SourceCodeCharsReader
