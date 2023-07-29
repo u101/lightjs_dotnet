@@ -13,6 +13,7 @@ public class LjsTokenizer
     private const char SingleQuotes = '\'';
     private const char NewLine = '\n';
     private const char Slash = '/';
+    private const char BackSlash = '\\';
     private const char Asterisk = '*';
     private const char Dot = '.';
 
@@ -106,14 +107,14 @@ public class LjsTokenizer
             // check if this is start of a string
             else if (c == DoubleQuotes || c == SingleQuotes)
             {
-                // todo process escape characters (quotes escape, line breaks, etc..)
-                
                 var startIndex = _reader.CurrentIndex + 1; // we ignore quotes (+1)
                 var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
 
                 ReadNextChar();
+
+                var hasEscapeChar = false;
                 
-                while (_reader.CurrentChar != c)
+                while (_reader.CurrentChar != c || hasEscapeChar)
                 {
                     if (!_reader.HasNextChar || _reader.NextChar == NewLine)
                     {
@@ -121,7 +122,9 @@ public class LjsTokenizer
                             "unterminated string literal", 
                             new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
                     }
-                    
+
+                    hasEscapeChar = !hasEscapeChar && _reader.CurrentChar == BackSlash;
+
                     ReadNextChar();
                 }
 

@@ -35,12 +35,45 @@ public class LjsTokenizerTest
           var tokens = ljsTokenizer.ReadTokens();
 
           Assert.That(tokens, Has.Count.EqualTo(1));
+
+          var token = tokens[0];
           
-          Assert.Multiple(() =>
+          Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
+          Assert.That(token.StringLength, Is.EqualTo(3));
+
+          var str = sourceCode.Substring(
+               token.TokenPosition.CharIndex, token.StringLength);
+          
+          Assert.That(str, Is.EqualTo("abc"));
+     }
+     
+     [Test]
+     public void ReadValidStringLiteralWithEscapeQuotesTest()
+     {
+          var testStrings = new[]
           {
-               Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.String));
-               Assert.That(tokens[0].StringLength, Is.EqualTo(3));
-          });
+               "abc\\\"def\\\"",
+               "abc\\\\",
+               "abc\\\\\\\"def\\\"",
+          };
+
+          foreach (var testString in testStrings)
+          {
+               var sourceCode = new LjsSourceCode($"\"{testString}\"");
+               var ljsTokenizer = new LjsTokenizer(sourceCode);
+               var tokens = ljsTokenizer.ReadTokens();
+
+               Assert.That(tokens, Has.Count.EqualTo(1));
+
+               var token = tokens[0];
+          
+               Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
+
+               var str = sourceCode.Substring(
+                    token.TokenPosition.CharIndex, token.StringLength);
+          
+               Assert.That(str, Is.EqualTo(testString));
+          }
      }
 
     [Test]
