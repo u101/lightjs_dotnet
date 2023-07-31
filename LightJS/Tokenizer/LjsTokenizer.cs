@@ -17,7 +17,31 @@ public class LjsTokenizer
 
     private int _currentLine;
     private int _currentCol;
-    
+
+    private static readonly Dictionary<string, LjsTokenType> _keywordsMap = new()
+    {
+        {"null", LjsTokenType.Null},
+        {"undefined", LjsTokenType.Undefined},
+        {"this", LjsTokenType.This},
+        
+        {"true", LjsTokenType.True},
+        {"false", LjsTokenType.False},
+        
+        {"var", LjsTokenType.Var},
+        {"const", LjsTokenType.Const},
+        {"function", LjsTokenType.Function},
+        
+        {"return", LjsTokenType.Return},
+        {"break", LjsTokenType.Break},
+        {"continue", LjsTokenType.Continue},
+        
+        {"if", LjsTokenType.If},
+        {"else", LjsTokenType.Else},
+        {"while", LjsTokenType.While},
+        {"do", LjsTokenType.Do},
+        {"for", LjsTokenType.For},
+    };
+
     public LjsTokenizer(string sourceCodeString)
     {
         if (string.IsNullOrEmpty(sourceCodeString))
@@ -134,7 +158,7 @@ public class LjsTokenizer
                 var ln = _reader.CurrentIndex - startIndex; // end index is exclusive
                 
                 AddToken(new LjsToken(
-                    LjsTokenType.String, tokenPos, ln));
+                    LjsTokenClass.Value, LjsTokenType.StringLiteral, tokenPos, ln));
             }
             // key word or identifier
             else if (IsLetterChar(c))
@@ -149,9 +173,31 @@ public class LjsTokenizer
                 }
 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
+
+                var wordSpan = _sourceCodeString.Substring(startIndex, ln);
+
+                if (_keywordsMap.TryGetValue(wordSpan, out var tokenType))
+                {
+                    switch (tokenType)
+                    {
+                        case LjsTokenType.Null:
+                        case LjsTokenType.Undefined:
+                        case LjsTokenType.True:
+                        case LjsTokenType.False:
+                            AddToken(new LjsToken(LjsTokenClass.Value, tokenType, tokenPos, ln));
+                            break;
+                        default:
+                            AddToken(new LjsToken(LjsTokenClass.Word, tokenType, tokenPos, ln));
+                            break;
+                    }
+                }
+                else
+                {
+                    AddToken(new LjsToken(
+                        LjsTokenClass.Word, LjsTokenType.Identifier, tokenPos, ln));
+                }
+
                 
-                AddToken(new LjsToken(
-                    LjsTokenType.Word, tokenPos, ln));
             }
             // hex int
             else if (c == '0' && _reader.HasNextChar && _reader.NextChar == 'x')
@@ -180,7 +226,7 @@ public class LjsTokenizer
                 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
                 
-                AddToken(new LjsToken(LjsTokenType.HexInt, tokenPos, ln));
+                AddToken(new LjsToken(LjsTokenClass.Value, LjsTokenType.IntHex, tokenPos, ln));
             }
             // binary int
             else if (c == '0' && _reader.HasNextChar && _reader.NextChar == 'b')
@@ -209,7 +255,8 @@ public class LjsTokenizer
                 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
                 
-                AddToken(new LjsToken(LjsTokenType.BinaryInt, tokenPos, ln));
+                AddToken(new LjsToken(
+                    LjsTokenClass.Value, LjsTokenType.IntBinary, tokenPos, ln));
             }
             
             // number
@@ -266,11 +313,12 @@ public class LjsTokenizer
                 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
 
-                AddToken(new LjsToken(GetNumberTokenType(hasDot, hasExponentMark), tokenPos, ln));
+                AddToken(new LjsToken(
+                    LjsTokenClass.Value, GetNumberTokenType(hasDot, hasExponentMark), tokenPos, ln));
             }
             else if (IsOperator(c))
             {
-                AddToken(new LjsToken(LjsTokenType.Operator, 
+                AddToken(new LjsToken(LjsTokenClass.Operator, GetOperatorTokenType(c),
                     new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol), 1));
             }
             else
@@ -294,7 +342,7 @@ public class LjsTokenizer
     private static LjsTokenType GetNumberTokenType(bool hasDot, bool hasExponentMark)
     {
         if (hasExponentMark) return LjsTokenType.FloatE;
-        return hasDot ? LjsTokenType.Float : LjsTokenType.Int;
+        return hasDot ? LjsTokenType.Float : LjsTokenType.IntDecimal;
     }
     
     private void AddToken(LjsToken token)
@@ -302,25 +350,38 @@ public class LjsTokenizer
         _tokens.Add(token);
     }
 
+    private static LjsTokenType GetOperatorTokenType(char c)
+    {
+        return c switch
+        {
+            '>' => LjsTokenType.OpGreater,
+            '<' => LjsTokenType.OpLess,
+            '=' => LjsTokenType.OpEqual,
+            '+' => LjsTokenType.OpPlus,
+            '-' => LjsTokenType.OpMinus,
+            '*' => LjsTokenType.OpMultiply,
+            '/' => LjsTokenType.OpSlash,
+            '&' => LjsTokenType.OpBitAnd,
+            '|' => LjsTokenType.OpBitOr,
+            '!' => LjsTokenType.OpNegate,
+            '?' => LjsTokenType.OpQuestionMark,
+            ',' => LjsTokenType.OpComma,
+            '.' => LjsTokenType.OpDot,
+            ':' => LjsTokenType.OpColon,
+            ';' => LjsTokenType.OpSemicolon,
+            '{' => LjsTokenType.OpBracketOpen,
+            '}' => LjsTokenType.OpBracketClose,
+            '(' => LjsTokenType.OpParenthesesOpen,
+            ')' => LjsTokenType.OpParenthesesClose,
+            '[' => LjsTokenType.OpSquareBracketsOpen,
+            ']' => LjsTokenType.OpSquareBracketsClose,
+            _ => LjsTokenType.None
+        };
+    }
+
     private static bool IsOperator(char c)
     {
-        return c == '>' ||
-               c == '<' ||
-               c == '=' ||
-               c == '+' ||
-               c == '-' ||
-               c == '*' ||
-               c == '/' ||
-               c == '&' ||
-               c == '|' ||
-               c == '!' ||
-               c == ',' ||
-               c == '.' ||
-               c == ':' ||
-               c == ';' ||
-               c == '{' || c == '}' ||
-               c == '(' || c == ')' ||
-               c == '[' || c == ']';
+        return GetOperatorTokenType(c) != LjsTokenType.None;
     }
 
     /// <summary>

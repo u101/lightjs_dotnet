@@ -44,7 +44,7 @@ public class LjsTokenizerTest
 
           var token = tokens[0];
           
-          Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
+          Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.StringLiteral));
 
           var str = sourceCodeString.Substring(
                token.Position.CharIndex, token.StringLength);
@@ -72,7 +72,7 @@ public class LjsTokenizerTest
 
                var token = tokens[0];
           
-               Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.String));
+               Assert.That(token.TokenType, Is.EqualTo(LjsTokenType.StringLiteral));
 
                var str = sourceCodeString.Substring(
                     token.Position.CharIndex, token.StringLength);
@@ -102,18 +102,18 @@ public class LjsTokenizerTest
           
           Assert.That(tokens, Has.Count.EqualTo(5));
           
-          Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.Word));
-          Assert.That(tokens[2].TokenType, Is.EqualTo(LjsTokenType.Word));
-          Assert.That(tokens[4].TokenType, Is.EqualTo(LjsTokenType.Word));
+          Assert.That(tokens[0].TokenClass, Is.EqualTo(LjsTokenClass.Word));
+          Assert.That(tokens[2].TokenClass, Is.EqualTo(LjsTokenClass.Word));
+          Assert.That(tokens[4].TokenClass, Is.EqualTo(LjsTokenClass.Word));
           
-          Assert.That(tokens[1].TokenType, Is.EqualTo(LjsTokenType.Operator));
-          Assert.That(tokens[3].TokenType, Is.EqualTo(LjsTokenType.Operator));
+          Assert.That(tokens[1].TokenClass, Is.EqualTo(LjsTokenClass.Operator));
+          Assert.That(tokens[3].TokenClass, Is.EqualTo(LjsTokenClass.Operator));
      }
 
      [Test]
      public void ReadValidDecimalInt()
      {
-          ReadValidToken("123456", LjsTokenType.Int);
+          ReadValidToken("123456", LjsTokenType.IntDecimal);
      }
      
      [Test]
@@ -126,7 +126,7 @@ public class LjsTokenizerTest
      [Test]
      public void ReadValidHexInt()
      {
-          ReadValidToken("0x0eF45ab", LjsTokenType.HexInt);
+          ReadValidToken("0x0eF45ab", LjsTokenType.IntHex);
      }
      
      [Test]
@@ -139,9 +139,9 @@ public class LjsTokenizerTest
      [Test]
      public void ReadValidBinaryInt()
      {
-          ReadValidToken("0b0", LjsTokenType.BinaryInt);
-          ReadValidToken("0b1010101010101", LjsTokenType.BinaryInt);
-          ReadValidToken("0b01", LjsTokenType.BinaryInt);
+          ReadValidToken("0b0", LjsTokenType.IntBinary);
+          ReadValidToken("0b1010101010101", LjsTokenType.IntBinary);
+          ReadValidToken("0b01", LjsTokenType.IntBinary);
      }
      
      [Test]
@@ -236,11 +236,11 @@ public class LjsTokenizerTest
 
           var tokens = ljsTokenizer.ReadTokens();
 
-          var ljsTokenTypes = Enum.GetValues<LjsTokenType>();
+          var ljsTokenTypes = Enum.GetValues<LjsTokenClass>();
 
           foreach (var tokenType in ljsTokenTypes)
           {
-               tokens.Should().Contain(x => x.TokenType == tokenType);
+               tokens.Should().Contain(x => x.TokenClass == tokenType);
           }
      }
     

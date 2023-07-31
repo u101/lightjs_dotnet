@@ -28,22 +28,44 @@ public static class LjsTokenizerUtils
         return sourceCodeString.Substring(startIndex, length);
     }
     
-    /*public static int ReadInt(this string sourceCodeString, int startIndex, int length)
+    public static int GetTokenIntValue(string sourceCodeString, LjsToken token)
     {
+        var length = token.StringLength;
+        var startIndex = token.Position.CharIndex;
+        
         ThrowIfOutOfRange(sourceCodeString, startIndex, length);
 
-        var substring = sourceCodeString.Substring(startIndex, length);
-
-        return int.Parse(substring, NumberStyles.Integer, NumberFormatInfo.InvariantInfo);
+        switch (token.TokenType)
+        {
+            case LjsTokenType.IntDecimal:
+                return int.Parse(
+                    sourceCodeString.AsSpan(startIndex, length), 
+                    NumberStyles.None, NumberFormatInfo.InvariantInfo);
+            
+            case LjsTokenType.IntHex:
+                return int.Parse(
+                    sourceCodeString.AsSpan(startIndex + 2, length), // skip leading 0x 
+                    NumberStyles.AllowHexSpecifier, NumberFormatInfo.InvariantInfo);
+            
+            case LjsTokenType.IntBinary:
+                return Convert.ToInt32(
+                    sourceCodeString.Substring(startIndex + 2, length), 2); // skip leading 0b
+            
+            default:
+                throw new IndexOutOfRangeException($"invalid int token type {token.TokenType}");
+        }
     }
 
-    public static double ReadDouble(this string sourceCodeString, int startIndex, int length)
+    public static double GetTokenFloatValue(string sourceCodeString, LjsToken token)
     {
+        var length = token.StringLength;
+        var startIndex = token.Position.CharIndex;
+        
         ThrowIfOutOfRange(sourceCodeString, startIndex, length);
 
-        var substring = sourceCodeString.Substring(startIndex, length);
-
-        return double.Parse(substring, NumberStyles.Float, NumberFormatInfo.InvariantInfo);
-    }*/
+        return double.Parse(
+            sourceCodeString.AsSpan(startIndex, length), 
+            NumberStyles.Float, NumberFormatInfo.InvariantInfo);
+    }
     
 }

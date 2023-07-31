@@ -1,5 +1,4 @@
 using LightJS.Tokenizer;
-using LightJS.Utils;
 
 namespace LightJS.Ast;
 
@@ -63,9 +62,9 @@ public class LjsAstBuilder
         var token = _tokensReader.CurrentToken;
         var tokenPosition = token.Position;
 
-        switch (token.TokenType)
+        switch (token.TokenClass)
         {
-            case LjsTokenType.Word:
+            case LjsTokenClass.Word:
 
                 var word = LjsTokenizerUtils.GetTokenStringValue(
                     _sourceCodeString, token);
@@ -77,7 +76,7 @@ public class LjsAstBuilder
                         case LjsKeywords.Var:
 
                             if (!_tokensReader.HasNextToken || 
-                                _tokensReader.NextToken.TokenType != LjsTokenType.Word)
+                                _tokensReader.NextToken.TokenClass != LjsTokenClass.Word)
                                 throw new LjsSyntaxError("expected identifier after 'var'", tokenPosition);
                             
                             _tokensReader.MoveForward();
@@ -102,24 +101,46 @@ public class LjsAstBuilder
                 throw new NotImplementedException();
                 break;
             
-            case LjsTokenType.Int:
+            case LjsTokenClass.Value:
+
+                switch (token.TokenType)
+                {
+                    case LjsTokenType.IntDecimal:
+                    case LjsTokenType.IntHex:
+                    case LjsTokenType.IntBinary:
+
+                        return new LjsAstValue<int>(
+                            LjsTokenizerUtils.GetTokenIntValue(_sourceCodeString, token));
+                    
+                    case LjsTokenType.Float:
+                    case LjsTokenType.FloatE:
+
+                        return new LjsAstValue<double>(
+                            LjsTokenizerUtils.GetTokenFloatValue(_sourceCodeString, token));
+                    
+                    case LjsTokenType.StringLiteral:
+                        return new LjsAstValue<string>(
+                            _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength));
+                    
+                    case LjsTokenType.True:
+                        
+                        return new LjsAstValue<bool>(true);
+                    
+                    case LjsTokenType.False:
+                        
+                        return new LjsAstValue<bool>(false);
+                    
+                    case LjsTokenType.Null:
+                        return LjsAstNull.Instance;
+                    
+                    case LjsTokenType.Undefined:
+                        return LjsAstUndefined.Instance;
+                    
+                    
+                    default:
+                        throw new Exception($"unsupported value token type {token.TokenType}");
+                }
                 
-                return new LjsAstValue<int>(
-                    _sourceCodeString.ReadInt(tokenPosition.CharIndex, token.StringLength));
-            
-            case LjsTokenType.Float:
-                
-                return new LjsAstValue<double>(
-                    _sourceCodeString.ReadDouble(tokenPosition.CharIndex, token.StringLength));
-            
-            case LjsTokenType.String:
-                
-                return new LjsAstValue<string>(
-                    _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength));
-                
-            case LjsTokenType.Operator:
-                
-                throw new NotImplementedException();
                 break;
             
             default:
