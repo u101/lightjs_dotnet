@@ -67,20 +67,39 @@ public class LjsAstBuilder
         {
             case LjsTokenType.Word:
 
-                var word = _sourceCodeString.Substring(
-                    tokenPosition.CharIndex, token.StringLength);
+                var word = LjsTokenizerUtils.GetTokenStringValue(
+                    _sourceCodeString, token);
 
-                switch (word)
+                if (IsKeyword(word))
                 {
-                    case LjsKeywords.Var:
+                    switch (word)
+                    {
+                        case LjsKeywords.Var:
 
-                        if (!_tokensReader.HasNextToken)
-                            throw new LjsSyntaxError("expected identifier after 'var'", tokenPosition);
-                        
-                        return null;
-                    default:
-                        throw new NotImplementedException();
+                            if (!_tokensReader.HasNextToken || 
+                                _tokensReader.NextToken.TokenType != LjsTokenType.Word)
+                                throw new LjsSyntaxError("expected identifier after 'var'", tokenPosition);
+                            
+                            _tokensReader.MoveForward();
+
+                            var v = LjsTokenizerUtils.GetTokenStringValue(
+                                _sourceCodeString, _tokensReader.CurrentToken);
+
+                            if (IsKeyword(v))
+                                throw new LjsSyntaxError(
+                                    $"unexpected {v} after 'var'", _tokensReader.CurrentToken.Position);
+
+                            var varNode = new LjsAstVar();
+                            
+                            
+
+                            return null;
+                        default:
+                            throw new NotImplementedException();
+                    }
                 }
+                
+                throw new NotImplementedException();
                 break;
             
             case LjsTokenType.Int:
@@ -108,6 +127,11 @@ public class LjsAstBuilder
         }
 
         
+    }
+
+    private static bool IsKeyword(string word)
+    {
+        return LjsKeywords.AllKeywords.Contains(word);
     }
     
     private class TokensReader

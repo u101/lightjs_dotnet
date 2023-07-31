@@ -1,7 +1,7 @@
 namespace LightJS.Ast;
 
 /// <summary>
-/// Abstract syntax tree leaf node that does not have children
+/// Abstract syntax tree leaf node that does not have any children
 /// </summary>
 public abstract class LjsAstLeafNode : ILjsAstNode
 {
