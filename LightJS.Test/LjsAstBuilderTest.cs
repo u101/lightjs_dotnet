@@ -7,6 +7,16 @@ namespace LightJS.Test;
 [TestFixture]
 public class LjsAstBuilderTest
 {
+
+    [Test]
+    public void BuildSimpleExpression()
+    {
+        var astBuilder = new LjsAstBuilder("var a = b + c");
+        var astModel = astBuilder.Build();
+
+        astModel.RootNodes.Should().HaveCount(1);
+    }
+    
     
     [Test]
     public void Build_ShouldReturnIntNode_WhenGivenIntLiteral()

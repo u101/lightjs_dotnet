@@ -2,7 +2,6 @@ namespace LightJS.Tokenizer;
 
 public readonly struct LjsToken
 {
-    public static readonly LjsToken Null = new LjsToken();
     
     public LjsTokenType TokenType { get; }
     public int StringLength { get; }

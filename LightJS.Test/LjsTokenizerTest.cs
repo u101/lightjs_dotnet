@@ -176,7 +176,7 @@ public class LjsTokenizerTest
      {
           var ljsTokenizer = new LjsTokenizer($"// invalid token next \n {testString}");
           
-          Assert.Throws<LjsTokenizerError>(() => ljsTokenizer.ReadTokens());
+          Assert.Throws<LjsSyntaxError>(() => ljsTokenizer.ReadTokens());
      }
      
      [Test]

@@ -121,7 +121,7 @@ public class LjsTokenizer
                 {
                     if (!_reader.HasNextChar || _reader.NextChar == NewLine)
                     {
-                        throw new LjsTokenizerError(
+                        throw new LjsSyntaxError(
                             "unterminated string literal", 
                             new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
                     }
@@ -275,7 +275,7 @@ public class LjsTokenizer
             }
             else
             {
-                throw new LjsTokenizerError(
+                throw new LjsSyntaxError(
                     "unknown token",
                     new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
             }
@@ -286,7 +286,7 @@ public class LjsTokenizer
 
     private void ThrowInvalidNumberFormatError()
     {
-        throw new LjsTokenizerError(
+        throw new LjsSyntaxError(
             "invalid number format", 
             new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol));
     }
