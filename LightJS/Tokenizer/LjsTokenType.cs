@@ -15,7 +15,7 @@ public enum LjsTokenType
     
     OpGreater,
     OpLess,
-    OpEqual,
+    OpAssign,
     OpPlus,
     OpMinus,
     OpMultiply,
@@ -35,6 +35,19 @@ public enum LjsTokenType
     OpSquareBracketsOpen,
     OpSquareBracketsClose,
     
+    OpIncrement,
+    OpDecrement,
+    OpPlusAssign,
+    OpMinusAssign,
+    OpEquals,
+    OpEqualsStrict,
+    OpGreaterOrEqual,
+    OpLessOrEqual,
+    OpNotEqual,
+    OpNotEqualStrict,
+    OpLogicalAnd,
+    OpLogicalOr,
+
     Null,
     Undefined,
     This,

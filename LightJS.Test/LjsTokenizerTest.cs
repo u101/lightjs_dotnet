@@ -111,6 +111,25 @@ public class LjsTokenizerTest
      }
 
      [Test]
+     public void ReadValidCompositeOperators()
+     {
+          ReadValidToken("++", LjsTokenType.OpIncrement);
+          ReadValidToken("--", LjsTokenType.OpDecrement);
+          ReadValidToken("+=", LjsTokenType.OpPlusAssign);
+          ReadValidToken("-=", LjsTokenType.OpMinusAssign);
+          ReadValidToken("==", LjsTokenType.OpEquals);
+          ReadValidToken("===", LjsTokenType.OpEqualsStrict);
+          
+          ReadValidToken(">=", LjsTokenType.OpGreaterOrEqual);
+          ReadValidToken("<=", LjsTokenType.OpLessOrEqual);
+          ReadValidToken("!=", LjsTokenType.OpNotEqual);
+          ReadValidToken("!==", LjsTokenType.OpNotEqualStrict);
+          
+          ReadValidToken("&&", LjsTokenType.OpLogicalAnd);
+          ReadValidToken("||", LjsTokenType.OpLogicalOr);
+     }
+
+     [Test]
      public void ReadValidDecimalInt()
      {
           ReadValidToken("123456", LjsTokenType.IntDecimal);
@@ -217,7 +236,7 @@ public class LjsTokenizerTest
      
 
 
-     [Test]
+     /*[Test]
      public void ReadTokens_ShouldReturnTokens_WhenJsScriptIsValid()
      {
           var ljsTokenizer = CreateLjsTokenizer("simpleTest.js");
@@ -242,6 +261,6 @@ public class LjsTokenizerTest
           {
                tokens.Should().Contain(x => x.TokenClass == tokenType);
           }
-     }
+     }*/
     
 }

@@ -318,8 +318,23 @@ public class LjsTokenizer
             }
             else if (IsOperator(c))
             {
-                AddToken(new LjsToken(LjsTokenClass.Operator, GetOperatorTokenType(c),
-                    new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol), 1));
+                var prevToken = PreviousToken;
+                var opPosition = new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol);
+                var opType = GetOperatorTokenType(c);
+                var compOp = LjsTokenType.None;
+
+                if (prevToken.TokenClass == LjsTokenClass.Operator && 
+                    prevToken.Position.IsAdjacentTo(opPosition, prevToken.StringLength) && 
+                    (compOp = GetOperatorComposition(prevToken.TokenType, opType)) != LjsTokenType.None)
+                {
+                    ReplaceLastToken(new LjsToken(
+                        LjsTokenClass.Operator, compOp, prevToken.Position, prevToken.StringLength + 1));
+                }
+                else
+                {
+                    AddToken(new LjsToken(
+                        LjsTokenClass.Operator, opType, opPosition,1));
+                }
             }
             else
             {
@@ -350,13 +365,47 @@ public class LjsTokenizer
         _tokens.Add(token);
     }
 
+    private void ReplaceLastToken(LjsToken newToken)
+    {
+        _tokens[^1] = newToken;
+    }
+
+    private LjsToken PreviousToken => 
+        _tokens.Count > 0 ? _tokens[^1] : default;
+
+    private static LjsTokenType GetOperatorComposition(LjsTokenType prevOp, LjsTokenType nexOp)
+    {
+        return prevOp switch
+        {
+            LjsTokenType.OpPlus when nexOp == LjsTokenType.OpPlus => LjsTokenType.OpIncrement,
+            LjsTokenType.OpMinus when nexOp == LjsTokenType.OpMinus => LjsTokenType.OpDecrement,
+            
+            LjsTokenType.OpPlus when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpPlusAssign,
+            LjsTokenType.OpMinus when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpMinusAssign,
+            
+            LjsTokenType.OpAssign when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpEquals,
+            LjsTokenType.OpEquals when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpEqualsStrict,
+            
+            LjsTokenType.OpGreater when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpGreaterOrEqual,
+            LjsTokenType.OpLess when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpLessOrEqual,
+            LjsTokenType.OpNegate when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpNotEqual,
+            LjsTokenType.OpNotEqual when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpNotEqualStrict,
+            
+            LjsTokenType.OpBitAnd when nexOp == LjsTokenType.OpBitAnd => LjsTokenType.OpLogicalAnd,
+            LjsTokenType.OpBitOr when nexOp == LjsTokenType.OpBitOr => LjsTokenType.OpLogicalOr,
+            
+            
+            _ => LjsTokenType.None
+        };
+    }
+    
     private static LjsTokenType GetOperatorTokenType(char c)
     {
         return c switch
         {
             '>' => LjsTokenType.OpGreater,
             '<' => LjsTokenType.OpLess,
-            '=' => LjsTokenType.OpEqual,
+            '=' => LjsTokenType.OpAssign,
             '+' => LjsTokenType.OpPlus,
             '-' => LjsTokenType.OpMinus,
             '*' => LjsTokenType.OpMultiply,

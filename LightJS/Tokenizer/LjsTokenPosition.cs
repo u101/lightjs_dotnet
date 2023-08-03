@@ -12,5 +12,24 @@ public readonly struct LjsTokenPosition
         Line = line;
         Column = column;
     }
+
+    public bool IsAdjacentTo(LjsTokenPosition p, int distance = 1)
+    {
+        var (_, pLine, pCol) = p;
+
+        if (pLine != Line) return false;
+
+        var maxCol = Column > pCol ? Column : pCol;
+        var minCol = Column < pCol ? Column : pCol;
+
+        return maxCol - minCol == distance;
+    }
+
+    public void Deconstruct(out int charIndex, out int line, out int col)
+    {
+        charIndex = CharIndex;
+        line = Line;
+        col = Column;
+    }
     
 }
