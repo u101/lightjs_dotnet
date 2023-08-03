@@ -233,10 +233,8 @@ public class LjsTokenizerTest
           return ljsTokenizer;
      }
 
-     
 
-
-     /*[Test]
+     [Test]
      public void ReadTokens_ShouldReturnTokens_WhenJsScriptIsValid()
      {
           var ljsTokenizer = CreateLjsTokenizer("simpleTest.js");
@@ -245,22 +243,6 @@ public class LjsTokenizerTest
 
           tokens.Should().NotBeEmpty();
      }
-
      
-
-     [Test]
-     public void ReadTokens_ShouldReturnTokensOfAllValidTypes_WhenJsScriptIsValid()
-     {
-          var ljsTokenizer = CreateLjsTokenizer("simpleTest.js");
-
-          var tokens = ljsTokenizer.ReadTokens();
-
-          var ljsTokenTypes = Enum.GetValues<LjsTokenClass>();
-
-          foreach (var tokenType in ljsTokenTypes)
-          {
-               tokens.Should().Contain(x => x.TokenClass == tokenType);
-          }
-     }*/
     
 }
