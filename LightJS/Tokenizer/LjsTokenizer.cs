@@ -167,7 +167,7 @@ public class LjsTokenizer
                 var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
 
                 while (_reader.HasNextChar && 
-                       (IsLetterChar(_reader.NextChar) || IsNumberChar(_reader.NextChar)))
+                       (IsLetterChar(_reader.NextChar) || char.IsDigit(_reader.NextChar)))
                 {
                     ReadNextChar();
                 }
@@ -260,7 +260,7 @@ public class LjsTokenizer
             }
             
             // number
-            else if (IsNumberChar(c))
+            else if (char.IsDigit(c))
             {
                 var startIndex = _reader.CurrentIndex;
                 var tokenPos = new LjsTokenPosition(startIndex, _currentLine, _currentCol);
@@ -277,7 +277,7 @@ public class LjsTokenizer
                     if (_reader.CurrentChar == Dot)
                     {
                         if (hasDot || hasExponentMark || 
-                            !_reader.HasNextChar || !IsNumberChar(_reader.NextChar))
+                            !_reader.HasNextChar || !char.IsDigit(_reader.NextChar))
                         {
                             ThrowInvalidNumberFormatError();
                         }
@@ -298,14 +298,14 @@ public class LjsTokenizer
                             ThrowInvalidNumberFormatError();
                         }
 
-                        if (!_reader.HasNextChar || !IsNumberChar(_reader.NextChar))
+                        if (!_reader.HasNextChar || !char.IsDigit(_reader.NextChar))
                         {
                             ThrowInvalidNumberFormatError();
                         }
 
                         hasExponentMark = true;
                     }
-                    else if (!IsNumberChar(_reader.CurrentChar))
+                    else if (!char.IsDigit(_reader.CurrentChar))
                     {
                         ThrowInvalidNumberFormatError();
                     }
@@ -451,12 +451,6 @@ public class LjsTokenizer
         return charCode == 36 || // $ sign
                (charCode >= 65 && charCode <= 90) || // uppercase letters 
                (charCode >= 97 && charCode <= 122); //lower case letters
-    }
-
-    private static bool IsNumberChar(char c)
-    {
-        var charCode = (int)c;
-        return charCode >= 48 && charCode <= 57;
     }
 
     private static bool IsBinaryDigitChar(char c)
