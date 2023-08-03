@@ -41,132 +41,92 @@ public class LjsAstBuilder
         _tokensReader = new TokensReader(tokens);
     }
 
-    public LjsAstModel Build()
+    public ILjsAstNode Build()
     {
-        
-        var topLevelNodes = new List<ILjsAstNode>();
-
-        while (_tokensReader.HasNextToken)
+        if (!_tokensReader.HasNextToken)
         {
-            _tokensReader.MoveForward();
-            
-            var node = ReadMain();
-            topLevelNodes.Add(node);
+            throw new Exception("no tokens");
         }
         
-        return new LjsAstModel(topLevelNodes);
+        _tokensReader.MoveForward();
+        
+        return ReadMain();
     }
 
-    public ILjsAstNode BuildExpression()
+    private ILjsAstNode GetValueNode(LjsToken token)
     {
-        while (_tokensReader.HasNextToken)
+        switch (token.TokenType)
         {
-            _tokensReader.MoveForward();
-            
-            var node = ReadMain();
+            case LjsTokenType.IntDecimal:
+            case LjsTokenType.IntHex:
+            case LjsTokenType.IntBinary:
 
-            return node;
+                return new LjsAstValue<int>(
+                    LjsTokenizerUtils.GetTokenIntValue(_sourceCodeString, token));
+                    
+            case LjsTokenType.Float:
+            case LjsTokenType.FloatE:
+
+                return new LjsAstValue<double>(
+                    LjsTokenizerUtils.GetTokenFloatValue(_sourceCodeString, token));
+                    
+            case LjsTokenType.StringLiteral:
+                return new LjsAstValue<string>(
+                    _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength));
+                    
+            case LjsTokenType.True:
+                        
+                return new LjsAstValue<bool>(true);
+                    
+            case LjsTokenType.False:
+                        
+                return new LjsAstValue<bool>(false);
+                    
+            case LjsTokenType.Null:
+                return LjsAstNull.Instance;
+                    
+            case LjsTokenType.Undefined:
+                return LjsAstUndefined.Instance;
+                    
+                    
+            default:
+                throw new Exception($"unsupported value token type {token.TokenType}");
         }
+    }
 
-        throw new Exception("empty script");
+    private ILjsAstNode ParseExpression()
+    {
+        return null;
     }
 
     private ILjsAstNode ReadMain()
     {
         var token = _tokensReader.CurrentToken;
-        var tokenPosition = token.Position;
 
         switch (token.TokenClass)
         {
             case LjsTokenClass.Word:
 
-                var word = LjsTokenizerUtils.GetTokenStringValue(
-                    _sourceCodeString, token);
-
-                if (IsKeyword(word))
+                switch (token.TokenType)
                 {
-                    switch (word)
-                    {
-                        case LjsKeywords.Var:
-
-                            if (!_tokensReader.HasNextToken || 
-                                _tokensReader.NextToken.TokenClass != LjsTokenClass.Word)
-                                throw new LjsSyntaxError("expected identifier after 'var'", tokenPosition);
-                            
-                            _tokensReader.MoveForward();
-
-                            var v = LjsTokenizerUtils.GetTokenStringValue(
-                                _sourceCodeString, _tokensReader.CurrentToken);
-
-                            if (IsKeyword(v))
-                                throw new LjsSyntaxError(
-                                    $"unexpected {v} after 'var'", _tokensReader.CurrentToken.Position);
-
-                            var varNode = new LjsAstVar();
-                            
-                            
-
-                            return null;
-                        default:
-                            throw new NotImplementedException();
-                    }
+                    
+                    case LjsTokenType.Identifier:
+                        
+                        break;
+                    
                 }
                 
                 throw new NotImplementedException();
-                break;
             
             case LjsTokenClass.Value:
 
-                switch (token.TokenType)
-                {
-                    case LjsTokenType.IntDecimal:
-                    case LjsTokenType.IntHex:
-                    case LjsTokenType.IntBinary:
-
-                        return new LjsAstValue<int>(
-                            LjsTokenizerUtils.GetTokenIntValue(_sourceCodeString, token));
-                    
-                    case LjsTokenType.Float:
-                    case LjsTokenType.FloatE:
-
-                        return new LjsAstValue<double>(
-                            LjsTokenizerUtils.GetTokenFloatValue(_sourceCodeString, token));
-                    
-                    case LjsTokenType.StringLiteral:
-                        return new LjsAstValue<string>(
-                            _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength));
-                    
-                    case LjsTokenType.True:
-                        
-                        return new LjsAstValue<bool>(true);
-                    
-                    case LjsTokenType.False:
-                        
-                        return new LjsAstValue<bool>(false);
-                    
-                    case LjsTokenType.Null:
-                        return LjsAstNull.Instance;
-                    
-                    case LjsTokenType.Undefined:
-                        return LjsAstUndefined.Instance;
-                    
-                    
-                    default:
-                        throw new Exception($"unsupported value token type {token.TokenType}");
-                }
-                
-                break;
+                return GetValueNode(token);
             
             default:
                 throw new ArgumentOutOfRangeException();
         }
 
         
-    }
-
-    private static bool IsKeyword(string word)
-    {
-        return LjsKeywords.AllKeywords.Contains(word);
     }
     
     private class TokensReader

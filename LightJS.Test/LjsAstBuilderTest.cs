@@ -8,66 +8,66 @@ namespace LightJS.Test;
 public class LjsAstBuilderTest
 {
 
-    /*[Test]
+    [Test]
     public void BuildSimpleExpression()
     {
-        var astBuilder = new LjsAstBuilder("a = b + c");
-        var astModel = astBuilder.Build();
+        var astBuilder = new LjsAstBuilder("a + b");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LsjAstBinaryOperation>();
 
-        astModel.RootNodes.Should().HaveCount(1);
-    }*/
+        rootNode.Should().BeEquivalentTo(
+            new LsjAstBinaryOperation(
+                new LjsAstGetVar("a"), 
+                new LjsAstGetVar("b"), 
+                LjsTokenType.OpPlus));
+    }
+    
+    [Test]
+    public void BuildSimpleExpressionWithOperatorsPriority()
+    {
+        var astBuilder = new LjsAstBuilder("a + b/c + d");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LsjAstBinaryOperation>();
+
+        var expectedResult = new LsjAstBinaryOperation(
+            new LsjAstBinaryOperation(
+                new LjsAstGetVar("a"),
+                new LsjAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsTokenType.OpSlash),
+                LjsTokenType.OpPlus),
+            new LjsAstGetVar("d"),
+            LjsTokenType.OpPlus);
+
+        rootNode.Should().BeEquivalentTo(expectedResult);
+    }
     
     
     [Test]
     public void Build_ShouldReturnIntNode_WhenGivenIntLiteral()
     {
-        var astBuilder = new LjsAstBuilder("123456789");
-        var astModel = astBuilder.Build();
-
-        astModel.RootNodes.Should().HaveCount(1);
-
-        astModel.RootNodes[0].Should().BeEquivalentTo(new LjsAstValue<int>(123456789));
-        astModel.RootNodes[0].Should().NotBeEquivalentTo(new LjsAstValue<int>(1));
-    }
-    
-    [Test]
-    public void Build_ShouldReturnDoubleNode_WhenGivenDoubleLiteral()
-    {
-        var astBuilder = new LjsAstBuilder("3.14");
-        var astModel = astBuilder.Build();
-
-        astModel.RootNodes.Should().HaveCount(1);
-
-        astModel.RootNodes[0].Should().BeEquivalentTo(new LjsAstValue<double>(3.14));
-        astModel.RootNodes[0].Should().NotBeEquivalentTo(new LjsAstValue<double>(3.141));
-    }
-    
-    [Test]
-    public void Build_ShouldReturnStringNode_WhenGivenStringLiteral()
-    {
-        const string someString = "Hello world";
-        const string sourceCodeString = $"\"{someString}\"";
+        ValidLiteralTest("123456789", 123456789);
+        ValidLiteralTest("0xff1267", 0xff1267);
+        ValidLiteralTest("0b010101", 0b010101);
         
-        var astBuilder = new LjsAstBuilder(sourceCodeString);
-        var astModel = astBuilder.Build();
-
-        astModel.RootNodes.Should().HaveCount(1);
-
-        astModel.RootNodes[0].Should().BeEquivalentTo(new LjsAstValue<string>(someString));
+        ValidLiteralTest("3.14", 3.14);
+        ValidLiteralTest("3.14e+3", 3.14e+3);
+        
+        ValidLiteralTest("true", true);
+        ValidLiteralTest("false", false);
+        
+        ValidLiteralTest<string>("\"Hello world\"", "Hello world");
+        ValidLiteralTest<string>("'Hello world'", "Hello world");
     }
 
-    /*[Test]
-    public void Build_ShouldReturnNotNullValue()
+    private static void ValidLiteralTest<TLiteralType>(
+        string literal, TLiteralType expectedValue)
     {
-        var sourceCode = LoadSourceCode("simpleTest.js");
-        var tokenizer = new LjsTokenizer(new LjsReader(sourceCode));
-        var tokens = tokenizer.ReadTokens();
+        var astBuilder = new LjsAstBuilder(literal);
+        var rootNode = astBuilder.Build();
 
-        var astBuilder = new LjsAstBuilder(sourceCode);
-
-        var astModel = astBuilder.Build(tokens);
-
-        astModel.Should().NotBeNull();
-    } */
+        rootNode.Should().BeOfType<LjsAstValue<TLiteralType>>();
+        rootNode.Should().BeEquivalentTo(new LjsAstValue<TLiteralType>(expectedValue));
+    }
     
 }
