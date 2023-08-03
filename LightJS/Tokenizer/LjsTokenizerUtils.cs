@@ -44,12 +44,12 @@ public static class LjsTokenizerUtils
             
             case LjsTokenType.IntHex:
                 return int.Parse(
-                    sourceCodeString.AsSpan(startIndex + 2, length), // skip leading 0x 
+                    sourceCodeString.AsSpan(startIndex + 2, length - 2), // skip leading 0x 
                     NumberStyles.AllowHexSpecifier, NumberFormatInfo.InvariantInfo);
             
             case LjsTokenType.IntBinary:
                 return Convert.ToInt32(
-                    sourceCodeString.Substring(startIndex + 2, length), 2); // skip leading 0b
+                    sourceCodeString.Substring(startIndex + 2, length - 2), 2); // skip leading 0b
             
             default:
                 throw new IndexOutOfRangeException($"invalid int token type {token.TokenType}");
