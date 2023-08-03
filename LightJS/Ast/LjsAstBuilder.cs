@@ -57,6 +57,20 @@ public class LjsAstBuilder
         return new LjsAstModel(topLevelNodes);
     }
 
+    public ILjsAstNode BuildExpression()
+    {
+        while (_tokensReader.HasNextToken)
+        {
+            _tokensReader.MoveForward();
+            
+            var node = ReadMain();
+
+            return node;
+        }
+
+        throw new Exception("empty script");
+    }
+
     private ILjsAstNode ReadMain()
     {
         var token = _tokensReader.CurrentToken;

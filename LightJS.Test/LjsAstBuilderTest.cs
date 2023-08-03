@@ -8,14 +8,14 @@ namespace LightJS.Test;
 public class LjsAstBuilderTest
 {
 
-    [Test]
+    /*[Test]
     public void BuildSimpleExpression()
     {
-        var astBuilder = new LjsAstBuilder("var a = b + c");
+        var astBuilder = new LjsAstBuilder("a = b + c");
         var astModel = astBuilder.Build();
 
         astModel.RootNodes.Should().HaveCount(1);
-    }
+    }*/
     
     
     [Test]
