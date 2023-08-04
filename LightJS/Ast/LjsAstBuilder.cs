@@ -48,9 +48,7 @@ public class LjsAstBuilder
             throw new Exception("no tokens");
         }
         
-        _tokensReader.MoveForward();
-        
-        return ReadMain();
+        return ParseExpression();
     }
 
     private ILjsAstNode GetValueNode(LjsToken token)
@@ -94,8 +92,91 @@ public class LjsAstBuilder
         }
     }
 
+    
+    private readonly List<ILjsAstNode> _postfixExpression = new();
+    private readonly Stack<OperatorNode> _operatorsStack = new();
+
+    private readonly Dictionary<LjsTokenType, OperatorNode> _operatorNodesMap = new()
+    {
+        { LjsTokenType.OpParenthesesOpen, new OperatorNode(LjsTokenType.OpParenthesesOpen, 0)},
+        { LjsTokenType.OpParenthesesClose, new OperatorNode(LjsTokenType.OpParenthesesClose, 0)},
+        
+        { LjsTokenType.OpPlus, new OperatorNode(LjsTokenType.OpAssign, 10)},
+        
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpEquals, 50)},
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpEqualsStrict, 50)},
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpGreater, 50)},
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpGreaterOrEqual, 50)},
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLess, 50)},
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLessOrEqual, 50)},
+        
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLogicalAnd, 80)},
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLogicalOr, 80)},
+        
+        { LjsTokenType.OpPlus, new OperatorNode(LjsTokenType.OpPlus, 100)},
+        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpMinus, 100)},
+        
+        { LjsTokenType.OpMultiply, new OperatorNode(LjsTokenType.OpMultiply, 200)},
+        { LjsTokenType.OpDiv, new OperatorNode(LjsTokenType.OpDiv, 200)},
+    };
+
+    private class OperatorNode : ILjsAstNode
+    {
+        public LjsTokenType OperatorType { get; }
+        public int Priority { get; }
+
+        public OperatorNode(LjsTokenType operatorType, int priority)
+        {
+            OperatorType = operatorType;
+            Priority = priority;
+        }
+        
+        public IEnumerable<ILjsAstNode> ChildNodes => Array.Empty<ILjsAstNode>();
+        public bool HasChildNodes => false;
+    }
+
     private ILjsAstNode ParseExpression()
     {
+        while (_tokensReader.HasNextToken)
+        {
+            _tokensReader.MoveForward();
+
+            var token = _tokensReader.CurrentToken;
+
+            if (token.TokenClass == LjsTokenClass.Value)
+            {
+                var valueNode = GetValueNode(token);
+                _postfixExpression.Add(valueNode);
+            }
+            else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
+            {
+                _operatorsStack.Push(_operatorNodesMap[LjsTokenType.OpParenthesesOpen]);
+            }
+            else if (token.TokenType == LjsTokenType.OpParenthesesClose)
+            {
+                //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
+                while (_operatorsStack.Count > 0 &&
+                       _operatorsStack.Peek().OperatorType != LjsTokenType.OpParenthesesOpen)
+                {
+                    _postfixExpression.Add(_operatorsStack.Pop());
+                }
+
+                _operatorsStack.Pop();
+            }
+            else if (token.TokenClass == LjsTokenClass.Operator && 
+                     _operatorNodesMap.ContainsKey(token.TokenType))
+            {
+                //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
+                while (_operatorsStack.Count > 0 && 
+                       (_operatorNodesMap[_operatorsStack.Peek().OperatorType].Priority >= _operatorNodesMap[token.TokenType].Priority))
+                    _postfixExpression.Add(_operatorsStack.Pop());
+                
+                //	Заносим в стек оператор
+                _operatorsStack.Push(_operatorNodesMap[token.TokenType]);
+            }
+
+        }
+        
         return null;
     }
 
@@ -141,6 +222,8 @@ public class LjsAstBuilder
         }
 
         public int CurrentIndex => _currentIndex;
+
+        public LjsToken this[int index] => _tokens[index];
 
         public LjsToken CurrentToken => 
             _currentIndex >= 0 && _currentIndex < _tokens.Count ? 

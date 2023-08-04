@@ -19,7 +19,7 @@ public enum LjsTokenType
     OpPlus,
     OpMinus,
     OpMultiply,
-    OpSlash,
+    OpDiv,
     OpBitAnd,
     OpBitOr,
     OpNegate,

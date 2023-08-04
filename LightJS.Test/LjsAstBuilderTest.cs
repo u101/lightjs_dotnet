@@ -34,7 +34,7 @@ public class LjsAstBuilderTest
         var expectedResult = new LsjAstBinaryOperation(
             new LsjAstBinaryOperation(
                 new LjsAstGetVar("a"),
-                new LsjAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsTokenType.OpSlash),
+                new LsjAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsTokenType.OpDiv),
                 LjsTokenType.OpPlus),
             new LjsAstGetVar("d"),
             LjsTokenType.OpPlus);

@@ -409,7 +409,7 @@ public class LjsTokenizer
             '+' => LjsTokenType.OpPlus,
             '-' => LjsTokenType.OpMinus,
             '*' => LjsTokenType.OpMultiply,
-            '/' => LjsTokenType.OpSlash,
+            '/' => LjsTokenType.OpDiv,
             '&' => LjsTokenType.OpBitAnd,
             '|' => LjsTokenType.OpBitOr,
             '!' => LjsTokenType.OpNegate,
