@@ -105,6 +105,7 @@ public class LjsAstBuilder
         { LjsTokenType.OpAssign, new OperatorNode(LjsTokenType.OpAssign, 10)},
         
         { LjsTokenType.OpEquals, new OperatorNode(LjsTokenType.OpEquals, 50)},
+        { LjsTokenType.OpNotEqual, new OperatorNode(LjsTokenType.OpNotEqual, 50)},
         { LjsTokenType.OpEqualsStrict, new OperatorNode(LjsTokenType.OpEqualsStrict, 50)},
         { LjsTokenType.OpGreater, new OperatorNode(LjsTokenType.OpGreater, 50)},
         { LjsTokenType.OpGreaterOrEqual, new OperatorNode(LjsTokenType.OpGreaterOrEqual, 50)},

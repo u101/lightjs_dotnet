@@ -42,6 +42,22 @@ public class LjsAstBuilderTest
         rootNode.Should().BeEquivalentTo(expectedResult);
     }
     
+    [Test]
+    public void BuildSimpleLogicalExpression()
+    {
+        var astBuilder = new LjsAstBuilder("a + b != c + d");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LsjAstBinaryOperation>();
+        
+        var expectedResult = new LsjAstBinaryOperation(
+            new LsjAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsTokenType.OpPlus),
+            new LsjAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsTokenType.OpPlus),
+            LjsTokenType.OpNotEqual);
+
+        rootNode.Should().BeEquivalentTo(expectedResult);
+    }
+    
     
     [Test]
     public void Build_ShouldReturnIntNode_WhenGivenIntLiteral()
