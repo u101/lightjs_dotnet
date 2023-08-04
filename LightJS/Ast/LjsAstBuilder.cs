@@ -102,17 +102,17 @@ public class LjsAstBuilder
         { LjsTokenType.OpParenthesesOpen, new OperatorNode(LjsTokenType.OpParenthesesOpen, 0)},
         { LjsTokenType.OpParenthesesClose, new OperatorNode(LjsTokenType.OpParenthesesClose, 0)},
         
-        { LjsTokenType.OpPlus, new OperatorNode(LjsTokenType.OpAssign, 10)},
+        { LjsTokenType.OpAssign, new OperatorNode(LjsTokenType.OpAssign, 10)},
         
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpEquals, 50)},
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpEqualsStrict, 50)},
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpGreater, 50)},
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpGreaterOrEqual, 50)},
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLess, 50)},
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLessOrEqual, 50)},
+        { LjsTokenType.OpEquals, new OperatorNode(LjsTokenType.OpEquals, 50)},
+        { LjsTokenType.OpEqualsStrict, new OperatorNode(LjsTokenType.OpEqualsStrict, 50)},
+        { LjsTokenType.OpGreater, new OperatorNode(LjsTokenType.OpGreater, 50)},
+        { LjsTokenType.OpGreaterOrEqual, new OperatorNode(LjsTokenType.OpGreaterOrEqual, 50)},
+        { LjsTokenType.OpLess, new OperatorNode(LjsTokenType.OpLess, 50)},
+        { LjsTokenType.OpLessOrEqual, new OperatorNode(LjsTokenType.OpLessOrEqual, 50)},
         
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLogicalAnd, 80)},
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpLogicalOr, 80)},
+        { LjsTokenType.OpLogicalAnd, new OperatorNode(LjsTokenType.OpLogicalAnd, 80)},
+        { LjsTokenType.OpLogicalOr, new OperatorNode(LjsTokenType.OpLogicalOr, 80)},
         
         { LjsTokenType.OpPlus, new OperatorNode(LjsTokenType.OpPlus, 100)},
         { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpMinus, 100)},
@@ -149,10 +149,18 @@ public class LjsAstBuilder
                 var valueNode = GetValueNode(token);
                 _postfixExpression.Add(valueNode);
             }
+            
+            else if (token.TokenType == LjsTokenType.Identifier)
+            {
+                var id = _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength);
+                _postfixExpression.Add(new LjsAstGetVar(id));
+            }
+            
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
             {
                 _operatorsStack.Push(_operatorNodesMap[LjsTokenType.OpParenthesesOpen]);
             }
+            
             else if (token.TokenType == LjsTokenType.OpParenthesesClose)
             {
                 //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
@@ -164,6 +172,7 @@ public class LjsAstBuilder
 
                 _operatorsStack.Pop();
             }
+            
             else if (token.TokenClass == LjsTokenClass.Operator && 
                      _operatorNodesMap.ContainsKey(token.TokenType))
             {
@@ -207,38 +216,6 @@ public class LjsAstBuilder
         }
 
         return _locals.Pop();
-    }
-    
-    
-
-    private ILjsAstNode ReadMain()
-    {
-        var token = _tokensReader.CurrentToken;
-
-        switch (token.TokenClass)
-        {
-            case LjsTokenClass.Word:
-
-                switch (token.TokenType)
-                {
-                    
-                    case LjsTokenType.Identifier:
-                        
-                        break;
-                    
-                }
-                
-                throw new NotImplementedException();
-            
-            case LjsTokenClass.Value:
-
-                return GetValueNode(token);
-            
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        
     }
     
     private class TokensReader
