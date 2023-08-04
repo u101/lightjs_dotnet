@@ -25,5 +25,23 @@ public class MatherTest
         
         Assert.That(result, Is.EqualTo(expectedResult));
     }
+
+    [Test]
+    public void StackForeachTest()
+    {
+        var result = "";
+        var stack = new Stack<char>();
+        stack.Push('a');
+        stack.Push('b');
+        stack.Push('c');
+        stack.Push('d');
+
+        foreach (var c in stack)
+        {
+            result += c;
+        }
+        
+        Assert.That(result, Is.EqualTo("dcba"));
+    }
     
 }

@@ -95,6 +95,7 @@ public class LjsAstBuilder
     
     private readonly List<ILjsAstNode> _postfixExpression = new();
     private readonly Stack<OperatorNode> _operatorsStack = new();
+    private readonly Stack<ILjsAstNode> _locals = new();
 
     private readonly Dictionary<LjsTokenType, OperatorNode> _operatorNodesMap = new()
     {
@@ -177,8 +178,38 @@ public class LjsAstBuilder
 
         }
         
-        return null;
+        //	Заносим все оставшиеся операторы из стека в выходную строку
+        foreach (var op in _operatorsStack)
+        {
+            _postfixExpression.Add(op);
+        }
+
+        //	Проходим по строке
+        for (var i = 0; i < _postfixExpression.Count; i++)
+        {
+            //	Текущий символ
+            var c = _postfixExpression[i];
+
+            if (c is OperatorNode operatorNode)
+            {
+
+                //	Получаем значения из стека в обратном порядке
+                var rightOperand = _locals.Pop();
+                var leftOperand = _locals.Pop();
+
+                //	Получаем результат операции и заносим в стек
+                _locals.Push(new LsjAstBinaryOperation(leftOperand, rightOperand, operatorNode.OperatorType));
+            }
+            else
+            {
+                _locals.Push(c);
+            }
+        }
+
+        return _locals.Pop();
     }
+    
+    
 
     private ILjsAstNode ReadMain()
     {
