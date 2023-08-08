@@ -143,29 +143,6 @@ public class LjsAstBuilder
         public bool HasChildNodes => false;
     }
     
-    private enum OperationType
-    {
-        Binary,
-        Unary,
-        Ternary,
-        Both
-    }
-
-    private static OperationType GetOperationType(LjsTokenType tokenType)
-    {
-        if (tokenType == LjsTokenType.OpQuestionMark) 
-            return OperationType.Ternary;
-        
-        if (tokenType == LjsTokenType.OpPlus || 
-            tokenType == LjsTokenType.OpMinus) return OperationType.Both;
-
-        if (tokenType == LjsTokenType.OpNegate ||
-            tokenType == LjsTokenType.OpIncrement ||
-            tokenType == LjsTokenType.OpDecrement) return OperationType.Unary;
-
-        return OperationType.Binary;
-    }
-    
     [Flags]
     private enum StopTokenType
     {
