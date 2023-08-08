@@ -181,7 +181,7 @@ public class LjsAstBuilder
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
 
-        var prevOperand = false;
+        var prevTokenClass = LjsTokenClass.None;
         
         while (_tokensReader.HasNextToken)
         {
@@ -192,15 +192,17 @@ public class LjsAstBuilder
             var tokenPosition = token.Position;
 
 
-            if (token.TokenClass == LjsTokenClass.Value)
+            if ((token.TokenClass & LjsTokenClass.Literal) != 0)
             {
-                if (prevOperand) 
+                if (prevTokenClass != LjsTokenClass.None &&
+                    (prevTokenClass & LjsTokenClass.Operator) == 0)
                     throw new LjsSyntaxError("unexpected token", tokenPosition);
+                
                 
                 var valueNode = GetValueNode(token);
                 _postfixExpression.Add(valueNode);
                 
-                prevOperand = true;
+                prevTokenClass = token.TokenClass;
             }
             
             else
@@ -208,13 +210,14 @@ public class LjsAstBuilder
                 
                 if (tokenType == LjsTokenType.Identifier)
                 {
-                    if (prevOperand) 
+                    if (prevTokenClass != LjsTokenClass.None &&
+                        (prevTokenClass & LjsTokenClass.Operator) == 0)
                         throw new LjsSyntaxError("unexpected token", tokenPosition);
                 
                     var id = _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength);
                     _postfixExpression.Add(new LjsAstGetVar(id));
                 
-                    prevOperand = true;
+                    prevTokenClass = token.TokenClass;
                 }
                 
                 else if (tokenType == LjsTokenType.OpQuestionMark)
@@ -245,10 +248,11 @@ public class LjsAstBuilder
             
                 else if (tokenType == LjsTokenType.OpParenthesesOpen)
                 {
-                    if (prevOperand) 
+                    if (prevTokenClass != LjsTokenClass.None &&
+                        (prevTokenClass & LjsTokenClass.Operator) == 0)
                         throw new LjsSyntaxError("unexpected token", tokenPosition);
 
-                    prevOperand = true;
+                    prevTokenClass = LjsTokenClass.Word;
 
                     var exp = ParseExpression(StopTokenType.Parentheses);
 
@@ -270,15 +274,17 @@ public class LjsAstBuilder
                     throw new LjsSyntaxError("unexpected parentheses", tokenPosition);
                 }
             
-                else if (token.TokenClass == LjsTokenClass.Operator && 
+                else if ((token.TokenClass & LjsTokenClass.Operator) != 0 && 
                          _operatorNodesMap.ContainsKey(tokenType))
                 {
-                    if (!prevOperand)
+                    if ((prevTokenClass == LjsTokenClass.None || 
+                         (prevTokenClass & LjsTokenClass.BinaryOperator) != 0) &&
+                        (token.TokenClass & LjsTokenClass.BinaryOperator) != 0)
                     {
                         throw new LjsSyntaxError("unexpected token", tokenPosition);
                     }
 
-                    prevOperand = false;
+                    prevTokenClass = token.TokenClass;
                     
 
                     //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет

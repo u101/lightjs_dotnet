@@ -102,12 +102,12 @@ public class LjsTokenizerTest
           
           Assert.That(tokens, Has.Count.EqualTo(5));
           
-          Assert.That(tokens[0].TokenClass, Is.EqualTo(LjsTokenClass.Word));
-          Assert.That(tokens[2].TokenClass, Is.EqualTo(LjsTokenClass.Word));
-          Assert.That(tokens[4].TokenClass, Is.EqualTo(LjsTokenClass.Word));
+          Assert.That(tokens[0].TokenType, Is.EqualTo(LjsTokenType.Identifier));
+          Assert.That(tokens[2].TokenType, Is.EqualTo(LjsTokenType.Identifier));
+          Assert.That(tokens[4].TokenType, Is.EqualTo(LjsTokenType.Identifier));
           
-          Assert.That(tokens[1].TokenClass, Is.EqualTo(LjsTokenClass.Operator));
-          Assert.That(tokens[3].TokenClass, Is.EqualTo(LjsTokenClass.Operator));
+          Assert.That(tokens[1].TokenType, Is.EqualTo(LjsTokenType.OpAssign));
+          Assert.That(tokens[3].TokenType, Is.EqualTo(LjsTokenType.OpPlus));
      }
 
      [Test]

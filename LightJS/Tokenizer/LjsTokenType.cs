@@ -22,12 +22,15 @@ public enum LjsTokenType
     OpDiv,
     OpBitAnd,
     OpBitOr,
+    
     OpNegate,
     OpQuestionMark,
+    
     OpComma,
     OpDot,
     OpColon,
     OpSemicolon,
+    
     OpBracketOpen,
     OpBracketClose,
     OpParenthesesOpen,
