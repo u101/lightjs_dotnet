@@ -26,7 +26,15 @@ public class LjsAstBuilderTest
     [Test]
     public void BuildSimpleExpressionWithParentheses()
     {
-        var astBuilder = new LjsAstBuilder("(a+b)-(c+d)");
+        BuildSimpleExpressionWithParentheses("(a+b)-(c+d)");
+        BuildSimpleExpressionWithParentheses("((a+b)-(c+d))");
+        BuildSimpleExpressionWithParentheses("(((a+b)-(c+d)))");
+        BuildSimpleExpressionWithParentheses("(((a+b)-((c+d))))");
+    }
+    
+    private static void BuildSimpleExpressionWithParentheses(string expression)
+    {
+        var astBuilder = new LjsAstBuilder(expression);
         var rootNode = astBuilder.Build();
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
@@ -37,14 +45,21 @@ public class LjsAstBuilderTest
                 new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsTokenType.OpPlus),
                 LjsTokenType.OpMinus));
     }
+
+    [Test]
+    public void BuildInvalidParenthesesExpression()
+    {
+        BuildInvalidExpression("(a+b))");
+        BuildInvalidExpression("(a+b");
+    }
     
     [Test]
     public void BuildInvalidOperatorsExpression()
     {
-        BuildInvalidOperatorsExpression("a * * * b");
+        BuildInvalidExpression("a * * * b");
     }
 
-    private static void BuildInvalidOperatorsExpression(string expression)
+    private static void BuildInvalidExpression(string expression)
     {
         var astBuilder = new LjsAstBuilder(expression);
         Assert.Throws<LjsSyntaxError>(() => astBuilder.Build());

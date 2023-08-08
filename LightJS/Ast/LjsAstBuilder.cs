@@ -175,7 +175,6 @@ public class LjsAstBuilder
 
     private ILjsAstNode ParseExpression(StopTokenType stopTokenType = StopTokenType.None)
     {
-        // TODO parentheses recursion
         // TODO unary operators
         // TODO ternary operators
 
