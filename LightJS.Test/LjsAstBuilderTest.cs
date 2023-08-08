@@ -24,6 +24,21 @@ public class LjsAstBuilderTest
     }
 
     [Test]
+    public void BuildSimpleTernaryIfExpression()
+    {
+        var astBuilder = new LjsAstBuilder("a ? b : c");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LjsAstTernaryIfOperation>();
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstTernaryIfOperation(
+                new LjsAstGetVar("a"),
+                new LjsAstGetVar("b"),
+                new LjsAstGetVar("c")));
+    }
+
+    [Test]
     public void BuildSimpleExpressionWithParentheses()
     {
         BuildSimpleExpressionWithParentheses("(a+b)-(c+d)");

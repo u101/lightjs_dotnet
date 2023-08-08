@@ -170,13 +170,13 @@ public class LjsAstBuilder
     private enum StopTokenType
     {
         None,
-        Parentheses
+        Parentheses,
+        Colon
     }
 
     private ILjsAstNode ParseExpression(StopTokenType stopTokenType = StopTokenType.None)
     {
         // TODO unary operators
-        // TODO ternary operators
 
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
@@ -216,6 +216,32 @@ public class LjsAstBuilder
                 
                     prevOperand = true;
                 }
+                
+                else if (tokenType == LjsTokenType.OpQuestionMark)
+                {
+                    if (_postfixExpression.Count - postfixExpressionStartingLn == 0)
+                    {
+                        throw new LjsSyntaxError("unexpected token", tokenPosition);
+                    }
+
+                    var condition = 
+                        BuildExpression(operatorsStackStartingLn, postfixExpressionStartingLn);
+
+                    var trueExpression = ParseExpression(StopTokenType.Colon);
+                    var falseExpression = ParseExpression();
+
+                    return new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression);
+                }
+                
+                else if (tokenType == LjsTokenType.OpColon)
+                {
+                    if ((stopTokenType & StopTokenType.Colon) != 0)
+                    {
+                        return BuildExpression(operatorsStackStartingLn, postfixExpressionStartingLn);
+                    }
+                    
+                    throw new LjsSyntaxError("unexpected colon", tokenPosition);
+                }
             
                 else if (tokenType == LjsTokenType.OpParenthesesOpen)
                 {
@@ -238,7 +264,7 @@ public class LjsAstBuilder
                 {
                     if ((stopTokenType & StopTokenType.Parentheses) != 0)
                     {
-                        break;
+                        return BuildExpression(operatorsStackStartingLn, postfixExpressionStartingLn);
                     }
                     
                     throw new LjsSyntaxError("unexpected parentheses", tokenPosition);
@@ -270,6 +296,11 @@ public class LjsAstBuilder
             }
         }
 
+        return BuildExpression(operatorsStackStartingLn, postfixExpressionStartingLn);
+    }
+
+    private ILjsAstNode BuildExpression(int operatorsStackStartingLn, int postfixExpressionStartingLn)
+    {
         while (_operatorsStack.Count > operatorsStackStartingLn)
         {
             var op = _operatorsStack.Pop();
