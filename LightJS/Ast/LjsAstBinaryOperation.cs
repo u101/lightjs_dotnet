@@ -2,7 +2,7 @@ using LightJS.Tokenizer;
 
 namespace LightJS.Ast;
 
-public class LsjAstBinaryOperation : ILjsAstNode
+public class LjsAstBinaryOperation : ILjsAstNode
 {
     public ILjsAstNode LeftOperand { get; }
     public ILjsAstNode RightOperand { get; }
@@ -10,7 +10,7 @@ public class LsjAstBinaryOperation : ILjsAstNode
     
     
 
-    public LsjAstBinaryOperation(ILjsAstNode leftOperand, ILjsAstNode rightOperand, LjsTokenType operatorType)
+    public LjsAstBinaryOperation(ILjsAstNode leftOperand, ILjsAstNode rightOperand, LjsTokenType operatorType)
     {
         LeftOperand = leftOperand;
         RightOperand = rightOperand;

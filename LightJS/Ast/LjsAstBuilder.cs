@@ -103,6 +103,8 @@ public class LjsAstBuilder
         { LjsTokenType.OpParenthesesClose, new OperatorNode(LjsTokenType.OpParenthesesClose, 0)},
         
         { LjsTokenType.OpAssign, new OperatorNode(LjsTokenType.OpAssign, 10)},
+        { LjsTokenType.OpPlusAssign, new OperatorNode(LjsTokenType.OpPlusAssign, 10)},
+        { LjsTokenType.OpMinusAssign, new OperatorNode(LjsTokenType.OpMinusAssign, 10)},
         
         { LjsTokenType.OpEquals, new OperatorNode(LjsTokenType.OpEquals, 50)},
         { LjsTokenType.OpNotEqual, new OperatorNode(LjsTokenType.OpNotEqual, 50)},
@@ -120,6 +122,10 @@ public class LjsAstBuilder
         
         { LjsTokenType.OpMultiply, new OperatorNode(LjsTokenType.OpMultiply, 200)},
         { LjsTokenType.OpDiv, new OperatorNode(LjsTokenType.OpDiv, 200)},
+        
+        { LjsTokenType.OpNegate, new OperatorNode(LjsTokenType.OpNegate, 1000)},
+        { LjsTokenType.OpIncrement, new OperatorNode(LjsTokenType.OpIncrement, 1000)},
+        { LjsTokenType.OpDecrement, new OperatorNode(LjsTokenType.OpDecrement, 1000)},
     };
 
     private class OperatorNode : ILjsAstNode
@@ -136,11 +142,39 @@ public class LjsAstBuilder
         public IEnumerable<ILjsAstNode> ChildNodes => Array.Empty<ILjsAstNode>();
         public bool HasChildNodes => false;
     }
+    
+    private enum OperationType
+    {
+        Binary,
+        Unary,
+        Ternary,
+        Both
+    }
+
+    private static OperationType GetOperationType(LjsTokenType tokenType)
+    {
+        if (tokenType == LjsTokenType.OpQuestionMark) 
+            return OperationType.Ternary;
+        
+        if (tokenType == LjsTokenType.OpPlus || 
+            tokenType == LjsTokenType.OpMinus) return OperationType.Both;
+
+        if (tokenType == LjsTokenType.OpNegate ||
+            tokenType == LjsTokenType.OpIncrement ||
+            tokenType == LjsTokenType.OpDecrement) return OperationType.Unary;
+
+        return OperationType.Binary;
+    }
 
     private ILjsAstNode ParseExpression()
     {
         // TODO unary operators
         // TODO ternary operators
+
+        var operatorsStackStartingLn = _operatorsStack.Count;
+        var postfixExpressionStartingLn = _postfixExpression.Count;
+
+        var prevOperand = false;
         
         while (_tokensReader.HasNextToken)
         {
@@ -150,74 +184,99 @@ public class LjsAstBuilder
 
             if (token.TokenClass == LjsTokenClass.Value)
             {
+                if (prevOperand) 
+                    throw new LjsSyntaxError("unexpected token", token.Position);
+                
                 var valueNode = GetValueNode(token);
                 _postfixExpression.Add(valueNode);
-            }
-            
-            else if (token.TokenType == LjsTokenType.Identifier)
-            {
-                var id = _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength);
-                _postfixExpression.Add(new LjsAstGetVar(id));
-            }
-            
-            else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
-            {
-                _operatorsStack.Push(_operatorNodesMap[LjsTokenType.OpParenthesesOpen]);
-            }
-            
-            else if (token.TokenType == LjsTokenType.OpParenthesesClose)
-            {
-                //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
-                while (_operatorsStack.Count > 0 &&
-                       _operatorsStack.Peek().OperatorType != LjsTokenType.OpParenthesesOpen)
-                {
-                    _postfixExpression.Add(_operatorsStack.Pop());
-                }
-
-                _operatorsStack.Pop();
-            }
-            
-            else if (token.TokenClass == LjsTokenClass.Operator && 
-                     _operatorNodesMap.ContainsKey(token.TokenType))
-            {
-                //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
-                while (_operatorsStack.Count > 0 && 
-                       (_operatorNodesMap[_operatorsStack.Peek().OperatorType].Priority >= _operatorNodesMap[token.TokenType].Priority))
-                    _postfixExpression.Add(_operatorsStack.Pop());
                 
-                //	Заносим в стек оператор
-                _operatorsStack.Push(_operatorNodesMap[token.TokenType]);
+                prevOperand = true;
             }
+            
+            else
+            {
+                var tokenType = token.TokenType;
+                
+                if (tokenType == LjsTokenType.Identifier)
+                {
+                    if (prevOperand) 
+                        throw new LjsSyntaxError("unexpected token", token.Position);
+                
+                    var id = _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength);
+                    _postfixExpression.Add(new LjsAstGetVar(id));
+                
+                    prevOperand = true;
+                }
+            
+                else if (tokenType == LjsTokenType.OpParenthesesOpen)
+                {
+                    _operatorsStack.Push(_operatorNodesMap[LjsTokenType.OpParenthesesOpen]);
+                }
+            
+                else if (tokenType == LjsTokenType.OpParenthesesClose)
+                {
+                    //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
+                    while (_operatorsStack.Count > operatorsStackStartingLn &&
+                           _operatorsStack.Peek().OperatorType != LjsTokenType.OpParenthesesOpen)
+                    {
+                        _postfixExpression.Add(_operatorsStack.Pop());
+                    }
 
+                    _operatorsStack.Pop();
+                }
+            
+                else if (token.TokenClass == LjsTokenClass.Operator && 
+                         _operatorNodesMap.ContainsKey(tokenType))
+                {
+                    if (!prevOperand)
+                        throw new LjsSyntaxError("unexpected token", token.Position);
+
+                    prevOperand = false;
+                    
+
+                    //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
+                    while (_operatorsStack.Count > operatorsStackStartingLn && 
+                           (_operatorNodesMap[_operatorsStack.Peek().OperatorType].Priority >= _operatorNodesMap[tokenType].Priority))
+                        _postfixExpression.Add(_operatorsStack.Pop());
+                
+                    //	Заносим в стек оператор
+                    _operatorsStack.Push(_operatorNodesMap[tokenType]);
+                }
+                else
+                {
+                    throw new Exception("unexpected token");
+                }
+            }
         }
-        
-        //	Заносим все оставшиеся операторы из стека в выходную строку
-        foreach (var op in _operatorsStack)
+
+        while (_operatorsStack.Count > operatorsStackStartingLn)
         {
+            var op = _operatorsStack.Pop();
             _postfixExpression.Add(op);
         }
-
-        //	Проходим по строке
-        for (var i = 0; i < _postfixExpression.Count; i++)
+        
+        _locals.Clear();
+        
+        for (var i = postfixExpressionStartingLn; i < _postfixExpression.Count; i++)
         {
-            //	Текущий символ
-            var c = _postfixExpression[i];
+            var n = _postfixExpression[i];
 
-            if (c is OperatorNode operatorNode)
+            if (n is OperatorNode operatorNode)
             {
-
                 //	Получаем значения из стека в обратном порядке
                 var rightOperand = _locals.Pop();
                 var leftOperand = _locals.Pop();
-
-                //	Получаем результат операции и заносим в стек
-                _locals.Push(new LsjAstBinaryOperation(leftOperand, rightOperand, operatorNode.OperatorType));
+                
+                _locals.Push(new LjsAstBinaryOperation(leftOperand, rightOperand, operatorNode.OperatorType));
             }
             else
             {
-                _locals.Push(c);
+                _locals.Push(n);
             }
         }
+        
+        _postfixExpression.RemoveRange(
+            postfixExpressionStartingLn, _postfixExpression.Count);
 
         return _locals.Pop();
     }

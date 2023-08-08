@@ -14,13 +14,25 @@ public class LjsAstBuilderTest
         var astBuilder = new LjsAstBuilder("a + b");
         var rootNode = astBuilder.Build();
         
-        rootNode.Should().BeOfType<LsjAstBinaryOperation>();
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
         rootNode.Should().BeEquivalentTo(
-            new LsjAstBinaryOperation(
+            new LjsAstBinaryOperation(
                 new LjsAstGetVar("a"), 
                 new LjsAstGetVar("b"), 
                 LjsTokenType.OpPlus));
+    }
+
+    [Test]
+    public void BuildInvalidOperatorsExpression()
+    {
+        BuildInvalidOperatorsExpression("a * * * b");
+    }
+
+    private static void BuildInvalidOperatorsExpression(string expression)
+    {
+        var astBuilder = new LjsAstBuilder(expression);
+        Assert.Throws<LjsSyntaxError>(() => astBuilder.Build());
     }
     
     [Test]
@@ -29,12 +41,12 @@ public class LjsAstBuilderTest
         var astBuilder = new LjsAstBuilder("a + b/c + d");
         var rootNode = astBuilder.Build();
         
-        rootNode.Should().BeOfType<LsjAstBinaryOperation>();
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
-        var expectedResult = new LsjAstBinaryOperation(
-            new LsjAstBinaryOperation(
+        var expectedResult = new LjsAstBinaryOperation(
+            new LjsAstBinaryOperation(
                 new LjsAstGetVar("a"),
-                new LsjAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsTokenType.OpDiv),
+                new LjsAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsTokenType.OpDiv),
                 LjsTokenType.OpPlus),
             new LjsAstGetVar("d"),
             LjsTokenType.OpPlus);
@@ -48,11 +60,11 @@ public class LjsAstBuilderTest
         var astBuilder = new LjsAstBuilder("a + b != c + d");
         var rootNode = astBuilder.Build();
         
-        rootNode.Should().BeOfType<LsjAstBinaryOperation>();
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
         
-        var expectedResult = new LsjAstBinaryOperation(
-            new LsjAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsTokenType.OpPlus),
-            new LsjAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsTokenType.OpPlus),
+        var expectedResult = new LjsAstBinaryOperation(
+            new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsTokenType.OpPlus),
+            new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsTokenType.OpPlus),
             LjsTokenType.OpNotEqual);
 
         rootNode.Should().BeEquivalentTo(expectedResult);
