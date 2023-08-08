@@ -139,6 +139,9 @@ public class LjsAstBuilder
 
     private ILjsAstNode ParseExpression()
     {
+        // TODO unary operators
+        // TODO ternary operators
+        
         while (_tokensReader.HasNextToken)
         {
             _tokensReader.MoveForward();

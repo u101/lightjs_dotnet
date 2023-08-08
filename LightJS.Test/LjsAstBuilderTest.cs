@@ -60,7 +60,7 @@ public class LjsAstBuilderTest
     
     
     [Test]
-    public void Build_ShouldReturnIntNode_WhenGivenIntLiteral()
+    public void BuildSimpleLiteral()
     {
         ValidLiteralTest("123456789", 123456789);
         ValidLiteralTest("0xff1267", 0xff1267);
