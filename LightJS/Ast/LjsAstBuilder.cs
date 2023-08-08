@@ -165,9 +165,17 @@ public class LjsAstBuilder
 
         return OperationType.Binary;
     }
-
-    private ILjsAstNode ParseExpression()
+    
+    [Flags]
+    private enum StopTokenType
     {
+        None,
+        Parentheses
+    }
+
+    private ILjsAstNode ParseExpression(StopTokenType stopTokenType = StopTokenType.None)
+    {
+        // TODO parentheses recursion
         // TODO unary operators
         // TODO ternary operators
 
@@ -181,11 +189,14 @@ public class LjsAstBuilder
             _tokensReader.MoveForward();
 
             var token = _tokensReader.CurrentToken;
+            var tokenType = token.TokenType;
+            var tokenPosition = token.Position;
+
 
             if (token.TokenClass == LjsTokenClass.Value)
             {
                 if (prevOperand) 
-                    throw new LjsSyntaxError("unexpected token", token.Position);
+                    throw new LjsSyntaxError("unexpected token", tokenPosition);
                 
                 var valueNode = GetValueNode(token);
                 _postfixExpression.Add(valueNode);
@@ -195,14 +206,13 @@ public class LjsAstBuilder
             
             else
             {
-                var tokenType = token.TokenType;
                 
                 if (tokenType == LjsTokenType.Identifier)
                 {
                     if (prevOperand) 
-                        throw new LjsSyntaxError("unexpected token", token.Position);
+                        throw new LjsSyntaxError("unexpected token", tokenPosition);
                 
-                    var id = _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength);
+                    var id = _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength);
                     _postfixExpression.Add(new LjsAstGetVar(id));
                 
                     prevOperand = true;
@@ -210,26 +220,38 @@ public class LjsAstBuilder
             
                 else if (tokenType == LjsTokenType.OpParenthesesOpen)
                 {
-                    _operatorsStack.Push(_operatorNodesMap[LjsTokenType.OpParenthesesOpen]);
+                    if (prevOperand) 
+                        throw new LjsSyntaxError("unexpected token", tokenPosition);
+
+                    prevOperand = true;
+
+                    var exp = ParseExpression(StopTokenType.Parentheses);
+
+                    if (_tokensReader.CurrentToken.TokenType != LjsTokenType.OpParenthesesClose)
+                    {
+                        throw new LjsSyntaxError("unclosed parentheses", tokenPosition);
+                    }
+                    
+                    _postfixExpression.Add(exp);
                 }
             
                 else if (tokenType == LjsTokenType.OpParenthesesClose)
                 {
-                    //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
-                    while (_operatorsStack.Count > operatorsStackStartingLn &&
-                           _operatorsStack.Peek().OperatorType != LjsTokenType.OpParenthesesOpen)
+                    if ((stopTokenType & StopTokenType.Parentheses) != 0)
                     {
-                        _postfixExpression.Add(_operatorsStack.Pop());
+                        break;
                     }
-
-                    _operatorsStack.Pop();
+                    
+                    throw new LjsSyntaxError("unexpected parentheses", tokenPosition);
                 }
             
                 else if (token.TokenClass == LjsTokenClass.Operator && 
                          _operatorNodesMap.ContainsKey(tokenType))
                 {
                     if (!prevOperand)
-                        throw new LjsSyntaxError("unexpected token", token.Position);
+                    {
+                        throw new LjsSyntaxError("unexpected token", tokenPosition);
+                    }
 
                     prevOperand = false;
                     
@@ -276,7 +298,7 @@ public class LjsAstBuilder
         }
         
         _postfixExpression.RemoveRange(
-            postfixExpressionStartingLn, _postfixExpression.Count);
+            postfixExpressionStartingLn, _postfixExpression.Count - postfixExpressionStartingLn);
 
         return _locals.Pop();
     }
@@ -322,6 +344,13 @@ public class LjsAstBuilder
             }
         
             ++_currentIndex;
+        }
+
+        public void MoveTo(int index)
+        {
+            if (index < 0 || index >= _tokens.Count)
+                throw new ArgumentException($"token index {index} out of range [0 .. {_tokens.Count}]");
+            _currentIndex = index;
         }
     }
     

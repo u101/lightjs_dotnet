@@ -24,6 +24,21 @@ public class LjsAstBuilderTest
     }
 
     [Test]
+    public void BuildSimpleExpressionWithParentheses()
+    {
+        var astBuilder = new LjsAstBuilder("(a+b)-(c+d)");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsTokenType.OpPlus),
+                new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsTokenType.OpPlus),
+                LjsTokenType.OpMinus));
+    }
+    
+    [Test]
     public void BuildInvalidOperatorsExpression()
     {
         BuildInvalidOperatorsExpression("a * * * b");
