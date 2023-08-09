@@ -9,6 +9,12 @@ public class LjsAstBuilderTest
 {
 
     [Test]
+    public void BuildSimpleUnaryExpression()
+    {
+        
+    }
+
+    [Test]
     public void BuildSimpleExpression()
     {
         var astBuilder = new LjsAstBuilder("a + b");
@@ -35,6 +41,25 @@ public class LjsAstBuilderTest
             new LjsAstTernaryIfOperation(
                 new LjsAstGetVar("a"),
                 new LjsAstGetVar("b"),
+                new LjsAstGetVar("c")));
+    }
+    
+    
+    [Test]
+    public void BuildNestedTernaryIfExpression()
+    {
+        var astBuilder = new LjsAstBuilder("a ? b ? b1 : b2 : c");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LjsAstTernaryIfOperation>();
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstTernaryIfOperation(
+                new LjsAstGetVar("a"),
+                new LjsAstTernaryIfOperation(
+                    new LjsAstGetVar("b"),
+                    new LjsAstGetVar("b1"),
+                    new LjsAstGetVar("b2")),
                 new LjsAstGetVar("c")));
     }
 

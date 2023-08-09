@@ -130,7 +130,7 @@ public class LjsAstBuilder
         { LjsTokenType.OpDecrement, 1000},
     };
 
-    private OperatorNode getOrCreateOperatorNode(LjsTokenType tokenType, LjsTokenPosition tokenPosition)
+    private OperatorNode GetOrCreateOperatorNode(LjsTokenType tokenType, LjsTokenPosition tokenPosition)
     {
         if (_opNodesPool.Count > 0)
         {
@@ -148,7 +148,7 @@ public class LjsAstBuilder
         };
     }
 
-    private void releaseOperatorNode(OperatorNode operatorNode)
+    private void ReleaseOperatorNode(OperatorNode operatorNode)
     {
         _opNodesPool.Add(operatorNode);
     }
@@ -174,6 +174,7 @@ public class LjsAstBuilder
     private ILjsAstNode ParseExpression(StopTokenType stopTokenType = StopTokenType.None)
     {
         // TODO unary operators
+        // TODO stop expression advanced
 
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
@@ -228,7 +229,7 @@ public class LjsAstBuilder
                         BuildExpression(operatorsStackStartingLn, postfixExpressionStartingLn);
 
                     var trueExpression = ParseExpression(StopTokenType.Colon);
-                    var falseExpression = ParseExpression();
+                    var falseExpression = ParseExpression(StopTokenType.Colon);
 
                     return new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression);
                 }
@@ -290,7 +291,7 @@ public class LjsAstBuilder
                         _postfixExpression.Add(_operatorsStack.Pop());
                 
                     //	Заносим в стек оператор
-                    _operatorsStack.Push(getOrCreateOperatorNode(tokenType, token.Position));
+                    _operatorsStack.Push(GetOrCreateOperatorNode(tokenType, token.Position));
                 }
                 else
                 {
@@ -324,7 +325,7 @@ public class LjsAstBuilder
                 
                 _locals.Push(new LjsAstBinaryOperation(leftOperand, rightOperand, operatorNode.OperatorType));
                 
-                releaseOperatorNode(operatorNode);
+                ReleaseOperatorNode(operatorNode);
             }
             else
             {
