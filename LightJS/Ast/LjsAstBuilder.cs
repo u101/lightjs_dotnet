@@ -97,47 +97,67 @@ public class LjsAstBuilder
     private readonly Stack<OperatorNode> _operatorsStack = new();
     private readonly Stack<ILjsAstNode> _locals = new();
 
-    private readonly Dictionary<LjsTokenType, OperatorNode> _operatorNodesMap = new()
+    private readonly List<OperatorNode> _opNodesPool = new();
+
+    private readonly Dictionary<LjsTokenType, int> _operatorsPriorityMap = new()
     {
-        { LjsTokenType.OpParenthesesOpen, new OperatorNode(LjsTokenType.OpParenthesesOpen, 0)},
-        { LjsTokenType.OpParenthesesClose, new OperatorNode(LjsTokenType.OpParenthesesClose, 0)},
+        { LjsTokenType.OpParenthesesOpen, 0},
+        { LjsTokenType.OpParenthesesClose, 0},
         
-        { LjsTokenType.OpAssign, new OperatorNode(LjsTokenType.OpAssign, 10)},
-        { LjsTokenType.OpPlusAssign, new OperatorNode(LjsTokenType.OpPlusAssign, 10)},
-        { LjsTokenType.OpMinusAssign, new OperatorNode(LjsTokenType.OpMinusAssign, 10)},
+        { LjsTokenType.OpAssign, 10},
+        { LjsTokenType.OpPlusAssign, 10},
+        { LjsTokenType.OpMinusAssign, 10},
         
-        { LjsTokenType.OpEquals, new OperatorNode(LjsTokenType.OpEquals, 50)},
-        { LjsTokenType.OpNotEqual, new OperatorNode(LjsTokenType.OpNotEqual, 50)},
-        { LjsTokenType.OpEqualsStrict, new OperatorNode(LjsTokenType.OpEqualsStrict, 50)},
-        { LjsTokenType.OpGreater, new OperatorNode(LjsTokenType.OpGreater, 50)},
-        { LjsTokenType.OpGreaterOrEqual, new OperatorNode(LjsTokenType.OpGreaterOrEqual, 50)},
-        { LjsTokenType.OpLess, new OperatorNode(LjsTokenType.OpLess, 50)},
-        { LjsTokenType.OpLessOrEqual, new OperatorNode(LjsTokenType.OpLessOrEqual, 50)},
+        { LjsTokenType.OpEquals, 50},
+        { LjsTokenType.OpNotEqual, 50},
+        { LjsTokenType.OpEqualsStrict, 50},
+        { LjsTokenType.OpGreater, 50},
+        { LjsTokenType.OpGreaterOrEqual, 50},
+        { LjsTokenType.OpLess, 50},
+        { LjsTokenType.OpLessOrEqual, 50},
         
-        { LjsTokenType.OpLogicalAnd, new OperatorNode(LjsTokenType.OpLogicalAnd, 80)},
-        { LjsTokenType.OpLogicalOr, new OperatorNode(LjsTokenType.OpLogicalOr, 80)},
+        { LjsTokenType.OpLogicalAnd, 80},
+        { LjsTokenType.OpLogicalOr, 80},
         
-        { LjsTokenType.OpPlus, new OperatorNode(LjsTokenType.OpPlus, 100)},
-        { LjsTokenType.OpMinus, new OperatorNode(LjsTokenType.OpMinus, 100)},
+        { LjsTokenType.OpPlus, 100},
+        { LjsTokenType.OpMinus, 100},
         
-        { LjsTokenType.OpMultiply, new OperatorNode(LjsTokenType.OpMultiply, 200)},
-        { LjsTokenType.OpDiv, new OperatorNode(LjsTokenType.OpDiv, 200)},
+        { LjsTokenType.OpMultiply, 200},
+        { LjsTokenType.OpDiv, 200},
         
-        { LjsTokenType.OpNegate, new OperatorNode(LjsTokenType.OpNegate, 1000)},
-        { LjsTokenType.OpIncrement, new OperatorNode(LjsTokenType.OpIncrement, 1000)},
-        { LjsTokenType.OpDecrement, new OperatorNode(LjsTokenType.OpDecrement, 1000)},
+        { LjsTokenType.OpNegate, 1000},
+        { LjsTokenType.OpIncrement, 1000},
+        { LjsTokenType.OpDecrement, 1000},
     };
+
+    private OperatorNode getOrCreateOperatorNode(LjsTokenType tokenType, LjsTokenPosition tokenPosition)
+    {
+        if (_opNodesPool.Count > 0)
+        {
+            var operatorNode = _opNodesPool[^1];
+            _opNodesPool.RemoveAt(_opNodesPool.Count - 1);
+            operatorNode.OperatorType = tokenType;
+            operatorNode.TokenPosition = tokenPosition;
+            return operatorNode;
+        }
+
+        return new OperatorNode()
+        {
+            OperatorType = tokenType,
+            TokenPosition = tokenPosition
+        };
+    }
+
+    private void releaseOperatorNode(OperatorNode operatorNode)
+    {
+        _opNodesPool.Add(operatorNode);
+    }
 
     private class OperatorNode : ILjsAstNode
     {
-        public LjsTokenType OperatorType { get; }
-        public int Priority { get; }
+        public LjsTokenType OperatorType { get; set; } = LjsTokenType.None;
 
-        public OperatorNode(LjsTokenType operatorType, int priority)
-        {
-            OperatorType = operatorType;
-            Priority = priority;
-        }
+        public LjsTokenPosition TokenPosition { get; set; } = default;
         
         public IEnumerable<ILjsAstNode> ChildNodes => Array.Empty<ILjsAstNode>();
         public bool HasChildNodes => false;
@@ -252,7 +272,7 @@ public class LjsAstBuilder
                 }
             
                 else if ((token.TokenClass & LjsTokenClass.Operator) != 0 && 
-                         _operatorNodesMap.ContainsKey(tokenType))
+                         _operatorsPriorityMap.ContainsKey(tokenType))
                 {
                     if ((prevTokenClass == LjsTokenClass.None || 
                          (prevTokenClass & LjsTokenClass.BinaryOperator) != 0) &&
@@ -266,11 +286,11 @@ public class LjsAstBuilder
 
                     //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
                     while (_operatorsStack.Count > operatorsStackStartingLn && 
-                           (_operatorNodesMap[_operatorsStack.Peek().OperatorType].Priority >= _operatorNodesMap[tokenType].Priority))
+                           (_operatorsPriorityMap[_operatorsStack.Peek().OperatorType] >= _operatorsPriorityMap[tokenType]))
                         _postfixExpression.Add(_operatorsStack.Pop());
                 
                     //	Заносим в стек оператор
-                    _operatorsStack.Push(_operatorNodesMap[tokenType]);
+                    _operatorsStack.Push(getOrCreateOperatorNode(tokenType, token.Position));
                 }
                 else
                 {
@@ -303,6 +323,8 @@ public class LjsAstBuilder
                 var leftOperand = _locals.Pop();
                 
                 _locals.Push(new LjsAstBinaryOperation(leftOperand, rightOperand, operatorNode.OperatorType));
+                
+                releaseOperatorNode(operatorNode);
             }
             else
             {
