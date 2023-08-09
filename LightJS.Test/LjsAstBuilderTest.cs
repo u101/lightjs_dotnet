@@ -139,8 +139,8 @@ public class LjsAstBuilderTest
         var astBuilder = new LjsAstBuilder(literal);
         var rootNode = astBuilder.Build();
 
-        rootNode.Should().BeOfType<LjsAstValue<TLiteralType>>();
-        rootNode.Should().BeEquivalentTo(new LjsAstValue<TLiteralType>(expectedValue));
+        rootNode.Should().BeOfType<LjsAstLiteral<TLiteralType>>();
+        rootNode.Should().BeEquivalentTo(new LjsAstLiteral<TLiteralType>(expectedValue));
     }
     
 }

@@ -59,32 +59,32 @@ public class LjsAstBuilder
             case LjsTokenType.IntHex:
             case LjsTokenType.IntBinary:
 
-                return new LjsAstValue<int>(
+                return new LjsAstLiteral<int>(
                     LjsTokenizerUtils.GetTokenIntValue(_sourceCodeString, token));
                     
             case LjsTokenType.Float:
             case LjsTokenType.FloatE:
 
-                return new LjsAstValue<double>(
+                return new LjsAstLiteral<double>(
                     LjsTokenizerUtils.GetTokenFloatValue(_sourceCodeString, token));
                     
             case LjsTokenType.StringLiteral:
-                return new LjsAstValue<string>(
+                return new LjsAstLiteral<string>(
                     _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength));
                     
             case LjsTokenType.True:
                         
-                return new LjsAstValue<bool>(true);
+                return new LjsAstLiteral<bool>(true);
                     
             case LjsTokenType.False:
                         
-                return new LjsAstValue<bool>(false);
+                return new LjsAstLiteral<bool>(false);
                     
             case LjsTokenType.Null:
-                return LjsAstNull.Instance;
+                return new LjsAstNull();
                     
             case LjsTokenType.Undefined:
-                return LjsAstUndefined.Instance;
+                return new LjsAstUndefined();
                     
                     
             default:
