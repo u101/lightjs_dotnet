@@ -15,8 +15,8 @@ public class LjsTokenizer
     private const char Asterisk = '*';
     private const char Dot = '.';
 
-    private int _currentLine;
-    private int _currentCol;
+    private int _currentLine = 0;
+    private int _currentCol = -1;
 
     private static readonly Dictionary<string, LjsTokenType> _keywordsMap = new()
     {
@@ -54,7 +54,7 @@ public class LjsTokenizer
 
     public List<LjsToken> ReadTokens()
     {
-        _currentCol = 0;
+        _currentCol = -1;
         _currentLine = 0;
         
         _reader = new SourceCodeCharsReader(_sourceCodeString);
@@ -74,7 +74,7 @@ public class LjsTokenizer
         if (c == '\n')
         {
             ++_currentLine;
-            _currentCol = 0;
+            _currentCol = -1;
         }
         else
         {

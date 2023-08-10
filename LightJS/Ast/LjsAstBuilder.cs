@@ -46,7 +46,7 @@ public class LjsAstBuilder
         _tokensReader = new TokensReader(tokens);
     }
 
-    public ILjsAstNode Build()
+    public LjsAstModel Build()
     {
         if (!_tokensReader.HasNextToken)
         {
@@ -55,7 +55,8 @@ public class LjsAstBuilder
         
         var firstExpression = ParseExpression(StopTokenType.NextExpression);
 
-        if (!_tokensReader.HasNextToken) return firstExpression;
+        if (!_tokensReader.HasNextToken) 
+            return new LjsAstModel(firstExpression, _tokenPositionsMap);
 
         var sq = new LjsAstSequence();
         sq.AddNode(firstExpression);
@@ -65,7 +66,7 @@ public class LjsAstBuilder
             sq.AddNode(ParseExpression(StopTokenType.NextExpression));
         }
 
-        return sq;
+        return new LjsAstModel(sq, _tokenPositionsMap);
     }
 
     private ILjsAstNode GetLiteralNode(LjsToken token)

@@ -1,11 +1,36 @@
 using FluentAssertions;
 using LightJS.Ast;
+using LightJS.Tokenizer;
 
 namespace LightJS.Test;
 
 [TestFixture]
 public class LjsAstBuilderTest
 {
+    
+    [Test]
+    public void SimpleNodesPositionsInSourceCodeCheck()
+    {
+        var astBuilder = new LjsAstBuilder("a + b");
+        var model = astBuilder.Build();
+
+        var rootNode = model.RootNode;
+
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+        var binOp = (LjsAstBinaryOperation)rootNode;
+        
+        Assert.That(model.HasTokenPositionForNode(binOp), Is.True);
+        Assert.That(model.GetTokenPositionForNode(binOp), Is.EqualTo(new LjsTokenPosition(2,0,2)));
+        
+        Assert.That(model.HasTokenPositionForNode(binOp.LeftOperand), Is.True);
+        Assert.That(model.HasTokenPositionForNode(binOp.RightOperand), Is.True);
+        
+        Assert.That(model.GetTokenPositionForNode(binOp.LeftOperand), Is.EqualTo(new LjsTokenPosition(0,0,0)));
+        Assert.That(model.GetTokenPositionForNode(binOp.RightOperand), Is.EqualTo(new LjsTokenPosition(4,0,4)));
+        
+    }
+    
 
     [Test]
     public void BuildMultilineExpressionWithSemicolon()
@@ -18,7 +43,7 @@ public class LjsAstBuilderTest
     private static void BuildMultilineExpressionWithSemicolon(string expression)
     {
         var astBuilder = new LjsAstBuilder(expression);
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstSequence>();
 
@@ -33,7 +58,7 @@ public class LjsAstBuilderTest
     public void BuildPostfixIncrementExpression()
     {
         var astBuilder = new LjsAstBuilder("a++ + b--");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -48,7 +73,7 @@ public class LjsAstBuilderTest
     public void BuildPrefixIncrementExpression()
     {
         var astBuilder = new LjsAstBuilder("++a + --b");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -63,7 +88,7 @@ public class LjsAstBuilderTest
     public void BuildUnaryMinusExpression()
     {
         var astBuilder = new LjsAstBuilder("a + -b");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -78,7 +103,7 @@ public class LjsAstBuilderTest
     public void BuildSimpleExpression()
     {
         var astBuilder = new LjsAstBuilder("a + b");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -93,7 +118,7 @@ public class LjsAstBuilderTest
     public void BuildSimpleTernaryIfExpression()
     {
         var astBuilder = new LjsAstBuilder("a ? b : c");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstTernaryIfOperation>();
 
@@ -109,7 +134,7 @@ public class LjsAstBuilderTest
     public void BuildNestedTernaryIfExpression()
     {
         var astBuilder = new LjsAstBuilder("a ? b ? b1 : b2 : c");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstTernaryIfOperation>();
 
@@ -135,7 +160,7 @@ public class LjsAstBuilderTest
     private static void BuildSimpleExpressionWithParentheses(string expression)
     {
         var astBuilder = new LjsAstBuilder(expression);
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -169,7 +194,7 @@ public class LjsAstBuilderTest
     public void BuildSimpleExpressionWithOperatorsPriority()
     {
         var astBuilder = new LjsAstBuilder("a + b/c + d");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -188,7 +213,7 @@ public class LjsAstBuilderTest
     public void BuildSimpleLogicalExpression()
     {
         var astBuilder = new LjsAstBuilder("a + b != c + d");
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
         
@@ -222,7 +247,7 @@ public class LjsAstBuilderTest
         string literal, TLiteralType expectedValue)
     {
         var astBuilder = new LjsAstBuilder(literal);
-        var rootNode = astBuilder.Build();
+        var rootNode = astBuilder.Build().RootNode;
 
         rootNode.Should().BeOfType<LjsAstLiteral<TLiteralType>>();
         rootNode.Should().BeEquivalentTo(new LjsAstLiteral<TLiteralType>(expectedValue));

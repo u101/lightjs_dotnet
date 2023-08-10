@@ -31,5 +31,9 @@ public readonly struct LjsTokenPosition
         line = Line;
         col = Column;
     }
-    
+
+    public override string ToString()
+    {
+        return $"{nameof(CharIndex)}: {CharIndex}, {nameof(Line)}: {Line}, {nameof(Column)}: {Column}";
+    }
 }
