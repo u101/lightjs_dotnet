@@ -10,6 +10,11 @@ public class LjsAstBuilder
     private readonly string _sourceCodeString;
     private readonly TokensReader _tokensReader;
 
+    /// <summary>
+    /// save nodes positions in source code (line number, col number)
+    /// </summary>
+    private readonly Dictionary<ILjsAstNode, LjsTokenPosition> _tokenPositionsMap = new();
+
     public LjsAstBuilder(string sourceCodeString)
     {
         if (string.IsNullOrEmpty(sourceCodeString))
@@ -111,7 +116,7 @@ public class LjsAstBuilder
 
     private readonly List<OperatorNode> _opNodesPool = new();
 
-    private readonly Dictionary<LjsTokenType, int> _operatorsPriorityMap = new()
+    private static readonly Dictionary<LjsTokenType, int> OperatorsPriorityMap = new()
     {
         { LjsTokenType.OpParenthesesOpen, 0},
         { LjsTokenType.OpParenthesesClose, 0},
@@ -330,12 +335,16 @@ public class LjsAstBuilder
                 }
 
                 var literalNode = GetLiteralNode(token);
+                
+                _tokenPositionsMap[literalNode] = tokenPosition;
 
                 if (prevMemberType == ExpressionMemberType.Operator &&
                     prevOperatorType == OperatorType.Unary)
                 {
                     literalNode = new LjsAstUnaryOperation(literalNode,
                         GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                    
+                    _tokenPositionsMap[literalNode] = tokenPosition;
                 }
                 
                 _postfixExpression.Add(literalNode);
@@ -355,11 +364,15 @@ public class LjsAstBuilder
                 
                 ILjsAstNode getVarNode = new LjsAstGetVar(id);
                 
+                _tokenPositionsMap[getVarNode] = tokenPosition;
+                
                 if (prevMemberType == ExpressionMemberType.Operator &&
                     prevOperatorType == OperatorType.Unary)
                 {
                     getVarNode = new LjsAstUnaryOperation(getVarNode,
                         GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                    
+                    _tokenPositionsMap[getVarNode] = tokenPosition;
                 }
                 
                 _postfixExpression.Add(getVarNode);
@@ -394,8 +407,7 @@ public class LjsAstBuilder
                 
                 if ((stopTokenType & StopTokenType.Colon) != 0)
                 {
-                    return BuildExpression(
-                        operatorsStackStartingLn, postfixExpressionStartingLn);
+                    break;
                 }
 
                 throw new LjsSyntaxError("unexpected colon", tokenPosition);
@@ -413,11 +425,14 @@ public class LjsAstBuilder
                     throw new LjsSyntaxError("unclosed parentheses", tokenPosition);
                 }
                 
+                //_tokenPositionsMap[exp] = tokenPosition; skip, already saved
+                
                 if (prevMemberType == ExpressionMemberType.Operator &&
                     prevOperatorType == OperatorType.Unary)
                 {
                     exp = new LjsAstUnaryOperation(exp,
                         GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                    _tokenPositionsMap[exp] = tokenPosition;
                 }
 
                 _postfixExpression.Add(exp);
@@ -441,7 +456,7 @@ public class LjsAstBuilder
                 throw new LjsSyntaxError("unexpected parentheses", tokenPosition);
             }
 
-            else if (_operatorsPriorityMap.ContainsKey(tokenType))
+            else if (OperatorsPriorityMap.ContainsKey(tokenType))
             {
                 var operatorType = GetOperatorType(tokenType);
 
@@ -484,6 +499,8 @@ public class LjsAstBuilder
 
                         var unaryOperation = new LjsAstUnaryOperation(operand, unaryOpType);
 
+                        _tokenPositionsMap[unaryOperation] = tokenPosition;
+                        
                         _postfixExpression[lastOperandIndex] = unaryOperation;
                         
                         prevMemberType = ExpressionMemberType.Operand;
@@ -500,8 +517,8 @@ public class LjsAstBuilder
                 {
                     
                     while (_operatorsStack.Count > operatorsStackStartingLn &&
-                           (_operatorsPriorityMap[_operatorsStack.Peek().OperatorType] >=
-                            _operatorsPriorityMap[tokenType]))
+                           (OperatorsPriorityMap[_operatorsStack.Peek().OperatorType] >=
+                            OperatorsPriorityMap[tokenType]))
                         _postfixExpression.Add(_operatorsStack.Pop());
 
 
@@ -552,9 +569,12 @@ public class LjsAstBuilder
                 //	Получаем значения из стека в обратном порядке
                 var rightOperand = _locals.Pop();
                 var leftOperand = _locals.Pop();
+
+                var binaryOperation = new LjsAstBinaryOperation(
+                    leftOperand, rightOperand, GetBinaryOperationType(operatorNode.OperatorType));
                 
-                _locals.Push(new LjsAstBinaryOperation(
-                    leftOperand, rightOperand, GetBinaryOperationType(operatorNode.OperatorType)));
+                _tokenPositionsMap[binaryOperation] = operatorNode.TokenPosition;
+                _locals.Push(binaryOperation);
                 
                 ReleaseOperatorNode(operatorNode);
             }
