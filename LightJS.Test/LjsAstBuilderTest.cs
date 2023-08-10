@@ -59,6 +59,21 @@ public class LjsAstBuilderTest
                 LjsAstAssignMode.Normal));
     }
     
+    [Test]
+    public void SimpleFunctionCallTest()
+    {
+        var astBuilder = new LjsAstBuilder("foo.bar(a,b)");
+        var model = astBuilder.Build();
+
+        var rootNode = model.RootNode;
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstFunctionCall(
+                new LjsAstGetNamedProperty("bar", new LjsAstGetVar("foo")),
+                new LjsAstGetVar("a"), new LjsAstGetVar("b")
+                ));
+    }
+    
     
     
     [Test]

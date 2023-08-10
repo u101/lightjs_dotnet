@@ -10,6 +10,12 @@ public class LjsAstFunctionCall : ILjsAstNode
     {
         FunctionGetter = functionGetter;
     }
+    
+    public LjsAstFunctionCall(ILjsAstNode functionGetter, params ILjsAstNode[] args)
+    {
+        FunctionGetter = functionGetter;
+        Arguments.AddRange(args);
+    }
 
     public IEnumerable<ILjsAstNode> ChildNodes
     {
