@@ -229,9 +229,19 @@ public class LjsAstBuilder
             _ => OperatorType.None
         };
 
+    private static LjsAstUnaryOperationType GetUnaryOperationType(LjsTokenType tokenType) => tokenType switch
+    {
+        LjsTokenType.OpPlus => LjsAstUnaryOperationType.Plus,
+        LjsTokenType.OpMinus => LjsAstUnaryOperationType.Minus,
+            
+        LjsTokenType.OpNegate => LjsAstUnaryOperationType.Negate,
+        LjsTokenType.OpIncrement => LjsAstUnaryOperationType.PrefixIncrement,
+        LjsTokenType.OpDecrement => LjsAstUnaryOperationType.PrefixDecrement,
+        _ => throw new Exception($"unsupported unary operation token type {tokenType}")
+    };
+
     private ILjsAstNode ParseExpression(StopTokenType stopTokenType = StopTokenType.None)
     {
-        // TODO unary operators
         // TODO stop expression advanced
 
         var operatorsStackStartingLn = _operatorsStack.Count;
@@ -239,6 +249,7 @@ public class LjsAstBuilder
 
         var prevOperatorType = OperatorType.None;
         var prevMemberType = ExpressionMemberType.None;
+        var prefixUnaryOperatorToken = default(LjsToken);
 
         while (_tokensReader.HasNextToken)
         {
@@ -257,6 +268,14 @@ public class LjsAstBuilder
                 }
 
                 var literalNode = GetLiteralNode(token);
+
+                if (prevMemberType == ExpressionMemberType.Operator &&
+                    prevOperatorType == OperatorType.Unary)
+                {
+                    literalNode = new LjsAstUnaryOperation(literalNode,
+                        GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                }
+                
                 _postfixExpression.Add(literalNode);
 
                 prevOperatorType = OperatorType.None;
@@ -271,7 +290,16 @@ public class LjsAstBuilder
                 }
 
                 var id = _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength);
-                var getVarNode = new LjsAstGetVar(id);
+                
+                ILjsAstNode getVarNode = new LjsAstGetVar(id);
+                
+                if (prevMemberType == ExpressionMemberType.Operator &&
+                    prevOperatorType == OperatorType.Unary)
+                {
+                    getVarNode = new LjsAstUnaryOperation(getVarNode,
+                        GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                }
+                
                 _postfixExpression.Add(getVarNode);
 
                 prevOperatorType = OperatorType.None;
@@ -280,7 +308,8 @@ public class LjsAstBuilder
 
             else if (tokenType == LjsTokenType.OpQuestionMark)
             {
-                if (_postfixExpression.Count - postfixExpressionStartingLn == 0)
+                if (_postfixExpression.Count - postfixExpressionStartingLn == 0 ||
+                    prevMemberType == ExpressionMemberType.Operator)
                 {
                     throw new LjsSyntaxError("unexpected token", tokenPosition);
                 }
@@ -296,6 +325,11 @@ public class LjsAstBuilder
 
             else if (tokenType == LjsTokenType.OpColon)
             {
+                if (prevMemberType == ExpressionMemberType.Operator)
+                {
+                    throw new LjsSyntaxError("unexpected token", tokenPosition);
+                }
+                
                 if ((stopTokenType & StopTokenType.Colon) != 0)
                 {
                     return BuildExpression(
@@ -316,6 +350,13 @@ public class LjsAstBuilder
                 {
                     throw new LjsSyntaxError("unclosed parentheses", tokenPosition);
                 }
+                
+                if (prevMemberType == ExpressionMemberType.Operator &&
+                    prevOperatorType == OperatorType.Unary)
+                {
+                    exp = new LjsAstUnaryOperation(exp,
+                        GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                }
 
                 _postfixExpression.Add(exp);
 
@@ -325,6 +366,11 @@ public class LjsAstBuilder
 
             else if (tokenType == LjsTokenType.OpParenthesesClose)
             {
+                if (prevMemberType == ExpressionMemberType.Operator)
+                {
+                    throw new LjsSyntaxError("unexpected token", tokenPosition);
+                }
+                
                 if ((stopTokenType & StopTokenType.ParenthesesClose) != 0)
                 {
                     return BuildExpression(
@@ -346,8 +392,20 @@ public class LjsAstBuilder
                     throw new LjsSyntaxError("unexpected token", tokenPosition);
                 }
 
+                if (operatorType == OperatorType.Polymorphic)
+                {
+                    operatorType = prevMemberType == ExpressionMemberType.Operand ? 
+                        OperatorType.Binary : OperatorType.Unary;
+                }
+
                 if (operatorType == OperatorType.Unary)
                 {
+                    if (prevMemberType == ExpressionMemberType.Operator &&
+                        prevOperatorType == OperatorType.Unary)
+                    {
+                        throw new LjsSyntaxError("unary operators sequence not supported", tokenPosition);
+                    }
+                    
                     // process postfix increment / decrement
                     if ((tokenType == LjsTokenType.OpIncrement || tokenType == LjsTokenType.OpDecrement) &&
                         prevMemberType == ExpressionMemberType.Operand)
@@ -366,12 +424,16 @@ public class LjsAstBuilder
                         var unaryOperation = new LjsAstUnaryOperation(operand, unaryOpType);
 
                         _postfixExpression[lastOperandIndex] = unaryOperation;
+                        
+                        prevMemberType = ExpressionMemberType.Operand;
+                        prevOperatorType = OperatorType.None;
                     }
                     else
                     {
-                        throw new NotImplementedException("unary operators");
+                        prefixUnaryOperatorToken = token;
+                        prevMemberType = ExpressionMemberType.Operator;
+                        prevOperatorType = OperatorType.Unary;
                     }
-                    // todo
                 }
                 else
                 {
@@ -384,11 +446,11 @@ public class LjsAstBuilder
 
                     var operatorNode = GetOrCreateOperatorNode(tokenType, token.Position);
                     _operatorsStack.Push(operatorNode);
+                    
+                    prevMemberType = ExpressionMemberType.Operator;
+                    prevOperatorType = operatorType;
                 }
-
-
-                prevMemberType = ExpressionMemberType.Operator;
-                prevOperatorType = operatorType;
+                
             }
             else
             {

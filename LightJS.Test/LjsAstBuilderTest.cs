@@ -22,6 +22,36 @@ public class LjsAstBuilderTest
                 new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PostfixIncrement), 
                 LjsTokenType.OpPlus));
     }
+    
+    [Test]
+    public void BuildPrefixIncrementExpression()
+    {
+        var astBuilder = new LjsAstBuilder("++a + --b");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PrefixIncrement), 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PrefixDecrement), 
+                LjsTokenType.OpPlus));
+    }
+    
+    [Test]
+    public void BuildUnaryMinusExpression()
+    {
+        var astBuilder = new LjsAstBuilder("a + -b");
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstGetVar("a"), 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.Minus), 
+                LjsTokenType.OpPlus));
+    }
 
     [Test]
     public void BuildSimpleExpression()
