@@ -1,0 +1,16 @@
+...
+
+0) save token positions for nodes
+
+0.1) multiline blocks of code
+0.2) if / else blocks
+0.3) while loops
+
+1) dot property access foo.bar.bazz
+2) square brackets property access foo["bar"]
+3) function call foo()
+
+3) array initialization literal [a,b,c]
+4) object initialization literal {"a":1,"b":2}
+
+5) function declaration : function(a,b,c) {  }
