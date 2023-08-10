@@ -19,6 +19,8 @@ public enum LjsTokenType
     Null,
     Undefined,
     
+    // binary operators ->
+    
     OpGreater,
     OpLess,
     OpAssign,
@@ -28,6 +30,19 @@ public enum LjsTokenType
     OpDiv,
     OpBitAnd,
     OpBitOr,
+    
+    OpPlusAssign,
+    OpMinusAssign,
+    OpEquals,
+    OpEqualsStrict,
+    OpGreaterOrEqual,
+    OpLessOrEqual,
+    OpNotEqual,
+    OpNotEqualStrict,
+    OpLogicalAnd,
+    OpLogicalOr,
+    
+    // end of binary operators;
     
     OpNegate,
     OpQuestionMark,
@@ -46,17 +61,6 @@ public enum LjsTokenType
     
     OpIncrement,
     OpDecrement,
-    OpPlusAssign,
-    OpMinusAssign,
-    OpEquals,
-    OpEqualsStrict,
-    OpGreaterOrEqual,
-    OpLessOrEqual,
-    OpNotEqual,
-    OpNotEqualStrict,
-    OpLogicalAnd,
-    OpLogicalOr,
-
     
     This,
     

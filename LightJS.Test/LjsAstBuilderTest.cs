@@ -20,7 +20,7 @@ public class LjsAstBuilderTest
             new LjsAstBinaryOperation(
                 new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PostfixIncrement), 
                 new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PostfixIncrement), 
-                LjsTokenType.OpPlus));
+                LjsAstBinaryOperationType.Plus));
     }
     
     [Test]
@@ -35,7 +35,7 @@ public class LjsAstBuilderTest
             new LjsAstBinaryOperation(
                 new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PrefixIncrement), 
                 new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PrefixDecrement), 
-                LjsTokenType.OpPlus));
+                LjsAstBinaryOperationType.Plus));
     }
     
     [Test]
@@ -50,7 +50,7 @@ public class LjsAstBuilderTest
             new LjsAstBinaryOperation(
                 new LjsAstGetVar("a"), 
                 new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.Minus), 
-                LjsTokenType.OpPlus));
+                LjsAstBinaryOperationType.Plus));
     }
 
     [Test]
@@ -65,7 +65,7 @@ public class LjsAstBuilderTest
             new LjsAstBinaryOperation(
                 new LjsAstGetVar("a"), 
                 new LjsAstGetVar("b"), 
-                LjsTokenType.OpPlus));
+                LjsAstBinaryOperationType.Plus));
     }
 
     [Test]
@@ -120,9 +120,9 @@ public class LjsAstBuilderTest
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstBinaryOperation(
-                new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsTokenType.OpPlus),
-                new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsTokenType.OpPlus),
-                LjsTokenType.OpMinus));
+                new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
+                new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsAstBinaryOperationType.Plus),
+                LjsAstBinaryOperationType.Minus));
     }
 
     [Test]
@@ -155,10 +155,10 @@ public class LjsAstBuilderTest
         var expectedResult = new LjsAstBinaryOperation(
             new LjsAstBinaryOperation(
                 new LjsAstGetVar("a"),
-                new LjsAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsTokenType.OpDiv),
-                LjsTokenType.OpPlus),
+                new LjsAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsAstBinaryOperationType.Div),
+                LjsAstBinaryOperationType.Plus),
             new LjsAstGetVar("d"),
-            LjsTokenType.OpPlus);
+            LjsAstBinaryOperationType.Plus);
 
         rootNode.Should().BeEquivalentTo(expectedResult);
     }
@@ -172,9 +172,9 @@ public class LjsAstBuilderTest
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
         
         var expectedResult = new LjsAstBinaryOperation(
-            new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsTokenType.OpPlus),
-            new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsTokenType.OpPlus),
-            LjsTokenType.OpNotEqual);
+            new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
+            new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsAstBinaryOperationType.Plus),
+            LjsAstBinaryOperationType.NotEqual);
 
         rootNode.Should().BeEquivalentTo(expectedResult);
     }

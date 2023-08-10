@@ -1,16 +1,15 @@
-using LightJS.Tokenizer;
-
 namespace LightJS.Ast;
 
 public class LjsAstBinaryOperation : ILjsAstNode
 {
     public ILjsAstNode LeftOperand { get; }
     public ILjsAstNode RightOperand { get; }
-    public LjsTokenType OperatorType { get; }
+    public LjsAstBinaryOperationType OperatorType { get; }
     
-    
-    // todo replace LjsTokenType with LjsAstBinaryOperationType
-    public LjsAstBinaryOperation(ILjsAstNode leftOperand, ILjsAstNode rightOperand, LjsTokenType operatorType)
+    public LjsAstBinaryOperation(
+        ILjsAstNode leftOperand, 
+        ILjsAstNode rightOperand, 
+        LjsAstBinaryOperationType operatorType)
     {
         LeftOperand = leftOperand;
         RightOperand = rightOperand;

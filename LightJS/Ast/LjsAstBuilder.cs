@@ -130,7 +130,7 @@ public class LjsAstBuilder
         { LjsTokenType.OpDecrement, 1000},
     };
 
-    private OperatorNode GetOrCreateOperatorNode(LjsTokenType tokenType, LjsTokenPosition tokenPosition)
+    private OperatorNode GetOrCreateBinaryOperatorNode(LjsTokenType tokenType, LjsTokenPosition tokenPosition)
     {
         if (_opNodesPool.Count > 0)
         {
@@ -147,6 +147,33 @@ public class LjsAstBuilder
             TokenPosition = tokenPosition
         };
     }
+
+    private static LjsAstBinaryOperationType GetBinaryOperationType(LjsTokenType tokenType) => tokenType switch
+    {
+        LjsTokenType.OpPlus => LjsAstBinaryOperationType.Plus,
+        LjsTokenType.OpMinus => LjsAstBinaryOperationType.Minus,
+        
+        LjsTokenType.OpGreater => LjsAstBinaryOperationType.Greater,
+        LjsTokenType.OpLess => LjsAstBinaryOperationType.Less,
+        LjsTokenType.OpAssign => LjsAstBinaryOperationType.Assign,
+        LjsTokenType.OpMultiply => LjsAstBinaryOperationType.Multiply,
+        LjsTokenType.OpDiv => LjsAstBinaryOperationType.Div,
+        LjsTokenType.OpBitAnd => LjsAstBinaryOperationType.BitAnd,
+        LjsTokenType.OpBitOr => LjsAstBinaryOperationType.BitOr,
+            
+        LjsTokenType.OpPlusAssign => LjsAstBinaryOperationType.PlusAssign,
+        LjsTokenType.OpMinusAssign => LjsAstBinaryOperationType.MinusAssign,
+        LjsTokenType.OpEquals => LjsAstBinaryOperationType.Equals,
+        LjsTokenType.OpEqualsStrict => LjsAstBinaryOperationType.EqualsStrict,
+        LjsTokenType.OpGreaterOrEqual => LjsAstBinaryOperationType.GreaterOrEqual,
+        LjsTokenType.OpLessOrEqual => LjsAstBinaryOperationType.LessOrEqual,
+        LjsTokenType.OpNotEqual => LjsAstBinaryOperationType.NotEqual,
+        LjsTokenType.OpNotEqualStrict => LjsAstBinaryOperationType.NotEqualStrict,
+        LjsTokenType.OpLogicalAnd => LjsAstBinaryOperationType.LogicalAnd,
+        LjsTokenType.OpLogicalOr => LjsAstBinaryOperationType.LogicalOr,
+        
+        _ => throw new Exception($"unsupported binary operator token {tokenType}")
+    };
 
     private void ReleaseOperatorNode(OperatorNode operatorNode)
     {
@@ -444,7 +471,7 @@ public class LjsAstBuilder
                         _postfixExpression.Add(_operatorsStack.Pop());
 
 
-                    var operatorNode = GetOrCreateOperatorNode(tokenType, token.Position);
+                    var operatorNode = GetOrCreateBinaryOperatorNode(tokenType, token.Position);
                     _operatorsStack.Push(operatorNode);
                     
                     prevMemberType = ExpressionMemberType.Operator;
@@ -492,7 +519,8 @@ public class LjsAstBuilder
                 var rightOperand = _locals.Pop();
                 var leftOperand = _locals.Pop();
                 
-                _locals.Push(new LjsAstBinaryOperation(leftOperand, rightOperand, operatorNode.OperatorType));
+                _locals.Push(new LjsAstBinaryOperation(
+                    leftOperand, rightOperand, GetBinaryOperationType(operatorNode.OperatorType)));
                 
                 ReleaseOperatorNode(operatorNode);
             }
