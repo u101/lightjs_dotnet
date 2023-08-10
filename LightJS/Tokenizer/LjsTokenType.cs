@@ -4,6 +4,9 @@ public enum LjsTokenType
 {
     None,
     
+    True,
+    False,
+    
     IntDecimal,
     IntHex,
     IntBinary,
@@ -12,6 +15,9 @@ public enum LjsTokenType
     FloatE,
     
     StringLiteral,
+    
+    Null,
+    Undefined,
     
     OpGreater,
     OpLess,
@@ -51,12 +57,8 @@ public enum LjsTokenType
     OpLogicalAnd,
     OpLogicalOr,
 
-    Null,
-    Undefined,
-    This,
     
-    True,
-    False,
+    This,
     
     Var,
     Const,

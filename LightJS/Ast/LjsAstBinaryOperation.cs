@@ -9,7 +9,7 @@ public class LjsAstBinaryOperation : ILjsAstNode
     public LjsTokenType OperatorType { get; }
     
     
-
+    // todo replace LjsTokenType with LjsAstBinaryOperationType
     public LjsAstBinaryOperation(ILjsAstNode leftOperand, ILjsAstNode rightOperand, LjsTokenType operatorType)
     {
         LeftOperand = leftOperand;
