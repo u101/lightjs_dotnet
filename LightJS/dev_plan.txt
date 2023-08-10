@@ -1,6 +1,6 @@
 ...
 
-0) save token positions for nodes
+0) save token positions for nodes [DONE]
 
 0.1) multiline blocks of code [DONE]
 0.15) var/prop assignment node

@@ -215,7 +215,9 @@ public class LjsAstBuilder
         // semi colon or new expression on a new line
         NextExpression = 1 << 0,
         ParenthesesClose = 1 << 1,
-        Colon = 1 << 2,
+        SquareBracketsClose = 1 << 2,
+        Colon = 1 << 3,
+        Comma = 1 << 4
     }
     
     private enum ExpressionMemberType
@@ -360,23 +362,26 @@ public class LjsAstBuilder
                 {
                     throw new LjsSyntaxError("unexpected token", tokenPosition);
                 }
+                
+                // 1) simple var here : x
+                // 2) func call : x(..)
+                // 3) prop access : x.foo
+                // 4) square brackets prop access : x[..]
+                // 5) var assign : x = 0
 
-                var id = _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength);
-                
-                ILjsAstNode getVarNode = new LjsAstGetVar(id);
-                
-                _tokenPositionsMap[getVarNode] = tokenPosition;
+                var node = ParseIdentifier(
+                    stopTokenType, prevMemberType == ExpressionMemberType.None);
                 
                 if (prevMemberType == ExpressionMemberType.Operator &&
                     prevOperatorType == OperatorType.Unary)
                 {
-                    getVarNode = new LjsAstUnaryOperation(getVarNode,
+                    node = new LjsAstUnaryOperation(node,
                         GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
                     
-                    _tokenPositionsMap[getVarNode] = tokenPosition;
+                    _tokenPositionsMap[node] = tokenPosition;
                 }
                 
-                _postfixExpression.Add(getVarNode);
+                _postfixExpression.Add(node);
 
                 prevOperatorType = OperatorType.None;
                 prevMemberType = ExpressionMemberType.Operand;
@@ -411,7 +416,22 @@ public class LjsAstBuilder
                     break;
                 }
 
-                throw new LjsSyntaxError("unexpected colon", tokenPosition);
+                throw new LjsSyntaxError("unexpected ':'", tokenPosition);
+            }
+            
+            else if (tokenType == LjsTokenType.OpComma)
+            {
+                if (prevMemberType == ExpressionMemberType.Operator)
+                {
+                    throw new LjsSyntaxError("unexpected token", tokenPosition);
+                }
+                
+                if ((stopTokenType & StopTokenType.Comma) != 0)
+                {
+                    break;
+                }
+
+                throw new LjsSyntaxError("unexpected ','", tokenPosition);
             }
 
             else if (tokenType == LjsTokenType.OpParenthesesOpen)
@@ -455,6 +475,21 @@ public class LjsAstBuilder
                 }
 
                 throw new LjsSyntaxError("unexpected parentheses", tokenPosition);
+            }
+            
+            else if (tokenType == LjsTokenType.OpSquareBracketsClose)
+            {
+                if (prevMemberType == ExpressionMemberType.Operator)
+                {
+                    throw new LjsSyntaxError("unexpected token", tokenPosition);
+                }
+                
+                if ((stopTokenType & StopTokenType.SquareBracketsClose) != 0)
+                {
+                    break;
+                }
+
+                throw new LjsSyntaxError("unexpected square bracket", tokenPosition);
             }
 
             else if (OperatorsPriorityMap.ContainsKey(tokenType))
@@ -538,6 +573,328 @@ public class LjsAstBuilder
         }
 
         return BuildExpression(operatorsStackStartingLn, postfixExpressionStartingLn);
+    }
+
+    private static LjsAstAssignMode GetAssignMode(LjsTokenType tokenType) => tokenType switch
+    {
+        LjsTokenType.OpAssign => LjsAstAssignMode.Normal,
+        LjsTokenType.OpPlusAssign => LjsAstAssignMode.PlusAssign,
+        LjsTokenType.OpMinusAssign => LjsAstAssignMode.MinusAssign,
+        _ => throw new Exception($"unsupported token type {tokenType}")
+    };
+
+    private ILjsAstNode ParseDotPropertyOperation(
+        ILjsAstNode propertySource, 
+        StopTokenType stopTokenType, 
+        bool assignmentOperationAllowed)
+    {
+        if (!_tokensReader.HasNextToken || _tokensReader.NextToken.TokenType != LjsTokenType.Identifier)
+        {
+            throw new LjsSyntaxError("expected identifier", _tokensReader.CurrentToken.Position);
+        }
+        
+        _tokensReader.MoveForward();
+        
+        var token = _tokensReader.CurrentToken;
+        var tokenPosition = token.Position;
+
+        var id = _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength);
+        
+        if (_tokensReader.HasNextToken)
+        {
+            var nextToken = _tokensReader.NextToken;
+
+            switch (nextToken.TokenType)
+            {
+                case LjsTokenType.OpAssign:
+                case LjsTokenType.OpPlusAssign:
+                case LjsTokenType.OpMinusAssign:
+
+                    if (!assignmentOperationAllowed)
+                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+
+                    _tokensReader.MoveForward();
+                    
+                    var exp = ParseExpression(stopTokenType);
+
+                    var setVar = new LjsAstSetNamedProperty(
+                        id, propertySource, exp, GetAssignMode(nextToken.TokenType));
+                        
+                    _tokenPositionsMap[setVar] = nextToken.Position;
+
+                    return setVar;
+            
+                case LjsTokenType.OpDot:
+                
+                    _tokensReader.MoveForward();
+                
+                    var varDot = new LjsAstGetNamedProperty(id, propertySource);
+
+                    _tokenPositionsMap[varDot] = tokenPosition;
+
+                    return ParseDotPropertyOperation(varDot, stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpParenthesesOpen:
+                
+                    _tokensReader.MoveForward();
+                
+                    var getFuncNode = new LjsAstGetNamedProperty(id, propertySource);
+
+                    _tokenPositionsMap[getFuncNode] = tokenPosition;
+
+                    return ParseFunctionCall(
+                        getFuncNode, tokenPosition, 
+                        stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpSquareBracketsOpen:
+                
+                    _tokensReader.MoveForward();
+
+                    var n = new LjsAstGetNamedProperty(id, propertySource);
+                
+                    _tokenPositionsMap[n] = tokenPosition;
+
+                    return ParseSquareBracketsPropertyOperation(n, stopTokenType, assignmentOperationAllowed);
+            }
+        }
+        
+        var getProp = new LjsAstGetNamedProperty(id, propertySource);
+                
+        _tokenPositionsMap[getProp] = tokenPosition;
+
+        return getProp;
+    }
+
+    private ILjsAstNode ParseSquareBracketsPropertyOperation(
+        ILjsAstNode propertySource, 
+        StopTokenType stopTokenType, 
+        bool assignmentOperationAllowed)
+    {
+        if (!_tokensReader.HasNextToken)
+        {
+            throw new LjsSyntaxError("expected square brackets close", _tokensReader.CurrentToken.Position);
+        }
+
+        var tokenPosition = _tokensReader.CurrentToken.Position;
+        
+        var getPropNameExpression = ParseExpression(StopTokenType.SquareBracketsClose);
+        
+        _tokenPositionsMap[getPropNameExpression] = tokenPosition;
+
+        if (_tokensReader.CurrentToken.TokenType != LjsTokenType.OpSquareBracketsClose)
+        {
+            throw new LjsSyntaxError("expected square brackets close", _tokensReader.CurrentToken.Position);
+        }
+        
+        _tokensReader.MoveForward();
+
+        if (_tokensReader.HasNextToken)
+        {
+            var nextToken = _tokensReader.NextToken;
+
+            switch (nextToken.TokenType)
+            {
+                case LjsTokenType.OpAssign:
+                case LjsTokenType.OpPlusAssign:
+                case LjsTokenType.OpMinusAssign:
+
+                    if (!assignmentOperationAllowed)
+                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+
+                    _tokensReader.MoveForward();
+                    
+                    var exp = ParseExpression(stopTokenType);
+
+                    var setVar = new LjsAstSetProperty(
+                        getPropNameExpression, 
+                        propertySource, 
+                        exp, 
+                        GetAssignMode(nextToken.TokenType));
+                        
+                    _tokenPositionsMap[setVar] = nextToken.Position;
+
+                    return setVar;
+            
+                case LjsTokenType.OpDot:
+                
+                    _tokensReader.MoveForward();
+                
+                    var varDot = new LjsAstGetProperty(getPropNameExpression, propertySource);
+
+                    _tokenPositionsMap[varDot] = tokenPosition;
+
+                    return ParseDotPropertyOperation(varDot, stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpParenthesesOpen:
+                
+                    _tokensReader.MoveForward();
+                
+                    var getFuncNode = new LjsAstGetProperty(getPropNameExpression, propertySource);
+
+                    _tokenPositionsMap[getFuncNode] = tokenPosition;
+
+                    return ParseFunctionCall(
+                        getFuncNode, _tokensReader.CurrentToken.Position, 
+                        stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpSquareBracketsOpen:
+                
+                    _tokensReader.MoveForward();
+
+                    var n = new LjsAstGetProperty(getPropNameExpression, propertySource);
+                
+                    _tokenPositionsMap[n] = tokenPosition;
+
+                    return ParseSquareBracketsPropertyOperation(n, stopTokenType, assignmentOperationAllowed);
+            }
+        }
+        
+        var getProp = new LjsAstGetProperty(getPropNameExpression, propertySource);
+                
+        _tokenPositionsMap[getProp] = tokenPosition;
+
+        return getProp;
+    }
+
+    private ILjsAstNode ParseFunctionCall(
+        ILjsAstNode functionGetter, LjsTokenPosition functionTokenPosition, 
+        StopTokenType stopTokenType, bool assignmentOperationAllowed)
+    {
+        if (!_tokensReader.HasNextToken)
+        {
+            throw new LjsSyntaxError("expected parentheses close", _tokensReader.CurrentToken.Position);
+        }
+
+        var funcCall = new LjsAstFunctionCall(functionGetter);
+        
+        _tokenPositionsMap[funcCall] = functionTokenPosition;
+
+        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
+        {
+            while (_tokensReader.CurrentToken.TokenType != LjsTokenType.OpParenthesesClose)
+            {
+                var argumentExpression = ParseExpression(
+                    StopTokenType.Comma | StopTokenType.ParenthesesClose);
+            
+                funcCall.Arguments.Add(argumentExpression);
+            }
+        }
+        else
+        {
+            _tokensReader.MoveForward();
+        }
+        
+        if (_tokensReader.HasNextToken)
+        {
+            var nextToken = _tokensReader.NextToken;
+
+            switch (nextToken.TokenType)
+            {
+                case LjsTokenType.OpAssign:
+                case LjsTokenType.OpPlusAssign:
+                case LjsTokenType.OpMinusAssign:
+                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+            
+                case LjsTokenType.OpDot:
+                
+                    _tokensReader.MoveForward();
+
+                    return ParseDotPropertyOperation(funcCall, stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpParenthesesOpen:
+                
+                    _tokensReader.MoveForward();
+
+                    return ParseFunctionCall(
+                        funcCall, _tokensReader.CurrentToken.Position, 
+                        stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpSquareBracketsOpen:
+                
+                    _tokensReader.MoveForward();
+
+                    return ParseSquareBracketsPropertyOperation(
+                        funcCall, stopTokenType, assignmentOperationAllowed);
+            }
+        }
+
+        return funcCall;
+    }
+
+    private ILjsAstNode ParseIdentifier(StopTokenType stopTokenType, bool assignmentOperationAllowed)
+    {
+        var token = _tokensReader.CurrentToken;
+        var tokenPosition = token.Position;
+
+        var id = _sourceCodeString.Substring(tokenPosition.CharIndex, token.StringLength);
+
+        // 1) simple var here : x
+        // 2) func call : x(..)
+        // 3) prop access : x.foo
+        // 4) square brackets prop access : x[..]
+        // 5) var assign : x = 0
+
+        if (_tokensReader.HasNextToken)
+        {
+            var nextToken = _tokensReader.NextToken;
+
+            switch (nextToken.TokenType)
+            {
+                case LjsTokenType.OpAssign:
+                case LjsTokenType.OpPlusAssign:
+                case LjsTokenType.OpMinusAssign:
+
+                    if (!assignmentOperationAllowed)
+                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+
+                    _tokensReader.MoveForward();
+                    
+                    var exp = ParseExpression(stopTokenType);
+
+                    var setVar = new LjsAstSetVar(id, exp, GetAssignMode(nextToken.TokenType));
+                        
+                    _tokenPositionsMap[setVar] = nextToken.Position;
+
+                    return setVar;
+            
+                case LjsTokenType.OpDot:
+                
+                    _tokensReader.MoveForward();
+                
+                    var varDor = new LjsAstGetVar(id);
+
+                    _tokenPositionsMap[varDor] = tokenPosition;
+
+                    return ParseDotPropertyOperation(varDor, stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpParenthesesOpen:
+                
+                    _tokensReader.MoveForward();
+                
+                    var getFuncNode = new LjsAstGetVar(id);
+
+                    _tokenPositionsMap[getFuncNode] = tokenPosition;
+
+                    return ParseFunctionCall(
+                        getFuncNode, tokenPosition, stopTokenType, assignmentOperationAllowed);
+            
+                case LjsTokenType.OpSquareBracketsOpen:
+                
+                    _tokensReader.MoveForward();
+
+                    var n = new LjsAstGetVar(id);
+                
+                    _tokenPositionsMap[n] = tokenPosition;
+
+                    return ParseSquareBracketsPropertyOperation(n, stopTokenType, assignmentOperationAllowed);
+            }
+        }
+        
+        var getVarNode = new LjsAstGetVar(id);
+
+        _tokenPositionsMap[getVarNode] = tokenPosition;
+
+        return getVarNode;
     }
 
     private int GetLastOperandIndex()
