@@ -6,6 +6,13 @@ public class LjsAstSequence : ILjsAstNode
 
     public IEnumerable<ILjsAstNode> ChildNodes => _nodes;
     public bool HasChildNodes => _nodes.Count != 0;
+    
+    public LjsAstSequence() {}
+
+    public LjsAstSequence(params ILjsAstNode[] nodes)
+    {
+        _nodes.AddRange(nodes);
+    }
 
     public void AddNode(ILjsAstNode node)
     {

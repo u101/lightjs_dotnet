@@ -48,7 +48,19 @@ public class LjsAstBuilder
             throw new Exception("no tokens");
         }
         
-        return ParseExpression();
+        var firstExpression = ParseExpression(StopTokenType.NextExpression);
+
+        if (!_tokensReader.HasNextToken) return firstExpression;
+
+        var sq = new LjsAstSequence();
+        sq.AddNode(firstExpression);
+
+        while (_tokensReader.HasNextToken)
+        {
+            sq.AddNode(ParseExpression(StopTokenType.NextExpression));
+        }
+
+        return sq;
     }
 
     private ILjsAstNode GetLiteralNode(LjsToken token)
@@ -193,9 +205,11 @@ public class LjsAstBuilder
     [Flags]
     private enum StopTokenType
     {
-        None,
-        ParenthesesClose,
-        Colon
+        None = 0,
+        // semi colon or new expression on a new line
+        NextExpression = 1 << 0,
+        ParenthesesClose = 1 << 1,
+        Colon = 1 << 2,
     }
     
     private enum ExpressionMemberType
@@ -269,7 +283,6 @@ public class LjsAstBuilder
 
     private ILjsAstNode ParseExpression(StopTokenType stopTokenType = StopTokenType.None)
     {
-        // TODO stop expression advanced
 
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
@@ -280,12 +293,34 @@ public class LjsAstBuilder
 
         while (_tokensReader.HasNextToken)
         {
+            
+            if ((stopTokenType & StopTokenType.NextExpression) != 0 && 
+                prevMemberType != ExpressionMemberType.None)
+            {
+                var nextToken = _tokensReader.NextToken;
+                var nextTokenType = nextToken.TokenType;
+                
+                if (nextTokenType == LjsTokenType.OpSemicolon)
+                {
+                    _tokensReader.MoveForward();
+                    break;
+                }
+
+                var nextOpType = GetOperatorType(nextTokenType);
+                
+                if (prevMemberType == ExpressionMemberType.Operand &&
+                    _tokensReader.CurrentToken.Position.Line < nextToken.Position.Line &&
+                    (nextOpType == OperatorType.None || nextOpType == OperatorType.Unary))
+                {
+                    break;
+                }
+            }
+            
             _tokensReader.MoveForward();
 
             var token = _tokensReader.CurrentToken;
             var tokenType = token.TokenType;
             var tokenPosition = token.Position;
-
 
             if (IsLiteral(tokenType))
             {
@@ -400,8 +435,7 @@ public class LjsAstBuilder
                 
                 if ((stopTokenType & StopTokenType.ParenthesesClose) != 0)
                 {
-                    return BuildExpression(
-                        operatorsStackStartingLn, postfixExpressionStartingLn);
+                    break;
                 }
 
                 throw new LjsSyntaxError("unexpected parentheses", tokenPosition);
@@ -464,7 +498,7 @@ public class LjsAstBuilder
                 }
                 else
                 {
-                    //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
+                    
                     while (_operatorsStack.Count > operatorsStackStartingLn &&
                            (_operatorsPriorityMap[_operatorsStack.Peek().OperatorType] >=
                             _operatorsPriorityMap[tokenType]))
@@ -481,7 +515,7 @@ public class LjsAstBuilder
             }
             else
             {
-                throw new Exception("unexpected token");
+                throw new LjsSyntaxError($"unexpected token {tokenType}", tokenPosition);
             }
         }
 

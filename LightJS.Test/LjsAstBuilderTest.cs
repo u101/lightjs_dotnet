@@ -1,6 +1,5 @@
 using FluentAssertions;
 using LightJS.Ast;
-using LightJS.Tokenizer;
 
 namespace LightJS.Test;
 
@@ -8,6 +7,28 @@ namespace LightJS.Test;
 public class LjsAstBuilderTest
 {
 
+    [Test]
+    public void BuildMultilineExpressionWithSemicolon()
+    {
+        BuildMultilineExpressionWithSemicolon("a + b; \n ++x * y");
+        BuildMultilineExpressionWithSemicolon("a + b;++x * y");
+        BuildMultilineExpressionWithSemicolon("a + b\n++x * y");
+    }
+    
+    private static void BuildMultilineExpressionWithSemicolon(string expression)
+    {
+        var astBuilder = new LjsAstBuilder(expression);
+        var rootNode = astBuilder.Build();
+        
+        rootNode.Should().BeOfType<LjsAstSequence>();
+
+        rootNode.Should().BeEquivalentTo(new LjsAstSequence(
+            new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
+            new LjsAstBinaryOperation(new LjsAstUnaryOperation(
+                new LjsAstGetVar("x"), LjsAstUnaryOperationType.PrefixIncrement), new LjsAstGetVar("y"), LjsAstBinaryOperationType.Multiply)
+            ));
+    }
+    
     [Test]
     public void BuildPostfixIncrementExpression()
     {
