@@ -12,10 +12,22 @@ public class LjsSyntaxError : Exception
         this(errorMessage, tokenPosition.Line, tokenPosition.Column)
     { }
     
+    public LjsSyntaxError(LjsTokenPosition tokenPosition):
+        this(tokenPosition.Line, tokenPosition.Column)
+    { }
+    
     public LjsSyntaxError(string errorMessage, int line, int col):
         base($"syntax error at line:{line} col:{col}. {errorMessage}")
     {
         ErrorMessage = errorMessage;
+        Line = line;
+        Col = col;
+    }
+    
+    public LjsSyntaxError(int line, int col):
+        base($"syntax error at line:{line} col:{col}.")
+    {
+        ErrorMessage = string.Empty;
         Line = line;
         Col = col;
     }

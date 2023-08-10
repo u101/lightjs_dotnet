@@ -345,15 +345,47 @@ public class LjsAstBuilder
                         // two binary operators in the line
                         throw new LjsSyntaxError("unexpected token", tokenPosition);
                     }
+                    
+                    if (operatorType == OperatorType.Unary)
+                    {
+                        // process postfix increment / decrement
+                        if ((tokenType == LjsTokenType.OpIncrement || tokenType == LjsTokenType.OpDecrement) && 
+                            prevMemberType == ExpressionMemberType.Operand)
+                        {
+                            var lastOperandIndex = GetLastOperandIndex();
 
-                    //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
-                    while (_operatorsStack.Count > operatorsStackStartingLn && 
-                           (_operatorsPriorityMap[_operatorsStack.Peek().OperatorType] >= _operatorsPriorityMap[tokenType]))
-                        _postfixExpression.Add(_operatorsStack.Pop());
+                            if (lastOperandIndex == -1) 
+                                throw new Exception("last operand not found");
+
+                            var operand = _postfixExpression[lastOperandIndex];
+                            
+                            var unaryOpType = tokenType == LjsTokenType.OpIncrement
+                                ? LjsAstUnaryOperationType.PostfixIncrement
+                                : LjsAstUnaryOperationType.PostfixDecrement;
+
+                            var unaryOperation = new LjsAstUnaryOperation(operand, unaryOpType);
+                            
+                            _postfixExpression[lastOperandIndex] = unaryOperation;
+                        }
+                        else
+                        {
+                            throw new NotImplementedException("unary operators");
+                        }
+                        // todo
+                    }
+                    else
+                    {
+                        //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
+                        while (_operatorsStack.Count > operatorsStackStartingLn && 
+                               (_operatorsPriorityMap[_operatorsStack.Peek().OperatorType] >= _operatorsPriorityMap[tokenType]))
+                            _postfixExpression.Add(_operatorsStack.Pop());
                 
                     
-                    var operatorNode = GetOrCreateOperatorNode(tokenType, token.Position);
-                    _operatorsStack.Push(operatorNode);
+                        var operatorNode = GetOrCreateOperatorNode(tokenType, token.Position);
+                        _operatorsStack.Push(operatorNode);
+                    }
+
+                    
 
                     prevMemberType = ExpressionMemberType.Operator;
                     prevOperatorType = operatorType;
@@ -365,6 +397,17 @@ public class LjsAstBuilder
         }
 
         return BuildExpression(operatorsStackStartingLn, postfixExpressionStartingLn);
+    }
+
+    private int GetLastOperandIndex()
+    {
+        for (var i = _postfixExpression.Count - 1; i >= 0; --i)
+        {
+            var n = _postfixExpression[i];
+            if (n is not OperatorNode) return i;
+        }
+
+        return -1;
     }
 
     private ILjsAstNode BuildExpression(int operatorsStackStartingLn, int postfixExpressionStartingLn)

@@ -9,9 +9,18 @@ public class LjsAstBuilderTest
 {
 
     [Test]
-    public void BuildSimpleUnaryExpression()
+    public void BuildPostfixIncrementExpression()
     {
+        var astBuilder = new LjsAstBuilder("a++ + b--");
+        var rootNode = astBuilder.Build();
         
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PostfixIncrement), 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PostfixIncrement), 
+                LjsTokenType.OpPlus));
     }
 
     [Test]
