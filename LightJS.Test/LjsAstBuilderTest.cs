@@ -7,6 +7,59 @@ namespace LightJS.Test;
 [TestFixture]
 public class LjsAstBuilderTest
 {
+
+    [Test]
+    public void SimpleVarAssignTest()
+    {
+        var astBuilder = new LjsAstBuilder("a = b + c");
+        var model = astBuilder.Build();
+
+        var rootNode = model.RootNode;
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetVar("a",
+                new LjsAstBinaryOperation(
+                    new LjsAstGetVar("b"),
+                    new LjsAstGetVar("c"),
+                    LjsAstBinaryOperationType.Plus),
+                LjsAstAssignMode.Normal));
+    }
+
+    [Test]
+    public void SimplePropertyAssignTest()
+    {
+        var astBuilder = new LjsAstBuilder("a.foo = b + c");
+        var model = astBuilder.Build();
+
+        var rootNode = model.RootNode;
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetNamedProperty("foo", new LjsAstGetVar("a"),
+                new LjsAstBinaryOperation(
+                    new LjsAstGetVar("b"),
+                    new LjsAstGetVar("c"),
+                    LjsAstBinaryOperationType.Plus),
+                LjsAstAssignMode.Normal));
+    }
+
+    [Test]
+    public void SimpleSquareBracketsPropertyAssignTest()
+    {
+        var astBuilder = new LjsAstBuilder("a[0] = b + c");
+        var model = astBuilder.Build();
+
+        var rootNode = model.RootNode;
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetProperty(new LjsAstLiteral<int>(0), new LjsAstGetVar("a"),
+                new LjsAstBinaryOperation(
+                    new LjsAstGetVar("b"),
+                    new LjsAstGetVar("c"),
+                    LjsAstBinaryOperationType.Plus),
+                LjsAstAssignMode.Normal));
+    }
+    
+    
     
     [Test]
     public void SimpleNodesPositionsInSourceCodeCheck()

@@ -676,7 +676,7 @@ public class LjsAstBuilder
         }
 
         var tokenPosition = _tokensReader.CurrentToken.Position;
-        
+
         var getPropNameExpression = ParseExpression(StopTokenType.SquareBracketsClose);
         
         _tokenPositionsMap[getPropNameExpression] = tokenPosition;
@@ -685,8 +685,6 @@ public class LjsAstBuilder
         {
             throw new LjsSyntaxError("expected square brackets close", _tokensReader.CurrentToken.Position);
         }
-        
-        _tokensReader.MoveForward();
 
         if (_tokensReader.HasNextToken)
         {
