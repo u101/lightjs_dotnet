@@ -28,6 +28,20 @@ public static class LjsAstBuilderUtils
         
         _ => throw new Exception($"unsupported binary operator token {tokenType}")
     };
+    
+    /// <summary>
+    /// for prefix operators only
+    /// </summary>
+    public static LjsAstUnaryOperationType GetUnaryOperationType(LjsTokenType tokenType) => tokenType switch
+    {
+        LjsTokenType.OpPlus => LjsAstUnaryOperationType.Plus,
+        LjsTokenType.OpMinus => LjsAstUnaryOperationType.Minus,
+            
+        LjsTokenType.OpNegate => LjsAstUnaryOperationType.Negate,
+        LjsTokenType.OpIncrement => LjsAstUnaryOperationType.PrefixIncrement,
+        LjsTokenType.OpDecrement => LjsAstUnaryOperationType.PrefixDecrement,
+        _ => throw new Exception($"unsupported unary operation token type {tokenType}")
+    };
 
     public static ILjsAstNode CreateLiteralNode(LjsToken token, string sourceCodeString)
     {

@@ -203,17 +203,6 @@ public class LjsAstBuilder
             _ => OperatorType.None
         };
 
-    private static LjsAstUnaryOperationType GetUnaryOperationType(LjsTokenType tokenType) => tokenType switch
-    {
-        LjsTokenType.OpPlus => LjsAstUnaryOperationType.Plus,
-        LjsTokenType.OpMinus => LjsAstUnaryOperationType.Minus,
-            
-        LjsTokenType.OpNegate => LjsAstUnaryOperationType.Negate,
-        LjsTokenType.OpIncrement => LjsAstUnaryOperationType.PrefixIncrement,
-        LjsTokenType.OpDecrement => LjsAstUnaryOperationType.PrefixDecrement,
-        _ => throw new Exception($"unsupported unary operation token type {tokenType}")
-    };
-
     private ILjsAstNode ParseExpression(StopTokenType stopTokenType = StopTokenType.None)
     {
 
@@ -270,7 +259,7 @@ public class LjsAstBuilder
                     prevOperatorType == OperatorType.Unary)
                 {
                     literalNode = new LjsAstUnaryOperation(literalNode,
-                        GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                        LjsAstBuilderUtils.GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
                     
                     _tokenPositionsMap[literalNode] = tokenPosition;
                 }
@@ -301,7 +290,7 @@ public class LjsAstBuilder
                     prevOperatorType == OperatorType.Unary)
                 {
                     node = new LjsAstUnaryOperation(node,
-                        GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                        LjsAstBuilderUtils.GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
                     
                     _tokenPositionsMap[node] = tokenPosition;
                 }
@@ -377,7 +366,7 @@ public class LjsAstBuilder
                     prevOperatorType == OperatorType.Unary)
                 {
                     exp = new LjsAstUnaryOperation(exp,
-                        GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                        LjsAstBuilderUtils.GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
                     _tokenPositionsMap[exp] = tokenPosition;
                 }
 
