@@ -69,47 +69,6 @@ public class LjsAstBuilder
         return new LjsAstModel(sq, _tokenPositionsMap);
     }
 
-    private ILjsAstNode GetLiteralNode(LjsToken token)
-    {
-        switch (token.TokenType)
-        {
-            case LjsTokenType.IntDecimal:
-            case LjsTokenType.IntHex:
-            case LjsTokenType.IntBinary:
-
-                return new LjsAstLiteral<int>(
-                    LjsTokenizerUtils.GetTokenIntValue(_sourceCodeString, token));
-                    
-            case LjsTokenType.Float:
-            case LjsTokenType.FloatE:
-
-                return new LjsAstLiteral<double>(
-                    LjsTokenizerUtils.GetTokenFloatValue(_sourceCodeString, token));
-                    
-            case LjsTokenType.StringLiteral:
-                return new LjsAstLiteral<string>(
-                    _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength));
-                    
-            case LjsTokenType.True:
-                        
-                return new LjsAstLiteral<bool>(true);
-                    
-            case LjsTokenType.False:
-                        
-                return new LjsAstLiteral<bool>(false);
-                    
-            case LjsTokenType.Null:
-                return new LjsAstNull();
-                    
-            case LjsTokenType.Undefined:
-                return new LjsAstUndefined();
-                    
-                    
-            default:
-                throw new Exception($"unsupported value token type {token.TokenType}");
-        }
-    }
-
     
     private readonly List<ILjsAstNode> _postfixExpression = new();
     private readonly Stack<OperatorNode> _operatorsStack = new();
@@ -303,7 +262,7 @@ public class LjsAstBuilder
                     throw new LjsSyntaxError("unexpected token", tokenPosition);
                 }
 
-                var literalNode = GetLiteralNode(token);
+                var literalNode = LjsAstBuilderUtils.CreateLiteralNode(token, _sourceCodeString);
                 
                 _tokenPositionsMap[literalNode] = tokenPosition;
 
