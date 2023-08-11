@@ -101,26 +101,50 @@ public class LjsAstBuilderTest
     
 
     [Test]
-    public void BuildMultilineExpressionWithSemicolon()
+    public void BuildSimpleMultilineExpression()
     {
-        BuildMultilineExpressionWithSemicolon("a + b; \n ++x * y");
-        BuildMultilineExpressionWithSemicolon("a + b;++x * y");
-        BuildMultilineExpressionWithSemicolon("a + b\n++x * y");
+        BuildSimpleMultilineExpression("a + b; \n ++x * y");
+        BuildSimpleMultilineExpression("a + b;++x * y");
+        BuildSimpleMultilineExpression("a + b\n++x * y");
+        BuildSimpleMultilineExpression("a\n + b\n++x * y");
+        BuildSimpleMultilineExpression("a + \nb\n++x * y");
     }
     
-    private static void BuildMultilineExpressionWithSemicolon(string expression)
+    private static void BuildSimpleMultilineExpression(string expression)
     {
         var astBuilder = new LjsAstBuilder(expression);
         var rootNode = astBuilder.Build().RootNode;
-        
-        rootNode.Should().BeOfType<LjsAstSequence>();
 
         rootNode.Should().BeEquivalentTo(new LjsAstSequence(
             new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
             new LjsAstBinaryOperation(new LjsAstUnaryOperation(
                 new LjsAstGetVar("x"), LjsAstUnaryOperationType.PrefixIncrement), new LjsAstGetVar("y"), LjsAstBinaryOperationType.Multiply)
-            ));
+        ));
     }
+    
+    [Test]
+    public void BuildAssignMultilineExpression()
+    {
+        BuildAssignMultilineExpression("a = b; \n y = ++x");
+        BuildAssignMultilineExpression("a = b;y = ++ x");
+        BuildAssignMultilineExpression("a = b\ny =++ x");
+        BuildAssignMultilineExpression("a\n = b\ny =++ x");
+        BuildAssignMultilineExpression("a = \nb\ny =++ x");
+        BuildAssignMultilineExpression("a = \nb\ny =\n++ x");
+    }
+    
+    private static void BuildAssignMultilineExpression(string expression)
+    {
+        var astBuilder = new LjsAstBuilder(expression);
+        var rootNode = astBuilder.Build().RootNode;
+
+        rootNode.Should().BeEquivalentTo(new LjsAstSequence(
+            new LjsAstSetVar("a", new LjsAstGetVar("b"), LjsAstAssignMode.Normal),
+            new LjsAstSetVar("y", new LjsAstUnaryOperation(
+                new LjsAstGetVar("x"), LjsAstUnaryOperationType.PrefixIncrement), LjsAstAssignMode.Normal)
+        ));
+    }
+    
     
     [Test]
     public void BuildPostfixIncrementExpression()
