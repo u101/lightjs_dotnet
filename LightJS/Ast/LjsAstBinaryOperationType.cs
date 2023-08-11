@@ -4,7 +4,6 @@ public enum LjsAstBinaryOperationType
 {
     Greater,
     Less,
-    Assign,
     Plus,
     Minus,
     Multiply,
@@ -12,8 +11,6 @@ public enum LjsAstBinaryOperationType
     BitAnd,
     BitOr,
     
-    PlusAssign,
-    MinusAssign,
     Equals,
     EqualsStrict,
     GreaterOrEqual,

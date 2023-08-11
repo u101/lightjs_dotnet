@@ -376,10 +376,17 @@ public class LjsTokenizer
         return prevOp switch
         {
             LjsTokenType.OpPlus when nexOp == LjsTokenType.OpPlus => LjsTokenType.OpIncrement,
+            
             LjsTokenType.OpMinus when nexOp == LjsTokenType.OpMinus => LjsTokenType.OpDecrement,
             
             LjsTokenType.OpPlus when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpPlusAssign,
             LjsTokenType.OpMinus when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpMinusAssign,
+            LjsTokenType.OpMultiply when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpMultAssign,
+            LjsTokenType.OpDiv when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpDivAssign,
+            LjsTokenType.OpBitOr when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpBitOrAssign,
+            LjsTokenType.OpBitAnd when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpBitAndAssign,
+            LjsTokenType.OpLogicalOr when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpLogicalOrAssign,
+            LjsTokenType.OpLogicalAnd when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpLogicalAndAssign,
             
             LjsTokenType.OpAssign when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpEquals,
             LjsTokenType.OpEquals when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpEqualsStrict,

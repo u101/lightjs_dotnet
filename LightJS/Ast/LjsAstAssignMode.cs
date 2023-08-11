@@ -4,5 +4,11 @@ public enum LjsAstAssignMode
 {
     Normal,
     PlusAssign,
-    MinusAssign
+    MinusAssign,
+    MulAssign,
+    DivAssign,
+    BitOrAssign,
+    BitAndAssign,
+    LogicalOrAssign,
+    LogicalAndAssign
 }

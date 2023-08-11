@@ -122,10 +122,6 @@ public class LjsAstBuilder
         { LjsTokenType.OpParenthesesOpen, 0},
         { LjsTokenType.OpParenthesesClose, 0},
         
-        { LjsTokenType.OpAssign, 10},
-        { LjsTokenType.OpPlusAssign, 10},
-        { LjsTokenType.OpMinusAssign, 10},
-        
         { LjsTokenType.OpEquals, 50},
         { LjsTokenType.OpNotEqual, 50},
         { LjsTokenType.OpEqualsStrict, 50},
@@ -173,14 +169,11 @@ public class LjsAstBuilder
         
         LjsTokenType.OpGreater => LjsAstBinaryOperationType.Greater,
         LjsTokenType.OpLess => LjsAstBinaryOperationType.Less,
-        LjsTokenType.OpAssign => LjsAstBinaryOperationType.Assign,
         LjsTokenType.OpMultiply => LjsAstBinaryOperationType.Multiply,
         LjsTokenType.OpDiv => LjsAstBinaryOperationType.Div,
         LjsTokenType.OpBitAnd => LjsAstBinaryOperationType.BitAnd,
         LjsTokenType.OpBitOr => LjsAstBinaryOperationType.BitOr,
-            
-        LjsTokenType.OpPlusAssign => LjsAstBinaryOperationType.PlusAssign,
-        LjsTokenType.OpMinusAssign => LjsAstBinaryOperationType.MinusAssign,
+        
         LjsTokenType.OpEquals => LjsAstBinaryOperationType.Equals,
         LjsTokenType.OpEqualsStrict => LjsAstBinaryOperationType.EqualsStrict,
         LjsTokenType.OpGreaterOrEqual => LjsAstBinaryOperationType.GreaterOrEqual,
@@ -258,14 +251,11 @@ public class LjsAstBuilder
             
             LjsTokenType.OpGreater => OperatorType.Binary,
             LjsTokenType.OpLess => OperatorType.Binary,
-            LjsTokenType.OpAssign => OperatorType.Binary,
             LjsTokenType.OpMultiply => OperatorType.Binary,
             LjsTokenType.OpDiv => OperatorType.Binary,
             LjsTokenType.OpBitAnd => OperatorType.Binary,
             LjsTokenType.OpBitOr => OperatorType.Binary,
             
-            LjsTokenType.OpPlusAssign => OperatorType.Binary,
-            LjsTokenType.OpMinusAssign => OperatorType.Binary,
             LjsTokenType.OpEquals => OperatorType.Binary,
             LjsTokenType.OpEqualsStrict => OperatorType.Binary,
             LjsTokenType.OpGreaterOrEqual => OperatorType.Binary,
@@ -580,8 +570,26 @@ public class LjsAstBuilder
         LjsTokenType.OpAssign => LjsAstAssignMode.Normal,
         LjsTokenType.OpPlusAssign => LjsAstAssignMode.PlusAssign,
         LjsTokenType.OpMinusAssign => LjsAstAssignMode.MinusAssign,
+        LjsTokenType.OpMultAssign => LjsAstAssignMode.MulAssign,
+        LjsTokenType.OpDivAssign => LjsAstAssignMode.DivAssign,
+        LjsTokenType.OpBitOrAssign => LjsAstAssignMode.BitOrAssign,
+        LjsTokenType.OpBitAndAssign => LjsAstAssignMode.BitAndAssign,
+        LjsTokenType.OpLogicalOrAssign => LjsAstAssignMode.LogicalOrAssign,
+        LjsTokenType.OpLogicalAndAssign => LjsAstAssignMode.LogicalAndAssign,
         _ => throw new Exception($"unsupported token type {tokenType}")
     };
+
+    private static bool IsAssignOperator(LjsTokenType tokenType) => 
+        tokenType is LjsTokenType.OpAssign 
+            or LjsTokenType.OpPlusAssign
+            or LjsTokenType.OpMinusAssign
+            or LjsTokenType.OpMultAssign
+            or LjsTokenType.OpDivAssign
+            or LjsTokenType.OpBitOrAssign
+            or LjsTokenType.OpBitAndAssign
+            or LjsTokenType.OpLogicalOrAssign
+            or LjsTokenType.OpLogicalAndAssign
+            ;
 
     private ILjsAstNode ParseDotPropertyOperation(
         ILjsAstNode propertySource, 
@@ -604,26 +612,25 @@ public class LjsAstBuilder
         {
             var nextToken = _tokensReader.NextToken;
 
+            if (IsAssignOperator(nextToken.TokenType))
+            {
+                if (!assignmentOperationAllowed)
+                    throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+
+                _tokensReader.MoveForward();
+                    
+                var exp = ParseExpression(stopTokenType);
+
+                var setVar = new LjsAstSetNamedProperty(
+                    id, propertySource, exp, GetAssignMode(nextToken.TokenType));
+                        
+                _tokenPositionsMap[setVar] = nextToken.Position;
+
+                return setVar;
+            }
+
             switch (nextToken.TokenType)
             {
-                case LjsTokenType.OpAssign:
-                case LjsTokenType.OpPlusAssign:
-                case LjsTokenType.OpMinusAssign:
-
-                    if (!assignmentOperationAllowed)
-                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
-
-                    _tokensReader.MoveForward();
-                    
-                    var exp = ParseExpression(stopTokenType);
-
-                    var setVar = new LjsAstSetNamedProperty(
-                        id, propertySource, exp, GetAssignMode(nextToken.TokenType));
-                        
-                    _tokenPositionsMap[setVar] = nextToken.Position;
-
-                    return setVar;
-            
                 case LjsTokenType.OpDot:
                 
                     _tokensReader.MoveForward();
@@ -690,29 +697,28 @@ public class LjsAstBuilder
         {
             var nextToken = _tokensReader.NextToken;
 
+            if (IsAssignOperator(nextToken.TokenType))
+            {
+                if (!assignmentOperationAllowed)
+                    throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+
+                _tokensReader.MoveForward();
+                    
+                var exp = ParseExpression(stopTokenType);
+
+                var setVar = new LjsAstSetProperty(
+                    getPropNameExpression, 
+                    propertySource, 
+                    exp, 
+                    GetAssignMode(nextToken.TokenType));
+                        
+                _tokenPositionsMap[setVar] = nextToken.Position;
+
+                return setVar;
+            }
+
             switch (nextToken.TokenType)
             {
-                case LjsTokenType.OpAssign:
-                case LjsTokenType.OpPlusAssign:
-                case LjsTokenType.OpMinusAssign:
-
-                    if (!assignmentOperationAllowed)
-                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
-
-                    _tokensReader.MoveForward();
-                    
-                    var exp = ParseExpression(stopTokenType);
-
-                    var setVar = new LjsAstSetProperty(
-                        getPropNameExpression, 
-                        propertySource, 
-                        exp, 
-                        GetAssignMode(nextToken.TokenType));
-                        
-                    _tokenPositionsMap[setVar] = nextToken.Position;
-
-                    return setVar;
-            
                 case LjsTokenType.OpDot:
                 
                     _tokensReader.MoveForward();
@@ -786,13 +792,13 @@ public class LjsAstBuilder
         {
             var nextToken = _tokensReader.NextToken;
 
+            if (IsAssignOperator(nextToken.TokenType))
+            {
+                throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+            }
+
             switch (nextToken.TokenType)
             {
-                case LjsTokenType.OpAssign:
-                case LjsTokenType.OpPlusAssign:
-                case LjsTokenType.OpMinusAssign:
-                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
-            
                 case LjsTokenType.OpDot:
                 
                     _tokensReader.MoveForward();
@@ -836,25 +842,24 @@ public class LjsAstBuilder
         {
             var nextToken = _tokensReader.NextToken;
 
+            if (IsAssignOperator(nextToken.TokenType))
+            {
+                if (!assignmentOperationAllowed)
+                    throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
+
+                _tokensReader.MoveForward();
+                    
+                var exp = ParseExpression(stopTokenType);
+
+                var setVar = new LjsAstSetVar(id, exp, GetAssignMode(nextToken.TokenType));
+                        
+                _tokenPositionsMap[setVar] = nextToken.Position;
+
+                return setVar;
+            }
+
             switch (nextToken.TokenType)
             {
-                case LjsTokenType.OpAssign:
-                case LjsTokenType.OpPlusAssign:
-                case LjsTokenType.OpMinusAssign:
-
-                    if (!assignmentOperationAllowed)
-                        throw new LjsSyntaxError($"invalid assignment {nextToken.TokenType}", nextToken.Position);
-
-                    _tokensReader.MoveForward();
-                    
-                    var exp = ParseExpression(stopTokenType);
-
-                    var setVar = new LjsAstSetVar(id, exp, GetAssignMode(nextToken.TokenType));
-                        
-                    _tokenPositionsMap[setVar] = nextToken.Position;
-
-                    return setVar;
-            
                 case LjsTokenType.OpDot:
                 
                     _tokensReader.MoveForward();
