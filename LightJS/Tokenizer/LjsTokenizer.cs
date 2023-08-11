@@ -157,8 +157,7 @@ public class LjsTokenizer
 
                 var ln = _reader.CurrentIndex - startIndex; // end index is exclusive
                 
-                AddToken(new LjsToken(
-                    LjsTokenClass.Literal, LjsTokenType.StringLiteral, tokenPos, ln));
+                AddToken(new LjsToken(LjsTokenType.StringLiteral, tokenPos, ln));
             }
             // key word or identifier
             else if (IsLetterChar(c))
@@ -184,17 +183,17 @@ public class LjsTokenizer
                         case LjsTokenType.Undefined:
                         case LjsTokenType.True:
                         case LjsTokenType.False:
-                            AddToken(new LjsToken(LjsTokenClass.Literal, tokenType, tokenPos, ln));
+                            AddToken(new LjsToken(tokenType, tokenPos, ln));
                             break;
                         default:
-                            AddToken(new LjsToken(LjsTokenClass.Word, tokenType, tokenPos, ln));
+                            AddToken(new LjsToken(tokenType, tokenPos, ln));
                             break;
                     }
                 }
                 else
                 {
                     AddToken(new LjsToken(
-                        LjsTokenClass.Word, LjsTokenType.Identifier, tokenPos, ln));
+                        LjsTokenType.Identifier, tokenPos, ln));
                 }
 
                 
@@ -226,7 +225,7 @@ public class LjsTokenizer
                 
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
                 
-                AddToken(new LjsToken(LjsTokenClass.Literal, LjsTokenType.IntHex, tokenPos, ln));
+                AddToken(new LjsToken(LjsTokenType.IntHex, tokenPos, ln));
             }
             // binary int
             else if (c == '0' && _reader.HasNextChar && _reader.NextChar == 'b')
@@ -256,7 +255,7 @@ public class LjsTokenizer
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
                 
                 AddToken(new LjsToken(
-                    LjsTokenClass.Literal, LjsTokenType.IntBinary, tokenPos, ln));
+                    LjsTokenType.IntBinary, tokenPos, ln));
             }
             
             // number
@@ -314,7 +313,7 @@ public class LjsTokenizer
                 var ln = (_reader.CurrentIndex + 1) - startIndex;
 
                 AddToken(new LjsToken(
-                    LjsTokenClass.Literal, GetNumberTokenType(hasDot, hasExponentMark), tokenPos, ln));
+                    GetNumberTokenType(hasDot, hasExponentMark), tokenPos, ln));
             }
             else if (IsOperator(c))
             {
@@ -323,17 +322,16 @@ public class LjsTokenizer
                 var opType = GetOperatorTokenType(c);
                 var compOp = LjsTokenType.None;
 
-                if ((prevToken.TokenClass & LjsTokenClass.Operator) != 0 && 
-                    prevToken.Position.IsAdjacentTo(opPosition, prevToken.StringLength) && 
+                if (prevToken.Position.IsAdjacentTo(opPosition, prevToken.StringLength) && 
                     (compOp = GetOperatorComposition(prevToken.TokenType, opType)) != LjsTokenType.None)
                 {
                     ReplaceLastToken(new LjsToken(
-                        GetOperatorTokenClass(compOp), compOp, prevToken.Position, prevToken.StringLength + 1));
+                        compOp, prevToken.Position, prevToken.StringLength + 1));
                 }
                 else
                 {
                     AddToken(new LjsToken(
-                        GetOperatorTokenClass(opType), opType, opPosition,1));
+                        opType, opPosition,1));
                 }
             }
             else
@@ -425,39 +423,6 @@ public class LjsTokenizer
             '[' => LjsTokenType.OpSquareBracketsOpen,
             ']' => LjsTokenType.OpSquareBracketsClose,
             _ => LjsTokenType.None
-        };
-    }
-
-    private static LjsTokenClass GetOperatorTokenClass(LjsTokenType tokenType)
-    {
-        return tokenType switch
-        {
-            LjsTokenType.OpPlus => LjsTokenClass.Operator | LjsTokenClass.PolymorphicOperator,
-            LjsTokenType.OpMinus => LjsTokenClass.Operator | LjsTokenClass.PolymorphicOperator,
-            LjsTokenType.OpNegate => LjsTokenClass.Operator | LjsTokenClass.UnaryOperator,
-            LjsTokenType.OpIncrement => LjsTokenClass.Operator | LjsTokenClass.UnaryOperator,
-            LjsTokenType.OpDecrement => LjsTokenClass.Operator | LjsTokenClass.UnaryOperator,
-            
-            LjsTokenType.OpGreater => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpLess => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpAssign => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpMultiply => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpDiv => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpBitAnd => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpBitOr => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            
-            LjsTokenType.OpPlusAssign => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpMinusAssign => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpEquals => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpEqualsStrict => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpGreaterOrEqual => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpLessOrEqual => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpNotEqual => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpNotEqualStrict => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpLogicalAnd => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            LjsTokenType.OpLogicalOr => LjsTokenClass.Operator | LjsTokenClass.BinaryOperator,
-            
-            _ => LjsTokenClass.Operator
         };
     }
 
