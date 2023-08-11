@@ -287,6 +287,11 @@ public class LjsAstBuilder
 
                 prevOperatorType = OperatorType.None;
                 prevMemberType = ExpressionMemberType.Operand;
+                
+                if (node is ILjsAstSetterNode)
+                {
+                    break;
+                }
             }
 
             else if (tokenType == LjsTokenType.OpQuestionMark)
