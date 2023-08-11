@@ -5,6 +5,32 @@ namespace LightJS.Ast;
 public static class LjsAstBuilderUtils
 {
     
+    public static LjsAstAssignMode GetAssignMode(LjsTokenType tokenType) => tokenType switch
+    {
+        LjsTokenType.OpAssign => LjsAstAssignMode.Normal,
+        LjsTokenType.OpPlusAssign => LjsAstAssignMode.PlusAssign,
+        LjsTokenType.OpMinusAssign => LjsAstAssignMode.MinusAssign,
+        LjsTokenType.OpMultAssign => LjsAstAssignMode.MulAssign,
+        LjsTokenType.OpDivAssign => LjsAstAssignMode.DivAssign,
+        LjsTokenType.OpBitOrAssign => LjsAstAssignMode.BitOrAssign,
+        LjsTokenType.OpBitAndAssign => LjsAstAssignMode.BitAndAssign,
+        LjsTokenType.OpLogicalOrAssign => LjsAstAssignMode.LogicalOrAssign,
+        LjsTokenType.OpLogicalAndAssign => LjsAstAssignMode.LogicalAndAssign,
+        _ => throw new Exception($"unsupported token type {tokenType}")
+    };
+
+    public static bool IsAssignOperator(LjsTokenType tokenType) => 
+        tokenType is LjsTokenType.OpAssign 
+            or LjsTokenType.OpPlusAssign
+            or LjsTokenType.OpMinusAssign
+            or LjsTokenType.OpMultAssign
+            or LjsTokenType.OpDivAssign
+            or LjsTokenType.OpBitOrAssign
+            or LjsTokenType.OpBitAndAssign
+            or LjsTokenType.OpLogicalOrAssign
+            or LjsTokenType.OpLogicalAndAssign
+    ;
+    
     public static bool IsLiteral(LjsTokenType tokenType) =>
         tokenType == LjsTokenType.True ||
         tokenType == LjsTokenType.False ||
