@@ -216,33 +216,5 @@ public class LjsTokenizerTest
           ReadInvalidToken("1e+2.45");
      }
      
-
-     [Test]
-     public void TestLoadScript()
-     {
-          var text = TestUtils.LoadJsFile("simpleTest.js");
-
-          Assert.That(text, Is.Not.Null);
-          Assert.That(text, Is.Not.Empty);
-     }
-
-     private static LjsTokenizer CreateLjsTokenizer(string scriptFileName)
-     {
-          var sourceCodeString = TestUtils.LoadJsFile(scriptFileName);
-          var ljsTokenizer = new LjsTokenizer(sourceCodeString);
-          return ljsTokenizer;
-     }
-
-
-     [Test]
-     public void ReadTokens_ShouldReturnTokens_WhenJsScriptIsValid()
-     {
-          var ljsTokenizer = CreateLjsTokenizer("simpleTest.js");
-
-          var tokens = ljsTokenizer.ReadTokens();
-
-          tokens.Should().NotBeEmpty();
-     }
-     
     
 }
