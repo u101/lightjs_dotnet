@@ -217,10 +217,10 @@ public class LjsAstBuilder
                 }
 
                 var nextOpType = GetOperatorType(nextTokenType);
-                
-                if (prevMemberType == ExpressionMemberType.Operand &&
-                    _tokensReader.CurrentToken.Position.Line < nextToken.Position.Line &&
-                    (nextOpType == OperatorType.None || nextOpType == OperatorType.Unary))
+
+                if (_tokensReader.CurrentToken.Position.Line < nextToken.Position.Line &&
+                    prevMemberType != ExpressionMemberType.Operator && 
+                     nextOpType != OperatorType.Binary && nextOpType != OperatorType.Polymorphic)
                 {
                     break;
                 }
@@ -262,7 +262,7 @@ public class LjsAstBuilder
             {
                 if (prevMemberType == ExpressionMemberType.Operand)
                 {
-                    throw new LjsSyntaxError("unexpected token", tokenPosition);
+                    throw new LjsSyntaxError($"unexpected token {tokenType}", tokenPosition);
                 }
                 
                 // 1) simple var here : x
