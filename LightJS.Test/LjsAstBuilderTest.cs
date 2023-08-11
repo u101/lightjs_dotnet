@@ -197,6 +197,20 @@ public class LjsAstBuilderTest
                 new LjsAstGetVar("c")));
     }
     
+    [Test]
+    public void BuildTernaryIfExpressionWithAssignment()
+    {
+        var astBuilder = new LjsAstBuilder("x = a ? b : c");
+        var rootNode = astBuilder.Build().RootNode;
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetVar("x",
+            new LjsAstTernaryIfOperation(
+                new LjsAstGetVar("a"),
+                new LjsAstGetVar("b"),
+                new LjsAstGetVar("c")), LjsAstAssignMode.Normal));
+    }
+    
     
     [Test]
     public void BuildNestedTernaryIfExpression()
