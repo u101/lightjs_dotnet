@@ -4,9 +4,9 @@ public class MatherBinaryOpNode : IMatherNode
 {
     public IMatherNode LeftOperand { get; }
     public IMatherNode RightOperand { get; }
-    public MatherBinaryOp OperationType { get; }
+    public MatherTokenType OperationType { get; }
 
-    public MatherBinaryOpNode(IMatherNode leftOperand, IMatherNode rightOperand, MatherBinaryOp operationType)
+    public MatherBinaryOpNode(IMatherNode leftOperand, IMatherNode rightOperand, MatherTokenType operationType)
     {
         LeftOperand = leftOperand;
         RightOperand = rightOperand;

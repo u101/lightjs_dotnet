@@ -5,7 +5,10 @@ public static class MatherTokensParser
     public static List<MatherToken> Parse(string exp)
     {
         var strings = exp.Split(' ');
-        return strings.Select(GetMatherToken).ToList();
+        return strings
+            .Where(s => !string.IsNullOrEmpty(s))
+            .Select(GetMatherToken)
+            .ToList();
     }
 
     private static readonly Dictionary<char, MatherTokenType> _ops = new()
