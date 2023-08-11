@@ -5,6 +5,18 @@ namespace LightJS.Ast;
 public static class LjsAstBuilderUtils
 {
     
+    public static bool IsLiteral(LjsTokenType tokenType) =>
+        tokenType == LjsTokenType.True ||
+        tokenType == LjsTokenType.False ||
+        tokenType == LjsTokenType.IntBinary ||
+        tokenType == LjsTokenType.IntDecimal ||
+        tokenType == LjsTokenType.IntHex ||
+        tokenType == LjsTokenType.Float ||
+        tokenType == LjsTokenType.FloatE ||
+        tokenType == LjsTokenType.Null ||
+        tokenType == LjsTokenType.Undefined ||
+        tokenType == LjsTokenType.StringLiteral;
+    
     public static LjsAstBinaryOperationType GetBinaryOperationType(LjsTokenType tokenType) => tokenType switch
     {
         LjsTokenType.OpPlus => LjsAstBinaryOperationType.Plus,

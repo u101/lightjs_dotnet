@@ -163,18 +163,6 @@ public class LjsAstBuilder
         Polymorphic // unary or binary
     }
 
-    private static bool IsLiteral(LjsTokenType tokenType) =>
-        tokenType == LjsTokenType.True ||
-        tokenType == LjsTokenType.False ||
-        tokenType == LjsTokenType.IntBinary ||
-        tokenType == LjsTokenType.IntDecimal ||
-        tokenType == LjsTokenType.IntHex ||
-        tokenType == LjsTokenType.Float ||
-        tokenType == LjsTokenType.FloatE ||
-        tokenType == LjsTokenType.Null ||
-        tokenType == LjsTokenType.Undefined ||
-        tokenType == LjsTokenType.StringLiteral;
-
     private static OperatorType GetOperatorType(LjsTokenType tokenType) => tokenType switch
         {
             LjsTokenType.OpPlus => OperatorType.Polymorphic,
@@ -244,7 +232,7 @@ public class LjsAstBuilder
             var tokenType = token.TokenType;
             var tokenPosition = token.Position;
 
-            if (IsLiteral(tokenType))
+            if (LjsAstBuilderUtils.IsLiteral(tokenType))
             {
                 if (prevMemberType == ExpressionMemberType.Operand)
                 {
