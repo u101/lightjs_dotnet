@@ -157,14 +157,25 @@ public class LjsAstBuilderTest
     {
         var astBuilder = new LjsAstBuilder("a + -b");
         var rootNode = astBuilder.Build().RootNode;
-        
-        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstBinaryOperation(
                 new LjsAstGetVar("a"), 
                 new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.Minus), 
                 LjsAstBinaryOperationType.Plus));
+    }
+    
+    [Test]
+    public void BuildSimpleUnaryMinusAssignment()
+    {
+        var astBuilder = new LjsAstBuilder("a = -b");
+        var rootNode = astBuilder.Build().RootNode;
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetVar(
+                "a", 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.Minus), 
+                LjsAstAssignMode.Normal));
     }
 
     [Test]
