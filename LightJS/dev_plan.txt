@@ -1,5 +1,7 @@
 ...
 
+-1) get rid of token class
+
 0) save token positions for nodes [DONE]
 
 0.1) multiline blocks of code [DONE]
