@@ -20,22 +20,40 @@ public static class MatherAdv
         { LjsTokenType.OpIncrement , 600},
         { LjsTokenType.OpDecrement , 600},
     };
+    
+    [Flags]
+    private enum OpType
+    {
+        None = 0,
+        Binary = 1 << 0,
+        UnaryPrefix = 1 << 1,
+        UnaryPostfix = 1 << 2,
+        Assign = 1 << 3,
+        Parentheses = 1 << 4
+    }
 
-    private class Op : IMatherNode
+    private class Op : ILjsAstNode
     {
         public LjsTokenType TokenType { get; }
-        public bool IsUnary { get; }
+        public OpType OpType { get; }
+        public bool IsUnary => 
+            ((this.OpType & OpType.UnaryPrefix) | (this.OpType & OpType.UnaryPostfix)) != 0;
+        
+        public bool IsUnaryPrefix => (this.OpType & OpType.UnaryPrefix) != 0;
+        public bool IsUnaryPostfix => (this.OpType & OpType.UnaryPostfix) != 0;
+        public bool IsBinary => (this.OpType & OpType.Binary) != 0;
+        public bool IsAssign => (this.OpType & OpType.Assign) != 0;
         public int Priority { get; }
 
-        public Op(LjsTokenType tokenType, bool isUnary, int priority)
+        public Op(LjsTokenType tokenType, OpType opType, int priority)
         {
             TokenType = tokenType;
-            IsUnary = isUnary;
+            OpType = opType;
             Priority = priority;
         }
     }
 
-    public static IMatherNode Convert(string sourceCodeString)
+    public static ILjsAstNode Convert(string sourceCodeString)
     {
         var ljsTokenizer = new LjsTokenizer(sourceCodeString);
         var tokens = ljsTokenizer.ReadTokens();
@@ -69,10 +87,10 @@ public static class MatherAdv
             LjsTokenType.OpAssign;
     }
 
-    public static IMatherNode Convert(List<LjsToken> tokens, string sourceCodeString)
+    public static ILjsAstNode Convert(List<LjsToken> tokens, string sourceCodeString)
     {
         //	Выходная строка, содержащая постфиксную запись
-        var postfixExpr = new List<IMatherNode>();
+        var postfixExpr = new List<ILjsAstNode>();
         //	Инициализация стека, содержащий операторы в виде символов
         var stack = new Stack<Op>();
 
@@ -87,20 +105,20 @@ public static class MatherAdv
             //	Если симовол - цифра
             if (token.TokenType == LjsTokenType.Identifier)
             {
-                postfixExpr.Add(new MatherGetVarNode(
+                postfixExpr.Add(new LjsAstGetVar(
                     sourceCodeString.Substring(token.Position.CharIndex, token.StringLength)));
             }
             else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
-                postfixExpr.Add(new MatherLiteralNode(
-                    sourceCodeString.Substring(token.Position.CharIndex, token.StringLength)));
+                postfixExpr.Add( LjsAstBuilderUtils.CreateLiteralNode(token, sourceCodeString));
             }
             
             //	Если открывающаяся скобка 
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
             {
                 //	Заносим её в стек
-                stack.Push(new Op(token.TokenType, false, 0));
+                
+                stack.Push(new Op(token.TokenType, OpType.Parentheses, 0));
             }
             //	Если закрывающая скобка
             else if (token.TokenType == LjsTokenType.OpParenthesesClose)
@@ -125,6 +143,18 @@ public static class MatherAdv
                                prevToken.TokenType == LjsTokenType.Identifier);
 
                 var isUnary = isUnaryPrefix || isUnaryPostfix;
+
+                var opType = OpType.None;
+                if (isUnaryPrefix) opType |= OpType.UnaryPrefix;
+                if (isUnaryPostfix) opType |= OpType.UnaryPostfix;
+                if (!isUnary)
+                {
+                    opType |= OpType.Binary;
+                    if (LjsAstBuilderUtils.IsAssignOperator(token.TokenType))
+                    {
+                        opType |= OpType.Assign;
+                    }
+                }
                 
                 // todo check isUnary equals isDefinitelyUnary() method and throw error if needed
                 
@@ -135,7 +165,7 @@ public static class MatherAdv
                     postfixExpr.Add(stack.Pop());
                 
                 //	Заносим в стек оператор
-                stack.Push(new Op(token.TokenType, isUnary, opPriority));
+                stack.Push(new Op(token.TokenType, opType, opPriority));
             }
 
             prevToken = token;
@@ -149,7 +179,7 @@ public static class MatherAdv
         
         // --------- CREATE NODES
         
-        var locals = new Stack<IMatherNode>();
+        var locals = new Stack<ILjsAstNode>();
 
         //	Проходим по строке
         for (var i = 0; i < postfixExpr.Count; i++)
@@ -162,14 +192,32 @@ public static class MatherAdv
                 if (op.IsUnary)
                 {
                     var operand = locals.Pop();
-                    locals.Push(new MatherUnaryOpNode(operand, op.TokenType));
+                    locals.Push(new LjsAstUnaryOperation(
+                        operand, LjsAstBuilderUtils.GetUnaryOperationType(op.TokenType, op.IsUnaryPrefix)));
                 }
                 else
                 {
                     var right = locals.Pop();
                     var left = locals.Pop();
+
+                    if (op.IsAssign)
+                    {
+                        if (left is LjsAstGetVar getVar)
+                        {
+                            locals.Push(new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                        }
+                        else
+                        {
+                            throw new Exception("invalid assign");
+                        }
+                    }
+                    else
+                    {
+                        locals.Push(new LjsAstBinaryOperation(
+                            left, right, LjsAstBuilderUtils.GetBinaryOperationType(op.TokenType)));
+                    }
                     
-                    locals.Push(new MatherBinaryOpNode(left, right, op.TokenType));
+                    
                 }
                 
             }

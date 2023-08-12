@@ -67,10 +67,7 @@ public static class LjsAstBuilderUtils
         _ => throw new Exception($"unsupported binary operator token {tokenType}")
     };
     
-    /// <summary>
-    /// for prefix operators only
-    /// </summary>
-    public static LjsAstUnaryOperationType GetUnaryOperationType(LjsTokenType tokenType) => tokenType switch
+    public static LjsAstUnaryOperationType GetUnaryPrefixOperationType(LjsTokenType tokenType) => tokenType switch
     {
         LjsTokenType.OpPlus => LjsAstUnaryOperationType.Plus,
         LjsTokenType.OpMinus => LjsAstUnaryOperationType.Minus,
@@ -80,6 +77,16 @@ public static class LjsAstBuilderUtils
         LjsTokenType.OpDecrement => LjsAstUnaryOperationType.PrefixDecrement,
         _ => throw new Exception($"unsupported unary operation token type {tokenType}")
     };
+    
+    public static LjsAstUnaryOperationType GetUnaryPostfixOperationType(LjsTokenType tokenType) => tokenType switch
+    {
+        LjsTokenType.OpIncrement => LjsAstUnaryOperationType.PostfixIncrement,
+        LjsTokenType.OpDecrement => LjsAstUnaryOperationType.PostfixDecrement,
+        _ => throw new Exception($"unsupported unary operation token type {tokenType}")
+    };
+
+    public static LjsAstUnaryOperationType GetUnaryOperationType(LjsTokenType tokenType, bool isPrefix) =>
+        isPrefix ? GetUnaryPrefixOperationType(tokenType) : GetUnaryPostfixOperationType(tokenType);
 
     public static ILjsAstNode CreateLiteralNode(LjsToken token, string sourceCodeString)
     {

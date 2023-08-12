@@ -247,7 +247,7 @@ public class LjsAstBuilder
                     prevOperatorType == OperatorType.Unary)
                 {
                     literalNode = new LjsAstUnaryOperation(literalNode,
-                        LjsAstBuilderUtils.GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                        LjsAstBuilderUtils.GetUnaryPrefixOperationType(prefixUnaryOperatorToken.TokenType));
                     
                     _tokenPositionsMap[literalNode] = tokenPosition;
                 }
@@ -278,7 +278,7 @@ public class LjsAstBuilder
                     prevOperatorType == OperatorType.Unary)
                 {
                     node = new LjsAstUnaryOperation(node,
-                        LjsAstBuilderUtils.GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                        LjsAstBuilderUtils.GetUnaryPrefixOperationType(prefixUnaryOperatorToken.TokenType));
                     
                     _tokenPositionsMap[node] = tokenPosition;
                 }
@@ -359,7 +359,7 @@ public class LjsAstBuilder
                     prevOperatorType == OperatorType.Unary)
                 {
                     exp = new LjsAstUnaryOperation(exp,
-                        LjsAstBuilderUtils.GetUnaryOperationType(prefixUnaryOperatorToken.TokenType));
+                        LjsAstBuilderUtils.GetUnaryPrefixOperationType(prefixUnaryOperatorToken.TokenType));
                     _tokenPositionsMap[exp] = tokenPosition;
                 }
 
