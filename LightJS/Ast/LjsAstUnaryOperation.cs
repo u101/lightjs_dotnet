@@ -11,8 +11,5 @@ public class LjsAstUnaryOperation : ILjsAstNode
         Operand = operand;
         OperatorType = operatorType;
     }
-
-    public IEnumerable<ILjsAstNode> ChildNodes => new[] { Operand };
     
-    public bool HasChildNodes => true;
 }

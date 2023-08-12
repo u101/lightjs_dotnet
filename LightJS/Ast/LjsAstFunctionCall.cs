@@ -16,15 +16,4 @@ public class LjsAstFunctionCall : ILjsAstNode
         FunctionGetter = functionGetter;
         Arguments.AddRange(args);
     }
-
-    public IEnumerable<ILjsAstNode> ChildNodes
-    {
-        get
-        {
-            var list = new List<ILjsAstNode> { FunctionGetter };
-            list.AddRange(Arguments);
-            return list;
-        }
-    }
-    public bool HasChildNodes => true;
 }

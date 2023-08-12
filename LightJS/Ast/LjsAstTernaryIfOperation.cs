@@ -13,8 +13,5 @@ public class LjsAstTernaryIfOperation : ILjsAstNode
         TrueExpression = trueExpression;
         FalseExpression = falseExpression;
     }
-
-    public IEnumerable<ILjsAstNode> ChildNodes => new[] { Condition, TrueExpression, FalseExpression };
     
-    public bool HasChildNodes => true;
 }

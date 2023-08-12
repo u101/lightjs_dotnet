@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstGetVar : LjsAstLeafNode
+public class LjsAstGetVar : ILjsAstNode
 {
     public string VarName { get; }
 

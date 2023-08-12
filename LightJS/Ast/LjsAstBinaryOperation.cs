@@ -15,8 +15,4 @@ public class LjsAstBinaryOperation : ILjsAstNode
         RightOperand = rightOperand;
         OperatorType = operatorType;
     }
-
-    public IEnumerable<ILjsAstNode> ChildNodes => new[] { LeftOperand, RightOperand };
-    
-    public bool HasChildNodes => true;
 }

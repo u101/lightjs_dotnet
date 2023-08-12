@@ -18,7 +18,5 @@ public class LjsAstSetNamedProperty : ILjsAstNode, ILjsAstSetterNode
         AssignmentExpression = assignmentExpression;
         AssignMode = assignMode;
     }
-
-    public IEnumerable<ILjsAstNode> ChildNodes => new[] { PropertySource, AssignmentExpression };
-    public bool HasChildNodes => true;
+    
 }

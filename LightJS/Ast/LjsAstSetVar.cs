@@ -13,6 +13,4 @@ public class LjsAstSetVar : ILjsAstNode, ILjsAstSetterNode
         AssignMode = assignMode;
     }
     
-    public IEnumerable<ILjsAstNode> ChildNodes => new[] { Expression };
-    public bool HasChildNodes => true;
 }

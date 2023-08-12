@@ -10,7 +10,4 @@ public class LjsAstGetProperty : ILjsAstNode
         PropertyName = propertyName;
         PropertySource = propertySource;
     }
-
-    public IEnumerable<ILjsAstNode> ChildNodes => new[] { PropertyName, PropertySource };
-    public bool HasChildNodes => true;
 }
