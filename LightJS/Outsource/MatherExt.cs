@@ -24,6 +24,11 @@ public static class MatherExt
         return new MatherUnaryOpNode(node, LjsTokenType.OpMinus);
     }
     
+    public static MatherUnaryOpNode WithIncrement(this IMatherNode node)
+    {
+        return new MatherUnaryOpNode(node, LjsTokenType.OpIncrement);
+    }
+    
     public static MatherUnaryOpNode WithUnaryPlus(this IMatherNode node)
     {
         return new MatherUnaryOpNode(node, LjsTokenType.OpPlus);

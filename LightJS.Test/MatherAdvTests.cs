@@ -19,6 +19,16 @@ public class MatherAdvTests
     }
 
     [Test]
+    public void IncrementSimpleTest()
+    {
+        var a = MatherAdv.Convert("++a");
+        a.Should().BeEquivalentTo("a".ToVar().WithIncrement());
+        
+        a = MatherAdv.Convert("a++");
+        a.Should().BeEquivalentTo("a".ToVar().WithIncrement());
+    }
+
+    [Test]
     public void UnaryMinusSimpleTest()
     {
         var node = MatherAdv.Convert("-a + b");

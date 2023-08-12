@@ -16,6 +16,9 @@ public static class MatherAdv
         { LjsTokenType.OpMinus , 100},
         { LjsTokenType.OpMultiply , 200},
         { LjsTokenType.OpDiv , 200},
+        
+        { LjsTokenType.OpIncrement , 600},
+        { LjsTokenType.OpDecrement , 600},
     };
 
     private class Op : IMatherNode
@@ -47,6 +50,13 @@ public static class MatherAdv
             LjsTokenType.OpIncrement or 
             LjsTokenType.OpDecrement or 
             LjsTokenType.OpNegate;
+    }
+    
+    private static bool CanBeUnaryPostfixOp(LjsTokenType tokenType)
+    {
+        return tokenType is 
+            LjsTokenType.OpIncrement or 
+            LjsTokenType.OpDecrement;
     }
 
     private static bool IsBinaryOp(LjsTokenType tokenType)
@@ -104,15 +114,20 @@ public static class MatherAdv
             //	Проверяем, содержится ли символ в списке операторов
             else if (_opsPriorityMap.ContainsKey(token.TokenType))
             {
-                //	Если да, то сначала проверяем
-                // char op = c;
-                //	Является ли оператор унарным символом
-                // if (op == '-' && (i == 0 || (i > 1 && operationPriority.ContainsKey(infixExpr[i - 1]))))
-                //     //	Если да - преобразуем его в тильду
-                //     op = '~';
+                var isUnaryPrefix = CanBeUnaryPrefixOp(token.TokenType) &&
+                                    (prevToken.TokenType == LjsTokenType.None ||
+                                     IsBinaryOp(prevToken.TokenType) ||
+                                     prevToken.TokenType == LjsTokenType.OpParenthesesOpen);
+                var isUnaryPostfix = !isUnaryPrefix &&
+                              CanBeUnaryPostfixOp(token.TokenType) && 
+                              (prevToken.TokenType == LjsTokenType.OpParenthesesClose ||
+                               prevToken.TokenType == LjsTokenType.OpSquareBracketsClose ||
+                               prevToken.TokenType == LjsTokenType.Identifier);
 
-                var isUnary = CanBeUnaryPrefixOp(token.TokenType) &&
-                              (prevToken.TokenType == LjsTokenType.None || IsBinaryOp(prevToken.TokenType) || prevToken.TokenType == LjsTokenType.OpParenthesesOpen);
+                var isUnary = isUnaryPrefix || isUnaryPostfix;
+                
+                // todo check isUnary equals isDefinitelyUnary() method and throw error if needed
+                
                 var opPriority = isUnary ? 500 : _opsPriorityMap[token.TokenType];
 
                 //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
