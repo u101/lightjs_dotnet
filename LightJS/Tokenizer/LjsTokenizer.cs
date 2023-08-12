@@ -392,8 +392,13 @@ public class LjsTokenizer
             LjsTokenType.OpEquals when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpEqualsStrict,
             
             LjsTokenType.OpGreater when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpGreaterOrEqual,
+            
+            LjsTokenType.OpGreater when nexOp == LjsTokenType.OpGreater => LjsTokenType.OpBitRightShift,
+            LjsTokenType.OpBitRightShift when nexOp == LjsTokenType.OpGreater => LjsTokenType.OpBitUnsignedRightShift,
+            LjsTokenType.OpLess when nexOp == LjsTokenType.OpLess => LjsTokenType.OpBitLeftShift,
+            
             LjsTokenType.OpLess when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpLessOrEqual,
-            LjsTokenType.OpNegate when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpNotEqual,
+            LjsTokenType.OpLogicalNot when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpNotEqual,
             LjsTokenType.OpNotEqual when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpNotEqualStrict,
             
             LjsTokenType.OpBitAnd when nexOp == LjsTokenType.OpBitAnd => LjsTokenType.OpLogicalAnd,
@@ -415,9 +420,11 @@ public class LjsTokenizer
             '-' => LjsTokenType.OpMinus,
             '*' => LjsTokenType.OpMultiply,
             '/' => LjsTokenType.OpDiv,
+            '%' => LjsTokenType.OpModulo,
             '&' => LjsTokenType.OpBitAnd,
             '|' => LjsTokenType.OpBitOr,
-            '!' => LjsTokenType.OpNegate,
+            '!' => LjsTokenType.OpLogicalNot,
+            '~' => LjsTokenType.OpBitNot,
             '?' => LjsTokenType.OpQuestionMark,
             ',' => LjsTokenType.OpComma,
             '.' => LjsTokenType.OpDot,

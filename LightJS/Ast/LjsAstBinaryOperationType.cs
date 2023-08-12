@@ -8,8 +8,14 @@ public enum LjsAstBinaryOperationType
     Minus,
     Multiply,
     Div,
+    Modulo,
+    
     BitAnd,
     BitOr,
+    
+    BitLeftShift,
+    BitRightShift,
+    BitUnsignedRightShift,
     
     Equals,
     EqualsStrict,

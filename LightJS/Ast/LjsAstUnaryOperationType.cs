@@ -2,7 +2,8 @@ namespace LightJS.Ast;
 
 public enum LjsAstUnaryOperationType
 {
-    Negate,
+    LogicalNot,
+    BitNot,
     PrefixIncrement,
     PrefixDecrement,
     PostfixIncrement,

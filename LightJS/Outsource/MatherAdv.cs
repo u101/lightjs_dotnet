@@ -5,21 +5,6 @@ namespace LightJS.Outsource;
 
 public static class MatherAdv
 {
-
-    private static readonly Dictionary<LjsTokenType, int> _opsPriorityMap = new()
-    {
-        
-        { LjsTokenType.OpAssign , 25},
-        { LjsTokenType.OpParenthesesOpen , 50},
-        
-        { LjsTokenType.OpPlus , 100},
-        { LjsTokenType.OpMinus , 100},
-        { LjsTokenType.OpMultiply , 200},
-        { LjsTokenType.OpDiv , 200},
-        
-        { LjsTokenType.OpIncrement , 600},
-        { LjsTokenType.OpDecrement , 600},
-    };
     
     [Flags]
     private enum OpType
@@ -59,33 +44,7 @@ public static class MatherAdv
         var tokens = ljsTokenizer.ReadTokens();
         return Convert(tokens, sourceCodeString);
     }
-
-    private static bool CanBeUnaryPrefixOp(LjsTokenType tokenType)
-    {
-        return tokenType is 
-            LjsTokenType.OpPlus or 
-            LjsTokenType.OpMinus or 
-            LjsTokenType.OpIncrement or 
-            LjsTokenType.OpDecrement or 
-            LjsTokenType.OpNegate;
-    }
     
-    private static bool CanBeUnaryPostfixOp(LjsTokenType tokenType)
-    {
-        return tokenType is 
-            LjsTokenType.OpIncrement or 
-            LjsTokenType.OpDecrement;
-    }
-
-    private static bool IsBinaryOp(LjsTokenType tokenType)
-    {
-        return tokenType is 
-            LjsTokenType.OpPlus or 
-            LjsTokenType.OpMinus or 
-            LjsTokenType.OpMultiply or 
-            LjsTokenType.OpDiv or 
-            LjsTokenType.OpAssign;
-    }
 
     public static ILjsAstNode Convert(List<LjsToken> tokens, string sourceCodeString)
     {
@@ -130,14 +89,14 @@ public static class MatherAdv
                 stack.Pop();
             }
             //	Проверяем, содержится ли символ в списке операторов
-            else if (_opsPriorityMap.ContainsKey(token.TokenType))
+            else if (LjsAstBuilderUtils.IsCalculationOperator(token.TokenType))
             {
-                var isUnaryPrefix = CanBeUnaryPrefixOp(token.TokenType) &&
+                var isUnaryPrefix = LjsAstBuilderUtils.CanBeUnaryPrefixOp(token.TokenType) &&
                                     (prevToken.TokenType == LjsTokenType.None ||
-                                     IsBinaryOp(prevToken.TokenType) ||
+                                     LjsAstBuilderUtils.IsBinaryOp(prevToken.TokenType) ||
                                      prevToken.TokenType == LjsTokenType.OpParenthesesOpen);
                 var isUnaryPostfix = !isUnaryPrefix &&
-                              CanBeUnaryPostfixOp(token.TokenType) && 
+                                     LjsAstBuilderUtils.CanBeUnaryPostfixOp(token.TokenType) && 
                               (prevToken.TokenType == LjsTokenType.OpParenthesesClose ||
                                prevToken.TokenType == LjsTokenType.OpSquareBracketsClose ||
                                prevToken.TokenType == LjsTokenType.Identifier);
@@ -157,8 +116,8 @@ public static class MatherAdv
                 }
                 
                 // todo check isUnary equals isDefinitelyUnary() method and throw error if needed
-                
-                var opPriority = isUnary ? 500 : _opsPriorityMap[token.TokenType];
+
+                var opPriority = LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, isUnary);
 
                 //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
                 while (stack.Count > 0 && (stack.Peek().Priority >= opPriority))

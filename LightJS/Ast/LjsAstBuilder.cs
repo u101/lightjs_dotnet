@@ -97,8 +97,9 @@ public class LjsAstBuilder
         
         { LjsTokenType.OpMultiply, 200},
         { LjsTokenType.OpDiv, 200},
+        { LjsTokenType.OpModulo, 200},
         
-        { LjsTokenType.OpNegate, 1000},
+        { LjsTokenType.OpLogicalNot, 1000},
         { LjsTokenType.OpIncrement, 1000},
         { LjsTokenType.OpDecrement, 1000},
     };
@@ -168,7 +169,7 @@ public class LjsAstBuilder
             LjsTokenType.OpPlus => OperatorType.Polymorphic,
             LjsTokenType.OpMinus => OperatorType.Polymorphic,
             
-            LjsTokenType.OpNegate => OperatorType.Unary,
+            LjsTokenType.OpLogicalNot => OperatorType.Unary,
             LjsTokenType.OpIncrement => OperatorType.Unary,
             LjsTokenType.OpDecrement => OperatorType.Unary,
             
@@ -176,6 +177,7 @@ public class LjsAstBuilder
             LjsTokenType.OpLess => OperatorType.Binary,
             LjsTokenType.OpMultiply => OperatorType.Binary,
             LjsTokenType.OpDiv => OperatorType.Binary,
+            LjsTokenType.OpModulo => OperatorType.Binary,
             LjsTokenType.OpBitAnd => OperatorType.Binary,
             LjsTokenType.OpBitOr => OperatorType.Binary,
             

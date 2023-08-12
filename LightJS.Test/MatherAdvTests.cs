@@ -1,6 +1,5 @@
 using FluentAssertions;
 using LightJS.Outsource;
-using LightJS.Tokenizer;
 
 namespace LightJS.Test;
 

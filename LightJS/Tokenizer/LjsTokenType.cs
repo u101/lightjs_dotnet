@@ -20,15 +20,19 @@ public enum LjsTokenType
     Undefined,
     
     // binary operators ->
-    
+    // todo Exponentiation ** operator returns the result of raising the first operand to the power of the second operand
     OpGreater,
     OpLess,
     OpPlus,
     OpMinus,
     OpMultiply,
     OpDiv,
+    OpModulo,
     OpBitAnd,
     OpBitOr,
+    OpBitLeftShift,
+    OpBitRightShift,
+    OpBitUnsignedRightShift,
     
     OpEquals,
     OpEqualsStrict,
@@ -51,7 +55,14 @@ public enum LjsTokenType
     
     // end of binary operators;
     
-    OpNegate,
+    // unary operators ->
+    
+    OpLogicalNot,
+    OpBitNot,
+    OpIncrement,
+    OpDecrement,
+    // end of unary operators;
+    
     OpQuestionMark,
     
     OpComma,
@@ -65,9 +76,6 @@ public enum LjsTokenType
     OpParenthesesClose,
     OpSquareBracketsOpen,
     OpSquareBracketsClose,
-    
-    OpIncrement,
-    OpDecrement,
     
     This,
     
