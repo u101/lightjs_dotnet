@@ -21,10 +21,14 @@ public static class MatherAdv
     private class Op : IMatherNode
     {
         public LjsTokenType TokenType { get; }
+        public bool IsUnary { get; }
+        public int Priority { get; }
 
-        public Op(LjsTokenType tokenType)
+        public Op(LjsTokenType tokenType, bool isUnary, int priority)
         {
             TokenType = tokenType;
+            IsUnary = isUnary;
+            Priority = priority;
         }
     }
 
@@ -35,6 +39,26 @@ public static class MatherAdv
         return Convert(tokens, sourceCodeString);
     }
 
+    private static bool CanBeUnaryPrefixOp(LjsTokenType tokenType)
+    {
+        return tokenType is 
+            LjsTokenType.OpPlus or 
+            LjsTokenType.OpMinus or 
+            LjsTokenType.OpIncrement or 
+            LjsTokenType.OpDecrement or 
+            LjsTokenType.OpNegate;
+    }
+
+    private static bool IsBinaryOp(LjsTokenType tokenType)
+    {
+        return tokenType is 
+            LjsTokenType.OpPlus or 
+            LjsTokenType.OpMinus or 
+            LjsTokenType.OpMultiply or 
+            LjsTokenType.OpDiv or 
+            LjsTokenType.OpAssign;
+    }
+
     public static IMatherNode Convert(List<LjsToken> tokens, string sourceCodeString)
     {
         //	Выходная строка, содержащая постфиксную запись
@@ -42,32 +66,34 @@ public static class MatherAdv
         //	Инициализация стека, содержащий операторы в виде символов
         var stack = new Stack<Op>();
 
+        var prevToken = default(LjsToken);
+        
         //	Перебираем строку
         for (var i = 0; i < tokens.Count; i++)
         {
             //	Текущий символ
-            var c = tokens[i];
+            var token = tokens[i];
 
             //	Если симовол - цифра
-            if (c.TokenType == LjsTokenType.Identifier)
+            if (token.TokenType == LjsTokenType.Identifier)
             {
                 postfixExpr.Add(new MatherGetVarNode(
-                    sourceCodeString.Substring(c.Position.CharIndex, c.StringLength)));
+                    sourceCodeString.Substring(token.Position.CharIndex, token.StringLength)));
             }
-            else if (LjsAstBuilderUtils.IsLiteral(c.TokenType))
+            else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
                 postfixExpr.Add(new MatherLiteralNode(
-                    sourceCodeString.Substring(c.Position.CharIndex, c.StringLength)));
+                    sourceCodeString.Substring(token.Position.CharIndex, token.StringLength)));
             }
             
             //	Если открывающаяся скобка 
-            else if (c.TokenType == LjsTokenType.OpParenthesesOpen)
+            else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
             {
                 //	Заносим её в стек
-                stack.Push(new Op(c.TokenType));
+                stack.Push(new Op(token.TokenType, false, 0));
             }
             //	Если закрывающая скобка
-            else if (c.TokenType == LjsTokenType.OpParenthesesClose)
+            else if (token.TokenType == LjsTokenType.OpParenthesesClose)
             {
                 //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
                 while (stack.Count > 0 && stack.Peek().TokenType != LjsTokenType.OpParenthesesOpen)
@@ -76,7 +102,7 @@ public static class MatherAdv
                 stack.Pop();
             }
             //	Проверяем, содержится ли символ в списке операторов
-            else if (_opsPriorityMap.ContainsKey(c.TokenType))
+            else if (_opsPriorityMap.ContainsKey(token.TokenType))
             {
                 //	Если да, то сначала проверяем
                 // char op = c;
@@ -85,13 +111,19 @@ public static class MatherAdv
                 //     //	Если да - преобразуем его в тильду
                 //     op = '~';
 
+                var isUnary = CanBeUnaryPrefixOp(token.TokenType) &&
+                              (prevToken.TokenType == LjsTokenType.None || IsBinaryOp(prevToken.TokenType) || prevToken.TokenType == LjsTokenType.OpParenthesesOpen);
+                var opPriority = isUnary ? 500 : _opsPriorityMap[token.TokenType];
+
                 //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
-                while (stack.Count > 0 && (_opsPriorityMap[stack.Peek().TokenType] >= _opsPriorityMap[c.TokenType]))
+                while (stack.Count > 0 && (stack.Peek().Priority >= opPriority))
                     postfixExpr.Add(stack.Pop());
                 
                 //	Заносим в стек оператор
-                stack.Push(new Op(c.TokenType));
+                stack.Push(new Op(token.TokenType, isUnary, opPriority));
             }
+
+            prevToken = token;
         }
 
         //	Заносим все оставшиеся операторы из стека в выходную строку
@@ -102,54 +134,36 @@ public static class MatherAdv
         
         // --------- CREATE NODES
         
-        //	Стек для хранения чисел
         var locals = new Stack<IMatherNode>();
-        //	Счётчик действий
-        var counter = 0;
 
         //	Проходим по строке
         for (var i = 0; i < postfixExpr.Count; i++)
         {
-            //	Текущий символ
-            var c = postfixExpr[i];
+            var node = postfixExpr[i];
             
-            //	Если символ есть в списке операторов
-            if (c is Op op)
+            if (node is Op op)
             {
-                //	Прибавляем значение счётчику
-                counter += 1;
-                //	Проверяем, является ли данный оператор унарным
-                // if (c == '~')
-                // {
-                //     //	Проверяем, пуст ли стек: если да - задаём нулевое значение,
-                //     //	еси нет - выталкиваем из стека значение
-                //     double last = locals.Count > 0 ? locals.Pop() : 0;
-                //
-                //     //	Получаем результат операции и заносим в стек
-                //     locals.Push(Execute('-', 0, last));
-                //     //	Отчитываемся пользователю о проделанной работе
-                //     Console.WriteLine($"{counter}) {c}{last} = {locals.Peek()}");
-                //     //	Указываем, что нужно перейти к следующей итерации цикла
-                //     //	 для того, чтобы пропустить остальной код
-                //     continue;
-                // }
 
-                //	Получаем значения из стека в обратном порядке
-                var right = locals.Pop();
-                var left = locals.Pop();
-
-                //	Получаем результат операции и заносим в стек
-                locals.Push(new MatherBinaryOpNode(left, right, op.TokenType));
-                //	Отчитываемся пользователю о проделанной работе
-                Console.WriteLine($"{counter}) {left} {c} {right} = {locals.Peek()}");
+                if (op.IsUnary)
+                {
+                    var operand = locals.Pop();
+                    locals.Push(new MatherUnaryOpNode(operand, op.TokenType));
+                }
+                else
+                {
+                    var right = locals.Pop();
+                    var left = locals.Pop();
+                    
+                    locals.Push(new MatherBinaryOpNode(left, right, op.TokenType));
+                }
+                
             }
             else
             {
-                locals.Push(c);
+                locals.Push(node);
             }
         }
-
-        //	По завершению цикла возвращаем результат из стека
+        
         return locals.Pop();
 
         

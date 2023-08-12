@@ -17,6 +17,82 @@ public class MatherAdvTests
             new MatherBinaryOpNode( "a".ToVar(), "b".ToVar(), LjsTokenType.OpPlus),
             "5".ToLit(), LjsTokenType.OpPlus));
     }
+
+    [Test]
+    public void UnaryMinusSimpleTest()
+    {
+        var node = MatherAdv.Convert("-a + b");
+        
+        node.Should().BeEquivalentTo(new MatherBinaryOpNode(
+            new MatherUnaryOpNode("a".ToVar(), LjsTokenType.OpMinus),
+            "b".ToVar(), LjsTokenType.OpPlus));
+    }
+    
+    [Test]
+    public void UnaryMinusAssignmentTest()
+    {
+        var node = MatherAdv.Convert("x = -a + -b");
+
+        var expect = "x".ToVar().Assign(
+            "a".ToVar().WithUnaryMinus().Plus("b".ToVar().WithUnaryMinus()));
+        
+        node.Should().BeEquivalentTo(expect);
+    }
+    
+    [Test]
+    public void UnaryMinusAssignmentWithParentheses()
+    {
+        var node = MatherAdv.Convert("x = (-(a + b))");
+
+        var expect = "x".ToVar().Assign(
+            "a".ToVar().Plus("b".ToVar()).WithUnaryMinus());
+        
+        node.Should().BeEquivalentTo(expect);
+    }
+    
+    [Test]
+    public void UnaryMinusSequence()
+    {
+        var node = MatherAdv.Convert("x = a - - - - - b");
+
+        var expect = "x".ToVar().Assign(
+            "a".ToVar().Minus("b".ToVar().WithUnaryMinus().WithUnaryMinus().WithUnaryMinus().WithUnaryMinus()));
+        
+        node.Should().BeEquivalentTo(expect);
+    }
+    
+    [Test]
+    public void UnaryPlusMinusSequence()
+    {
+        var node = MatherAdv.Convert("x = a - + - + - b");
+
+        var expect = "x".ToVar().Assign(
+            "a".ToVar().Minus("b".ToVar().WithUnaryMinus().WithUnaryPlus().WithUnaryMinus().WithUnaryPlus()));
+        
+        node.Should().BeEquivalentTo(expect);
+    }
+    
+    [Test]
+    public void UnaryMinusAssignmentComplexTest()
+    {
+        var node = MatherAdv.Convert("x = -(a + -b)");
+
+        var expect = "x".ToVar().Assign(
+            "a".ToVar().Plus("b".ToVar().WithUnaryMinus()).WithUnaryMinus());
+        
+        node.Should().BeEquivalentTo(expect);
+    }
+    
+    [Test]
+    public void UnaryPlusAssignmentTest()
+    {
+        var node = MatherAdv.Convert("x = +a + +b");
+
+        var expect = "x".ToVar().Assign(
+            "a".ToVar().WithUnaryPlus().Plus("b".ToVar().WithUnaryPlus()));
+        
+        node.Should().BeEquivalentTo(expect);
+    }
     
     [Test]
     public void ParenthesesTest()
@@ -43,6 +119,15 @@ public class MatherAdvTests
     }
     
     [Test]
+    public void AssignSequenceTest()
+    {
+        var node = MatherAdv.Convert("x = y = a = b + c");
+
+        node.Should().BeEquivalentTo("x".ToVar().Assign("y".ToVar().Assign("a".ToVar().Assign(
+            "b".ToVar().Plus("c".ToVar())))));
+    }
+    
+    [Test]
     public void AssignWithParenthesesTest()
     {
         var node = MatherAdv.Convert("x = a + ( b - c ) + d");
@@ -57,5 +142,5 @@ public class MatherAdvTests
             "d".ToVar(), LjsTokenType.OpPlus),
             LjsTokenType.OpAssign));
     }
-    
+
 }
