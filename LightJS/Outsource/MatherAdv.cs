@@ -1,32 +1,41 @@
+using LightJS.Ast;
+using LightJS.Tokenizer;
+
 namespace LightJS.Outsource;
 
 public static class MatherAdv
 {
 
-    private static readonly Dictionary<MatherTokenType, int> _opsPriorityMap = new()
+    private static readonly Dictionary<LjsTokenType, int> _opsPriorityMap = new()
     {
         
-        { MatherTokenType.OpAssign , 25},
-        { MatherTokenType.OpParenthesesOpen , 50},
+        { LjsTokenType.OpAssign , 25},
+        { LjsTokenType.OpParenthesesOpen , 50},
         
-        { MatherTokenType.OpPlus , 100},
-        { MatherTokenType.OpMinus , 100},
-        { MatherTokenType.OpMul , 200},
-        { MatherTokenType.OpDiv , 200},
+        { LjsTokenType.OpPlus , 100},
+        { LjsTokenType.OpMinus , 100},
+        { LjsTokenType.OpMultiply , 200},
+        { LjsTokenType.OpDiv , 200},
     };
 
     private class Op : IMatherNode
     {
-        public MatherTokenType TokenType { get; }
+        public LjsTokenType TokenType { get; }
 
-        public Op(MatherTokenType tokenType)
+        public Op(LjsTokenType tokenType)
         {
             TokenType = tokenType;
         }
     }
-    
 
-    public static IMatherNode Convert(List<MatherToken> tokens)
+    public static IMatherNode Convert(string sourceCodeString)
+    {
+        var ljsTokenizer = new LjsTokenizer(sourceCodeString);
+        var tokens = ljsTokenizer.ReadTokens();
+        return Convert(tokens, sourceCodeString);
+    }
+
+    public static IMatherNode Convert(List<LjsToken> tokens, string sourceCodeString)
     {
         //	Выходная строка, содержащая постфиксную запись
         var postfixExpr = new List<IMatherNode>();
@@ -40,26 +49,28 @@ public static class MatherAdv
             var c = tokens[i];
 
             //	Если симовол - цифра
-            if (c.TokenType == MatherTokenType.Id)
+            if (c.TokenType == LjsTokenType.Identifier)
             {
-                postfixExpr.Add(new MatherGetVarNode(c.Value));
+                postfixExpr.Add(new MatherGetVarNode(
+                    sourceCodeString.Substring(c.Position.CharIndex, c.StringLength)));
             }
-            else if (c.TokenType == MatherTokenType.Literal)
+            else if (LjsAstBuilderUtils.IsLiteral(c.TokenType))
             {
-                postfixExpr.Add(new MatherLiteralNode(c.Value));
+                postfixExpr.Add(new MatherLiteralNode(
+                    sourceCodeString.Substring(c.Position.CharIndex, c.StringLength)));
             }
             
             //	Если открывающаяся скобка 
-            else if (c.TokenType == MatherTokenType.OpParenthesesOpen)
+            else if (c.TokenType == LjsTokenType.OpParenthesesOpen)
             {
                 //	Заносим её в стек
                 stack.Push(new Op(c.TokenType));
             }
             //	Если закрывающая скобка
-            else if (c.TokenType == MatherTokenType.OpParenthesesClose)
+            else if (c.TokenType == LjsTokenType.OpParenthesesClose)
             {
                 //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
-                while (stack.Count > 0 && stack.Peek().TokenType != MatherTokenType.OpParenthesesOpen)
+                while (stack.Count > 0 && stack.Peek().TokenType != LjsTokenType.OpParenthesesOpen)
                     postfixExpr.Add(stack.Pop()); 
                 //	Удаляем открывающуюся скобку из стека
                 stack.Pop();
