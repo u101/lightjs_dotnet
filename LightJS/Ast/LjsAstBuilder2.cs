@@ -70,7 +70,8 @@ public class LjsAstBuilder2
         Assign = 1 << 3,
         Parentheses = 1 << 4,
         FuncCall = 1 << 5,
-        PropAccess = 1 << 6
+        PropAccess = 1 << 6,
+        TernaryIf = 1 << 7
     }
     
     private readonly struct ExpressionStackPosition
@@ -113,7 +114,8 @@ public class LjsAstBuilder2
     {
         None,
         FuncCall, // stop at comma or parentheses close
-        PropAccess // property access with square brackets 
+        PropAccess, // property access with square brackets
+        UpToColon
     }
 
     private ILjsAstNode Convert(ParsingMode parsingMode)
@@ -161,6 +163,14 @@ public class LjsAstBuilder2
                     break;
                 }
             }
+            else if (parsingMode == ParsingMode.UpToColon)
+            {
+                if (token.TokenType == LjsTokenType.OpColon)
+                {
+                    parsingModeFinished = true;
+                    break;
+                }
+            }
             
             if (token.TokenType == LjsTokenType.Identifier)
             {
@@ -170,6 +180,22 @@ public class LjsAstBuilder2
             else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
                 _postfixExpression.Add( LjsAstBuilderUtils.CreateLiteralNode(token, sourceCodeString));
+            }
+            
+            else if (token.TokenType == LjsTokenType.OpQuestionMark)
+            {
+                var trueExpressionNode = Convert(ParsingMode.UpToColon);
+                var falseExpressionNode = Convert(ParsingMode.None);
+
+                _postfixExpression.Add(trueExpressionNode);
+                _postfixExpression.Add(falseExpressionNode);
+                
+                PushOperatorToStack(
+                    new Op(token, OpType.TernaryIf,
+                        LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, false)),
+                    operatorsStackStartingLn);
+                
+                break;
             }
             
             else if (token.TokenType == LjsTokenType.OpSquareBracketsOpen)
@@ -279,6 +305,10 @@ public class LjsAstBuilder2
                     new Op(token, opType, opPriority), 
                     operatorsStackStartingLn);
             }
+            else
+            {
+                throw new LjsSyntaxError("unexpected token", token.Position);
+            }
         }
         
         // check correct exit in modes
@@ -358,6 +388,13 @@ public class LjsAstBuilder2
                     var operand = _locals.Pop();
                     
                     _locals.Push(new LjsAstGetProperty(propNameNode, operand));
+                }
+                else if ((op.OpType & OpType.TernaryIf) != 0)
+                {
+                    var falseExpression = _locals.Pop();
+                    var trueExpression = _locals.Pop();
+                    var condition = _locals.Pop();
+                    _locals.Push(new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression));
                 }
                 
                 // unary operation

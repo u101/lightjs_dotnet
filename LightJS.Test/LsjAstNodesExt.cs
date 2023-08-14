@@ -154,5 +154,12 @@ public static class LsjAstNodesExt
         f.Arguments.AddRange(args);
         return f;
     }
+
+    public static ILjsAstNode TernaryIf(
+        this ILjsAstNode condition, ILjsAstNode trueExpression,
+        ILjsAstNode falseExpression)
+    {
+        return new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression);
+    }
     
 }

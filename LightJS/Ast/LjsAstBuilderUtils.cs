@@ -57,6 +57,8 @@ public static class LjsAstBuilderUtils
         { LjsTokenType.OpLogicalAnd, 4000},
         { LjsTokenType.OpLogicalOr, 3000},
         
+        { LjsTokenType.OpQuestionMark, 2500},
+        
     };
     
     public static int GetOperatorPriority(LjsTokenType tokenType, bool isUnary)

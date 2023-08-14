@@ -370,6 +370,14 @@ public class LjsAstSimpleExpressionsTest
         var expected = "a".SetProp("foo".ToLit(), "x".ToVar());
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
+    
+    [Test]
+    public void BuildSimpleTernaryIfExpression()
+    {
+        var node = TestUtils.BuildAstNode("a ? b : c");
+        var expected = "a".ToVar().TernaryIf("b".ToVar(), "c".ToVar());
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
 
     
 }
