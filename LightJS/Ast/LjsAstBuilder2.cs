@@ -360,7 +360,7 @@ public class LjsAstBuilder2
                     _locals.Push(new LjsAstGetProperty(propNameNode, operand));
                 }
                 
-                // unary operaton
+                // unary operation
                 else if (op.IsUnary)
                 {
                     var operand = _locals.Pop();
@@ -388,6 +388,7 @@ public class LjsAstBuilder2
 
                     else if (op.IsAssign)
                     {
+                        // replace getter nodes by setter nodes
                         switch (left)
                         {
                             case LjsAstGetVar getVar:
