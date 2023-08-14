@@ -6,13 +6,6 @@ namespace LightJS.Test;
 [TestFixture]
 public class LjsAstSimpleExpressionsTest
 {
-
-    private static ILjsAstNode Parse(string sourceCode)
-    {
-        var builder = new LjsAstBuilder2(sourceCode);
-        var model = builder.Build();
-        return model.RootNode;
-    }
     
     [Test]
     public void BuildSimpleLiteral()
@@ -44,7 +37,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void SimpleTest()
     {
-        var node = Parse("a + b + 5");
+        var node = TestUtils.BuildAstNode("a + b + 5");
 
         node.Should().BeEquivalentTo("a".ToVar().Plus("b".ToVar()).Plus(5.ToLit()));
     }
@@ -52,17 +45,17 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void IncrementSimpleTest()
     {
-        var a = Parse("++a");
+        var a = TestUtils.BuildAstNode("++a");
         a.Should().BeEquivalentTo("a".ToVar().WithPrefixIncrement());
         
-        a = Parse("a++");
+        a = TestUtils.BuildAstNode("a++");
         a.Should().BeEquivalentTo("a".ToVar().WithPostfixIncrement());
     }
 
     [Test]
     public void UnaryMinusSimpleTest()
     {
-        var node = Parse("-a + b");
+        var node = TestUtils.BuildAstNode("-a + b");
 
         node.Should().BeEquivalentTo("a".WithUnaryMinus().Plus("b"));
     }
@@ -70,7 +63,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void UnaryMinusAssignmentTest()
     {
-        var node = Parse("x = -a + -b");
+        var node = TestUtils.BuildAstNode("x = -a + -b");
 
         node.Should().BeEquivalentTo(
             "x".Assign("a".WithUnaryMinus().Plus("b".WithUnaryMinus())));
@@ -79,7 +72,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void UnaryMinusAssignmentWithParentheses()
     {
-        var node = Parse("x = (-(a + b))");
+        var node = TestUtils.BuildAstNode("x = (-(a + b))");
 
         node.Should().BeEquivalentTo("x".Assign("a".Plus("b").WithUnaryMinus()));
     }
@@ -87,7 +80,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void UnaryMinusSequence()
     {
-        var node = Parse("x = a - - - - - b");
+        var node = TestUtils.BuildAstNode("x = a - - - - - b");
 
         node.Should()
             .BeEquivalentTo(
@@ -97,7 +90,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void UnaryPlusMinusSequence()
     {
-        var node = Parse("x = a - + - + - b");
+        var node = TestUtils.BuildAstNode("x = a - + - + - b");
 
         node.Should()
             .BeEquivalentTo(
@@ -107,7 +100,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void UnaryMinusAssignmentComplexTest()
     {
-        var node = Parse("x = -(a + -b)");
+        var node = TestUtils.BuildAstNode("x = -(a + -b)");
 
         node.Should()
             .BeEquivalentTo(
@@ -117,7 +110,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void UnaryPlusAssignmentTest()
     {
-        var node = Parse("x = +a + +b");
+        var node = TestUtils.BuildAstNode("x = +a + +b");
 
         node.Should().BeEquivalentTo("x".Assign("a".WithUnaryPlus().Plus("b".WithUnaryPlus())));
     }
@@ -125,7 +118,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void ParenthesesTest()
     {
-        var node = Parse("a + ( b - c ) + d");
+        var node = TestUtils.BuildAstNode("a + ( b - c ) + d");
 
         node.Should().BeEquivalentTo(
             "a".Plus("b".Minus("c")).Plus("d"));
@@ -141,7 +134,7 @@ public class LjsAstSimpleExpressionsTest
 
         void Check(string expression)
         {
-            var node = Parse(expression);
+            var node = TestUtils.BuildAstNode(expression);
             node.Should().BeEquivalentTo(("a".Plus("b")).Minus("c".Plus("d")));
         }
     }
@@ -149,7 +142,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void AssignSimpleTest()
     {
-        var node = Parse("a = b + c");
+        var node = TestUtils.BuildAstNode("a = b + c");
 
         node.Should().BeEquivalentTo("a".Assign("b".Plus("c")));
     }
@@ -157,7 +150,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void AssignSequenceTest()
     {
-        var node = Parse("x = (y = (a = b + c))");
+        var node = TestUtils.BuildAstNode("x = (y = (a = b + c))");
 
         node.Should().BeEquivalentTo(
             "x".Assign("y".Assign("a".Assign(
@@ -168,7 +161,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void AssignWithParenthesesTest()
     {
-        var node = Parse("x = a + ( b - c ) + d");
+        var node = TestUtils.BuildAstNode("x = a + ( b - c ) + d");
 
         node.Should().BeEquivalentTo(
             "x".Assign(
@@ -178,7 +171,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void DotAccessSimpleTest()
     {
-        var node = Parse("x = a.foo.bar");
+        var node = TestUtils.BuildAstNode("x = a.foo.bar");
         node.Should().BeEquivalentTo(
             "x".Assign("a".GetProp("foo").GetProp("bar")));
     }
@@ -186,29 +179,10 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void DotPropertyAssignSimpleTest()
     {
-        var node = Parse("a.foo.bar = x");
+        var node = TestUtils.BuildAstNode("a.foo.bar = x");
         var expected = "a".GetProp("foo").SetProp("bar", "x".ToVar());
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
 
-    [Test]
-    public void SimpleFuncCallWithoutArgs()
-    {
-        var node = Parse("x = a() + (b() + c())");
-        var expected = "x".Assign(
-            "a".FuncCall().Plus("b".FuncCall().Plus("c".FuncCall())));
-        
-        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
-    }
-
-    /*[Test]
-    public void SimpleFuncCall()
-    {
-        var node = Parse("x = foo(a, c-(a+b))");
-        var expected = "x".Assign("foo".FuncCall(
-            "a".ToVar(),
-            "c".Minus("a".Plus("b"))
-        ));
-        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
-    }*/
+    
 }

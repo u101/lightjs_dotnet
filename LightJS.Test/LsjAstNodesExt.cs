@@ -76,6 +76,10 @@ public static class LsjAstNodesExt
     {
         return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstGetVar(y), LjsAstBinaryOperationType.Plus);
     }
+    public static LjsAstBinaryOperation Plus(this string x, int y)
+    {
+        return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstLiteral<int>(y), LjsAstBinaryOperationType.Plus);
+    }
     
     public static LjsAstBinaryOperation Minus(this ILjsAstNode x, ILjsAstNode y)
     {

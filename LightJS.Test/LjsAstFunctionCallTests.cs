@@ -1,0 +1,39 @@
+using LightJS.Ast;
+using FluentAssertions;
+
+namespace LightJS.Test;
+
+[TestFixture]
+public class LjsAstFunctionCallTests
+{
+
+    [Test]
+    public void SimpleFuncCallWithArgs()
+    {
+        var node = TestUtils.BuildAstNode("foo(x, y + 2, z + 1)");
+        var expected = "foo".FuncCall("x".ToVar(), "y".Plus(2), "z".Plus(1));
+        
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+    
+    [Test]
+    public void SimpleFuncCallWithoutArgs()
+    {
+        var node = TestUtils.BuildAstNode("x = a() + (b() + c())");
+        var expected = "x".Assign(
+            "a".FuncCall().Plus("b".FuncCall().Plus("c".FuncCall())));
+        
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+    
+    [Test]
+    public void SimpleFuncCallWithAssignment()
+    {
+        var node = TestUtils.BuildAstNode("x = foo(a, c-(a+b))");
+        var expected = "x".Assign("foo".FuncCall(
+            "a".ToVar(),
+            "c".Minus("a".Plus("b"))
+        ));
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+}

@@ -54,7 +54,7 @@ public class LjsAstBuilder2
             throw new Exception("no tokens");
         }
 
-        var node = Convert(ParsingMode.None, default);
+        var node = Convert(ParsingMode.None);
 
         return new LjsAstModel(node, _tokenPositionsMap);
 
@@ -97,32 +97,32 @@ public class LjsAstBuilder2
         public bool IsBinary => (this.OpType & OpType.Binary) != 0;
         public bool IsAssign => (this.OpType & OpType.Assign) != 0;
         public int Priority { get; }
+        public int InnerMembersCount { get; }
 
-        public Op(LjsToken token, OpType opType, int priority)
+        public Op(LjsToken token, OpType opType, int priority, int innerMembersCount = 0)
         {
             Token = token;
             OpType = opType;
             Priority = priority;
+            InnerMembersCount = innerMembersCount;
         }
     }
     
     private enum ParsingMode
     {
         None,
-        FuncCall
+        FuncCall // stop at comma or parentheses close
     }
 
-    private ILjsAstNode Convert(
-        ParsingMode parsingMode, 
-        ExpressionStackPosition expressionStackPosition)
+    private ILjsAstNode Convert(ParsingMode parsingMode)
     {
-        // TODO function call
         // TODO ternary opertaor .. ? .. : ..
         // TODO dot prop access
 
         var parenthesesCount = 0;
         
         var sourceCodeString = _sourceCodeString;
+        var expressionStackPosition = new ExpressionStackPosition(_operatorsStack.Count, _postfixExpression.Count);
 
 
         while (_tokensReader.HasNextToken)
@@ -132,6 +132,18 @@ public class LjsAstBuilder2
             var token = _tokensReader.CurrentToken;
             var prevToken = _tokensReader.PrevToken;
             var nextToken = _tokensReader.NextToken;
+
+            if (parsingMode == ParsingMode.FuncCall)
+            {
+                if (token.TokenType == LjsTokenType.OpComma)
+                {
+                    break;
+                }
+                if (parenthesesCount == 0 && token.TokenType == LjsTokenType.OpParenthesesClose)
+                {
+                    break;
+                }
+            }
             
             if (token.TokenType == LjsTokenType.Identifier)
             {
@@ -158,7 +170,21 @@ public class LjsAstBuilder2
                     }
                     else
                     {
-                        throw new NotImplementedException();
+                        var argumentsCount = 1;
+                        var funcArg = Convert(ParsingMode.FuncCall);
+                        
+                        _postfixExpression.Add(funcArg);
+                        
+                        while (_tokensReader.CurrentToken.TokenType != LjsTokenType.OpParenthesesClose)
+                        {
+                            funcArg = Convert(ParsingMode.FuncCall);
+                            _postfixExpression.Add(funcArg);
+                            ++argumentsCount;
+                        }
+                        
+                        _operatorsStack.Push(new Op(
+                            token, OpType.FuncCall | OpType.UnaryPostfix, 
+                            LjsAstBuilderUtils.FuncCallOperatorPriority, argumentsCount));
                     }
                     
                 }
@@ -250,12 +276,32 @@ public class LjsAstBuilder2
             if (node is Op op)
             {
 
+                // function call operation
                 if ((op.OpType & OpType.FuncCall) != 0)
                 {
-                    var operand = _locals.Pop();
-                    _locals.Push(new LjsAstFunctionCall(operand));
-                }
+                    var argumentsCount = op.InnerMembersCount;
 
+                    if (argumentsCount == 0)
+                    {
+                        var operand = _locals.Pop();
+                    
+                        _locals.Push(new LjsAstFunctionCall(operand));
+                    }
+                    else
+                    {
+                        var args = new ILjsAstNode[argumentsCount];
+                        
+                        for (var j = 0; j < argumentsCount; j++)
+                        {
+                            args[j] = _locals.Pop();
+                        }
+                        
+                        var operand = _locals.Pop();
+                        
+                        _locals.Push(new LjsAstFunctionCall(operand, args));
+                    }
+                }
+                // unary operaton
                 else if (op.IsUnary)
                 {
                     var operand = _locals.Pop();
@@ -264,6 +310,7 @@ public class LjsAstBuilder2
                 }
                 else
                 {
+                    // binary operation
                     var right = _locals.Pop();
                     var left = _locals.Pop();
 
