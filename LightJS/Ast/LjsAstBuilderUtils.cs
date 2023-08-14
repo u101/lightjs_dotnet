@@ -125,7 +125,7 @@ public static class LjsAstBuilderUtils
     };
 
     private static readonly HashSet<LjsTokenType> BinaryOperatorsSet =
-        BinaryOperationsMap.Keys.Concat(AssignModes.Keys).ToHashSet();
+        BinaryOperationsMap.Keys.Concat(AssignModes.Keys).Concat(new [] { LjsTokenType.OpDot}).ToHashSet();
 
     private static readonly Dictionary<LjsTokenType, LjsAstUnaryOperationType> PrefixUnaryOperationsMap = new()
     {
@@ -151,7 +151,7 @@ public static class LjsAstBuilderUtils
     public static bool IsBinaryOp(LjsTokenType tokenType) => 
         BinaryOperatorsSet.Contains(tokenType);
 
-    public static bool IsCalculationOperator(LjsTokenType tokenType) => 
+    public static bool IsOrdinaryOperator(LjsTokenType tokenType) => 
         IsBinaryOp(tokenType) || CanBeUnaryPrefixOp(tokenType);
 
     

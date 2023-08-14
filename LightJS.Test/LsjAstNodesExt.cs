@@ -101,4 +101,20 @@ public static class LsjAstNodesExt
     {
         return new LjsAstSetVar(varName, other, LjsAstAssignMode.Normal);
     }
+
+    public static ILjsAstNode GetProp(this string varName, string prop)
+    {
+        return new LjsAstGetNamedProperty(prop, new LjsAstGetVar(varName));
+    }
+
+    public static ILjsAstNode GetProp(this ILjsAstNode node, string prop)
+    {
+        return new LjsAstGetNamedProperty(prop, node);
+    }
+
+    public static ILjsAstNode SetProp(this ILjsAstNode node, string propName, ILjsAstNode v)
+    {
+        return new LjsAstSetNamedProperty(propName, node, v, LjsAstAssignMode.Normal);
+    }
+    
 }

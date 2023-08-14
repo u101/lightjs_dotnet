@@ -84,8 +84,7 @@ public static class MatherAdv
                 
                 stack.Pop(); // remove opening parentheses from stack
             }
-            
-            else if (LjsAstBuilderUtils.IsCalculationOperator(token.TokenType))
+            else if (LjsAstBuilderUtils.IsOrdinaryOperator(token.TokenType))
             {
                 var isUnaryPrefix = LjsAstBuilderUtils.CanBeUnaryPrefixOp(token.TokenType) &&
                                     (prevToken.TokenType == LjsTokenType.None ||
@@ -114,13 +113,9 @@ public static class MatherAdv
                 // todo check isUnary equals isDefinitelyUnary() method and throw error if needed
 
                 var opPriority = LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, isUnary);
-                var isRightToLeft = (opType & OpType.Assign) != 0;
-
-                if (!isRightToLeft)
-                {
-                    while (stack.Count > 0 && (stack.Peek().Priority >= opPriority))
-                        postfixExpr.Add(stack.Pop());
-                }
+                
+                while (stack.Count > 0 && (stack.Peek().Priority >= opPriority))
+                    postfixExpr.Add(stack.Pop());
                 
                 stack.Push(new Op(token, opType, opPriority));
             }
@@ -156,15 +151,32 @@ public static class MatherAdv
                     var right = locals.Pop();
                     var left = locals.Pop();
 
-                    if (op.IsAssign)
+                    if (op.TokenType == LjsTokenType.OpDot)
                     {
-                        if (left is LjsAstGetVar getVar)
+                        if (right is LjsAstGetVar getVar)
                         {
-                            locals.Push(new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                            locals.Push(new LjsAstGetNamedProperty(getVar.VarName, left));
                         }
                         else
                         {
-                            throw new Exception("invalid assign");
+                            throw new LjsSyntaxError("invalid property access", op.Token.Position);
+                        }
+                    }
+
+                    else if (op.IsAssign)
+                    {
+                        switch (left)
+                        {
+                            case LjsAstGetVar getVar:
+                                locals.Push(new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                                break;
+                            case LjsAstGetNamedProperty getProp:
+                                locals.Push(new LjsAstSetNamedProperty(
+                                    getProp.PropertyName, getProp.PropertySource, 
+                                    right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                                break;
+                            default:
+                                throw new LjsSyntaxError("invalid assign", op.Token.Position);
                         }
                     }
                     else

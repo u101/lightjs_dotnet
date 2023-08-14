@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstSetNamedProperty : ILjsAstNode, ILjsAstSetterNode
+public class LjsAstSetNamedProperty : ILjsAstNode
 {
     public string PropertyName { get; }
     public ILjsAstNode PropertySource { get; }

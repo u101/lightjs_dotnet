@@ -108,7 +108,7 @@ public class MatherAdvTests
     [Test]
     public void AssignSequenceTest()
     {
-        var node = MatherAdv.Convert("x = y = a = b + c");
+        var node = MatherAdv.Convert("x = (y = (a = b + c))");
 
         node.Should().BeEquivalentTo(
             "x".Assign("y".Assign("a".Assign(
@@ -124,6 +124,22 @@ public class MatherAdvTests
         node.Should().BeEquivalentTo(
             "x".Assign(
                 "a".Plus("b".Minus("c")).Plus("d")));
+    }
+
+    [Test]
+    public void DotAccessSimpleTest()
+    {
+        var node = MatherAdv.Convert("x = a.foo.bar");
+        node.Should().BeEquivalentTo(
+            "x".Assign("a".GetProp("foo").GetProp("bar")));
+    }
+    
+    [Test]
+    public void DotPropertyAssignSimpleTest()
+    {
+        var node = MatherAdv.Convert("a.foo.bar = x");
+        var expected = "a".GetProp("foo").SetProp("bar", "x".ToVar());
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
 
 }
