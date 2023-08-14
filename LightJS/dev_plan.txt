@@ -1,11 +1,12 @@
 ...
 
-0) save token positions for nodes [DONE]
+0) save token positions for nodes
 
 0.1) multiline blocks of code [DONE]
 0.15) var/prop assignment node [DONE]
 0.2) if / else blocks
 0.3) while loops
+0.4) ternary if expression
 
 1) dot property access foo.bar.bazz [DONE]
 2) square brackets property access foo["bar"]  [DONE]
