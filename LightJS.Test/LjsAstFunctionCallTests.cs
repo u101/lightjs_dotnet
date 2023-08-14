@@ -17,6 +17,20 @@ public class LjsAstFunctionCallTests
     }
     
     [Test]
+    public void NestedFuncCallsTest()
+    {
+        var node = TestUtils.BuildAstNode("x = foo(a, bar(x, buzz(a1,a2,a3)))");
+        var expected = "x".Assign(
+            "foo".FuncCall(
+                "a".ToVar(), "bar".FuncCall(
+                    "x".ToVar(), "buzz".FuncCall(
+                        "a1".ToVar(), "a2".ToVar(), "a3".ToVar()
+            ))));
+        
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+    
+    [Test]
     public void SimpleFuncCallWithoutArgs()
     {
         var node = TestUtils.BuildAstNode("x = a() + (b() + c())");
