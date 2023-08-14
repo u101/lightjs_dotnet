@@ -6,6 +6,10 @@ public class LjsAstBuilder2
 {
     private readonly string _sourceCodeString;
     private readonly TokensReader _tokensReader;
+    
+    private readonly List<ILjsAstNode> _postfixExpression = new();
+    private readonly Stack<Op> _operatorsStack = new();
+    private readonly Stack<ILjsAstNode> _locals = new();
 
     /// <summary>
     /// save nodes positions in source code (line number, col number)
@@ -50,7 +54,7 @@ public class LjsAstBuilder2
             throw new Exception("no tokens");
         }
 
-        var node = Convert(ParsingMode.None);
+        var node = Convert(ParsingMode.None, default);
 
         return new LjsAstModel(node, _tokenPositionsMap);
 
@@ -65,6 +69,18 @@ public class LjsAstBuilder2
         UnaryPostfix = 1 << 2,
         Assign = 1 << 3,
         Parentheses = 1 << 4
+    }
+    
+    private readonly struct ExpressionStackPosition
+    {
+        public int OperatorsStackStartingLn { get; }
+        public int PostfixExpressionStartingLn { get; }
+
+        public ExpressionStackPosition(int operatorsStackStartingLn, int postfixExpressionStartingLn)
+        {
+            OperatorsStackStartingLn = operatorsStackStartingLn;
+            PostfixExpressionStartingLn = postfixExpressionStartingLn;
+        }
     }
 
     private class Op : ILjsAstNode
@@ -95,14 +111,13 @@ public class LjsAstBuilder2
         FuncCall
     }
 
-    private ILjsAstNode Convert(ParsingMode parsingMode)
+    private ILjsAstNode Convert(
+        ParsingMode parsingMode, 
+        ExpressionStackPosition expressionStackPosition)
     {
         // TODO function call
         // TODO ternary opertaor .. ? .. : ..
         // TODO dot prop access
-        
-        var postfixExpr = new List<ILjsAstNode>();
-        var stack = new Stack<Op>();
 
         var parenthesesCount = 0;
         
@@ -118,12 +133,12 @@ public class LjsAstBuilder2
             
             if (token.TokenType == LjsTokenType.Identifier)
             {
-                postfixExpr.Add(new LjsAstGetVar(
+                _postfixExpression.Add(new LjsAstGetVar(
                     sourceCodeString.Substring(token.Position.CharIndex, token.StringLength)));
             }
             else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
-                postfixExpr.Add( LjsAstBuilderUtils.CreateLiteralNode(token, sourceCodeString));
+                _postfixExpression.Add( LjsAstBuilderUtils.CreateLiteralNode(token, sourceCodeString));
             }
             
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
@@ -135,18 +150,19 @@ public class LjsAstBuilder2
                     // todo
                 }
                 
-                stack.Push(new Op(token, opType, 0));
+                _operatorsStack.Push(new Op(token, opType, 0));
                 ++parenthesesCount;
             }
             
             else if (token.TokenType == LjsTokenType.OpParenthesesClose)
             {
-                while (stack.Count > 0 && stack.Peek().TokenType != LjsTokenType.OpParenthesesOpen)
+                while (_operatorsStack.Count > 0 && 
+                       _operatorsStack.Peek().TokenType != LjsTokenType.OpParenthesesOpen)
                 {
-                    postfixExpr.Add(stack.Pop()); 
+                    _postfixExpression.Add(_operatorsStack.Pop()); 
                 }
                 
-                stack.Pop(); // remove opening parentheses from stack
+                _operatorsStack.Pop(); // remove opening parentheses from stack
                 --parenthesesCount;
             }
             else if (LjsAstBuilderUtils.IsOrdinaryOperator(token.TokenType))
@@ -179,10 +195,10 @@ public class LjsAstBuilder2
 
                 var opPriority = LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, isUnary);
                 
-                while (stack.Count > 0 && (stack.Peek().Priority >= opPriority))
-                    postfixExpr.Add(stack.Pop());
+                while (_operatorsStack.Count > 0 && (_operatorsStack.Peek().Priority >= opPriority))
+                    _postfixExpression.Add(_operatorsStack.Pop());
                 
-                stack.Push(new Op(token, opType, opPriority));
+                _operatorsStack.Push(new Op(token, opType, opPriority));
             }
         }
 
@@ -190,8 +206,9 @@ public class LjsAstBuilder2
         
         if (parenthesesCount > 0)
         {
-            foreach (var op in stack)
+            while (_operatorsStack.Count > expressionStackPosition.OperatorsStackStartingLn)
             {
+                var op = _operatorsStack.Pop();
                 if (op.TokenType == LjsTokenType.OpParenthesesOpen)
                 {
                     throw new LjsSyntaxError("unclosed parentheses", op.Token.Position);
@@ -201,40 +218,41 @@ public class LjsAstBuilder2
             throw new LjsSyntaxError("unclosed parentheses");
         }
         
-        while (stack.Count > 0)
+        while (_operatorsStack.Count > expressionStackPosition.OperatorsStackStartingLn)
         {
-            postfixExpr.Add(stack.Pop());
+            _postfixExpression.Add(_operatorsStack.Pop());
         }
         
         // --------- CREATE NODES
         
-        var locals = new Stack<ILjsAstNode>();
+        _locals.Clear();
 
+        var postfixExprStart = expressionStackPosition.PostfixExpressionStartingLn;
         
-        for (var i = 0; i < postfixExpr.Count; i++)
+        for (var i = postfixExprStart; i < _postfixExpression.Count; i++)
         {
-            var node = postfixExpr[i];
+            var node = _postfixExpression[i];
             
             if (node is Op op)
             {
 
                 if (op.IsUnary)
                 {
-                    var operand = locals.Pop();
-                    locals.Push(new LjsAstUnaryOperation(
+                    var operand = _locals.Pop();
+                    _locals.Push(new LjsAstUnaryOperation(
                         operand, LjsAstBuilderUtils.GetUnaryOperationType(op.TokenType, op.IsUnaryPrefix)));
                 }
                 else
                 {
-                    var right = locals.Pop();
-                    var left = locals.Pop();
+                    var right = _locals.Pop();
+                    var left = _locals.Pop();
 
                     if (op.TokenType == LjsTokenType.OpDot)
                     {
                         // convert get var node into get named property
                         if (right is LjsAstGetVar getVar)
                         {
-                            locals.Push(new LjsAstGetNamedProperty(getVar.VarName, left));
+                            _locals.Push(new LjsAstGetNamedProperty(getVar.VarName, left));
                         }
                         else
                         {
@@ -247,10 +265,10 @@ public class LjsAstBuilder2
                         switch (left)
                         {
                             case LjsAstGetVar getVar:
-                                locals.Push(new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                                _locals.Push(new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
                                 break;
                             case LjsAstGetNamedProperty getProp:
-                                locals.Push(new LjsAstSetNamedProperty(
+                                _locals.Push(new LjsAstSetNamedProperty(
                                     getProp.PropertyName, getProp.PropertySource, 
                                     right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
                                 break;
@@ -260,7 +278,7 @@ public class LjsAstBuilder2
                     }
                     else
                     {
-                        locals.Push(new LjsAstBinaryOperation(
+                        _locals.Push(new LjsAstBinaryOperation(
                             left, right, LjsAstBuilderUtils.GetBinaryOperationType(op.TokenType)));
                     }
                     
@@ -270,11 +288,14 @@ public class LjsAstBuilder2
             }
             else
             {
-                locals.Push(node);
+                _locals.Push(node);
             }
         }
         
-        return locals.Pop();
+        _postfixExpression.RemoveRange(
+            postfixExprStart, _postfixExpression.Count - postfixExprStart);
+        
+        return _locals.Pop();
     }
     
     private static bool IsFunctionCall(LjsTokenType prevTokenType) => prevTokenType is
