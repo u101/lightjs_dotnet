@@ -1,10 +1,60 @@
-using LightJS.Ast;
 using LightJS.Tokenizer;
 
-namespace LightJS.Outsource;
+namespace LightJS.Ast;
 
-public static class MatherAdv
+public class LjsAstBuilder2
 {
+    private readonly string _sourceCodeString;
+    private readonly List<LjsToken> _tokens;
+
+    /// <summary>
+    /// save nodes positions in source code (line number, col number)
+    /// </summary>
+    private readonly Dictionary<ILjsAstNode, LjsTokenPosition> _tokenPositionsMap = new();
+
+    public LjsAstBuilder2(string sourceCodeString)
+    {
+        if (string.IsNullOrEmpty(sourceCodeString))
+        {
+            throw new ArgumentException("input string is null or empty");
+        }
+        
+        var ljsTokenizer = new LjsTokenizer(sourceCodeString);
+        var tokens = ljsTokenizer.ReadTokens();
+        
+        _sourceCodeString = sourceCodeString;
+        _tokens = tokens;
+    }
+    
+    public LjsAstBuilder2(string sourceCodeString, List<LjsToken> tokens)
+    {
+        if (string.IsNullOrEmpty(sourceCodeString))
+        {
+            throw new ArgumentException("input string is null or empty");
+        }
+        
+        if (tokens == null)
+            throw new ArgumentNullException(nameof(tokens));
+
+        if (tokens.Count == 0)
+            throw new ArgumentException("empty tokens list");
+        
+        _sourceCodeString = sourceCodeString;
+        _tokens = tokens;
+    }
+
+    public LjsAstModel Build()
+    {
+        if (_tokens.Count == 0)
+        {
+            throw new Exception("no tokens");
+        }
+
+        var node = Convert();
+
+        return new LjsAstModel(node, _tokenPositionsMap);
+
+    }
     
     [Flags]
     private enum OpType
@@ -40,15 +90,7 @@ public static class MatherAdv
         }
     }
 
-    public static ILjsAstNode Convert(string sourceCodeString)
-    {
-        var ljsTokenizer = new LjsTokenizer(sourceCodeString);
-        var tokens = ljsTokenizer.ReadTokens();
-        return Convert(tokens, sourceCodeString);
-    }
-    
-
-    public static ILjsAstNode Convert(List<LjsToken> tokens, string sourceCodeString)
+    private ILjsAstNode Convert()
     {
         // TODO function call
         // TODO ternary opertaor .. ? .. : ..
@@ -60,6 +102,9 @@ public static class MatherAdv
         var prevToken = default(LjsToken);
 
         var parenthesesCount = 0;
+
+        var tokens = _tokens;
+        var sourceCodeString = _sourceCodeString;
         
         
         for (var i = 0; i < tokens.Count; i++)
@@ -227,10 +272,8 @@ public static class MatherAdv
         }
         
         return locals.Pop();
-
-        
     }
-
+    
     private static bool IsFunctionCall(LjsTokenType prevTokenType) => prevTokenType is
         LjsTokenType.Identifier or
         LjsTokenType.OpParenthesesClose or
