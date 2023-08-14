@@ -191,6 +191,14 @@ public class LjsAstSimpleExpressionsTest
         var expected = "x".Assign("a".GetProp("foo".ToLit()));
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
+    
+    [Test]
+    public void BracketsPropertyAssignSimpleTest()
+    {
+        var node = TestUtils.BuildAstNode("a['foo'] = x");
+        var expected = "a".SetProp("foo".ToLit(), "x".ToVar());
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
 
     
 }
