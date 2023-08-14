@@ -191,6 +191,16 @@ public class LjsAstSimpleExpressionsTest
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
 
+    [Test]
+    public void SimpleFuncCallWithoutArgs()
+    {
+        var node = Parse("x = a() + (b() + c())");
+        var expected = "x".Assign(
+            "a".FuncCall().Plus("b".FuncCall().Plus("c".FuncCall())));
+        
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+
     /*[Test]
     public void SimpleFuncCall()
     {

@@ -68,7 +68,8 @@ public class LjsAstBuilder2
         UnaryPrefix = 1 << 1,
         UnaryPostfix = 1 << 2,
         Assign = 1 << 3,
-        Parentheses = 1 << 4
+        Parentheses = 1 << 4,
+        FuncCall = 1 << 5
     }
     
     private readonly struct ExpressionStackPosition
@@ -130,6 +131,7 @@ public class LjsAstBuilder2
 
             var token = _tokensReader.CurrentToken;
             var prevToken = _tokensReader.PrevToken;
+            var nextToken = _tokensReader.NextToken;
             
             if (token.TokenType == LjsTokenType.Identifier)
             {
@@ -143,21 +145,33 @@ public class LjsAstBuilder2
             
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
             {
-                var opType = OpType.Parentheses;
-                
                 if (IsFunctionCall(prevToken.TokenType))
                 {
-                    // todo
+                    if (nextToken.TokenType == LjsTokenType.OpParenthesesClose)
+                    {
+                        // func call without arguments
+                        _operatorsStack.Push(new Op(
+                            token, OpType.FuncCall | OpType.UnaryPostfix, 
+                            LjsAstBuilderUtils.FuncCallOperatorPriority));
+                        
+                        _tokensReader.MoveForward(); // skip closing parentheses
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                    
                 }
-                
-                _operatorsStack.Push(new Op(token, opType, 0));
-                ++parenthesesCount;
+                else
+                {
+                    _operatorsStack.Push(new Op(token, OpType.Parentheses, 0));
+                    ++parenthesesCount;
+                }
             }
             
             else if (token.TokenType == LjsTokenType.OpParenthesesClose)
             {
-                while (_operatorsStack.Count > 0 && 
-                       _operatorsStack.Peek().TokenType != LjsTokenType.OpParenthesesOpen)
+                while (_operatorsStack.Count > 0 && !IsParenthesesOpenOperator(_operatorsStack.Peek()))
                 {
                     _postfixExpression.Add(_operatorsStack.Pop()); 
                 }
@@ -236,7 +250,13 @@ public class LjsAstBuilder2
             if (node is Op op)
             {
 
-                if (op.IsUnary)
+                if ((op.OpType & OpType.FuncCall) != 0)
+                {
+                    var operand = _locals.Pop();
+                    _locals.Push(new LjsAstFunctionCall(operand));
+                }
+
+                else if (op.IsUnary)
                 {
                     var operand = _locals.Pop();
                     _locals.Push(new LjsAstUnaryOperation(
@@ -297,6 +317,9 @@ public class LjsAstBuilder2
         
         return _locals.Pop();
     }
+
+    private static bool IsParenthesesOpenOperator(Op op) => (op.OpType & OpType.Parentheses) != 0 &&
+                                                             op.TokenType == LjsTokenType.OpParenthesesOpen;
     
     private static bool IsFunctionCall(LjsTokenType prevTokenType) => prevTokenType is
         LjsTokenType.Identifier or
