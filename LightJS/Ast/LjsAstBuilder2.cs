@@ -69,7 +69,8 @@ public class LjsAstBuilder2
         UnaryPostfix = 1 << 2,
         Assign = 1 << 3,
         Parentheses = 1 << 4,
-        FuncCall = 1 << 5
+        FuncCall = 1 << 5,
+        PropAccess = 1 << 6
     }
     
     private readonly struct ExpressionStackPosition
@@ -111,19 +112,22 @@ public class LjsAstBuilder2
     private enum ParsingMode
     {
         None,
-        FuncCall // stop at comma or parentheses close
+        FuncCall, // stop at comma or parentheses close
+        PropAccess // property access with square brackets 
     }
 
     private ILjsAstNode Convert(ParsingMode parsingMode)
     {
         // TODO ternary opertaor .. ? .. : ..
-        // TODO dot prop access
 
         var parenthesesCount = 0;
         
         var sourceCodeString = _sourceCodeString;
-        var expressionStackPosition = new ExpressionStackPosition(_operatorsStack.Count, _postfixExpression.Count);
+        var expressionStackPosition = new ExpressionStackPosition(
+            _operatorsStack.Count, _postfixExpression.Count);
 
+        var startingToken = _tokensReader.CurrentToken;
+        var parsingModeFinished = false;
 
         while (_tokensReader.HasNextToken)
         {
@@ -137,10 +141,20 @@ public class LjsAstBuilder2
             {
                 if (token.TokenType == LjsTokenType.OpComma)
                 {
+                    parsingModeFinished = true;
                     break;
                 }
                 if (parenthesesCount == 0 && token.TokenType == LjsTokenType.OpParenthesesClose)
                 {
+                    parsingModeFinished = true;
+                    break;
+                }
+            }
+            else if (parsingMode == ParsingMode.PropAccess)
+            {
+                if (token.TokenType == LjsTokenType.OpSquareBracketsClose)
+                {
+                    parsingModeFinished = true;
                     break;
                 }
             }
@@ -153,6 +167,25 @@ public class LjsAstBuilder2
             else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
                 _postfixExpression.Add( LjsAstBuilderUtils.CreateLiteralNode(token, sourceCodeString));
+            }
+            
+            else if (token.TokenType == LjsTokenType.OpSquareBracketsOpen)
+            {
+                if (IsPropertyAccess(prevToken.TokenType))
+                {
+                    var propAccessNode = Convert(ParsingMode.PropAccess);
+                    
+                    _postfixExpression.Add(propAccessNode);
+                    
+                    _operatorsStack.Push(new Op(
+                        token, OpType.PropAccess | OpType.UnaryPostfix, 
+                        LjsAstBuilderUtils.FuncCallOperatorPriority, 1));
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                    // todo check if array initialization
+                }
             }
             
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
@@ -241,6 +274,18 @@ public class LjsAstBuilder2
                 _operatorsStack.Push(new Op(token, opType, opPriority));
             }
         }
+        
+        // check correct exit in modes
+        if (!parsingModeFinished)
+        {
+            switch (parsingMode)
+            {
+                case ParsingMode.FuncCall:
+                    throw new LjsSyntaxError("invalid function call", startingToken.Position);
+                case ParsingMode.PropAccess:
+                    throw new LjsSyntaxError("invalid [] prop access", startingToken.Position);
+            }
+        }
 
         // check unclosed groups
         
@@ -301,6 +346,15 @@ public class LjsAstBuilder2
                         _locals.Push(new LjsAstFunctionCall(operand, args));
                     }
                 }
+                // property access
+                if ((op.OpType & OpType.PropAccess) != 0)
+                {
+                    var propNameNode =  _locals.Pop();
+                    var operand = _locals.Pop();
+                    
+                    _locals.Push(new LjsAstGetProperty(propNameNode, operand));
+                }
+                
                 // unary operaton
                 else if (op.IsUnary)
                 {
@@ -334,8 +388,13 @@ public class LjsAstBuilder2
                             case LjsAstGetVar getVar:
                                 _locals.Push(new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
                                 break;
-                            case LjsAstGetNamedProperty getProp:
+                            case LjsAstGetNamedProperty getNamedProp:
                                 _locals.Push(new LjsAstSetNamedProperty(
+                                    getNamedProp.PropertyName, getNamedProp.PropertySource, 
+                                    right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                                break;
+                            case LjsAstGetProperty getProp:
+                                _locals.Push(new LjsAstSetProperty(
                                     getProp.PropertyName, getProp.PropertySource, 
                                     right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
                                 break;
@@ -369,6 +428,11 @@ public class LjsAstBuilder2
                                                              op.TokenType == LjsTokenType.OpParenthesesOpen;
     
     private static bool IsFunctionCall(LjsTokenType prevTokenType) => prevTokenType is
+        LjsTokenType.Identifier or
+        LjsTokenType.OpParenthesesClose or
+        LjsTokenType.OpSquareBracketsClose;
+
+    private static bool IsPropertyAccess(LjsTokenType prevTokenType) => prevTokenType is
         LjsTokenType.Identifier or
         LjsTokenType.OpParenthesesClose or
         LjsTokenType.OpSquareBracketsClose;
