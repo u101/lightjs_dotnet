@@ -5,7 +5,7 @@ namespace LightJS.Ast;
 public class LjsAstBuilder2
 {
     private readonly string _sourceCodeString;
-    private readonly List<LjsToken> _tokens;
+    private readonly TokensReader _tokensReader;
 
     /// <summary>
     /// save nodes positions in source code (line number, col number)
@@ -23,7 +23,7 @@ public class LjsAstBuilder2
         var tokens = ljsTokenizer.ReadTokens();
         
         _sourceCodeString = sourceCodeString;
-        _tokens = tokens;
+        _tokensReader = new TokensReader(tokens);
     }
     
     public LjsAstBuilder2(string sourceCodeString, List<LjsToken> tokens)
@@ -40,17 +40,17 @@ public class LjsAstBuilder2
             throw new ArgumentException("empty tokens list");
         
         _sourceCodeString = sourceCodeString;
-        _tokens = tokens;
+        _tokensReader = new TokensReader(tokens);
     }
 
     public LjsAstModel Build()
     {
-        if (_tokens.Count == 0)
+        if (!_tokensReader.HasNextToken)
         {
             throw new Exception("no tokens");
         }
 
-        var node = Convert();
+        var node = Convert(ParsingMode.None);
 
         return new LjsAstModel(node, _tokenPositionsMap);
 
@@ -64,8 +64,7 @@ public class LjsAstBuilder2
         UnaryPrefix = 1 << 1,
         UnaryPostfix = 1 << 2,
         Assign = 1 << 3,
-        Parentheses = 1 << 4,
-        FunctionCall = 1 << 5
+        Parentheses = 1 << 4
     }
 
     private class Op : ILjsAstNode
@@ -89,8 +88,14 @@ public class LjsAstBuilder2
             Priority = priority;
         }
     }
+    
+    private enum ParsingMode
+    {
+        None,
+        FuncCall
+    }
 
-    private ILjsAstNode Convert()
+    private ILjsAstNode Convert(ParsingMode parsingMode)
     {
         // TODO function call
         // TODO ternary opertaor .. ? .. : ..
@@ -99,17 +104,17 @@ public class LjsAstBuilder2
         var postfixExpr = new List<ILjsAstNode>();
         var stack = new Stack<Op>();
 
-        var prevToken = default(LjsToken);
-
         var parenthesesCount = 0;
-
-        var tokens = _tokens;
+        
         var sourceCodeString = _sourceCodeString;
-        
-        
-        for (var i = 0; i < tokens.Count; i++)
+
+
+        while (_tokensReader.HasNextToken)
         {
-            var token = tokens[i];
+            _tokensReader.MoveForward();
+
+            var token = _tokensReader.CurrentToken;
+            var prevToken = _tokensReader.PrevToken;
             
             if (token.TokenType == LjsTokenType.Identifier)
             {
@@ -127,7 +132,7 @@ public class LjsAstBuilder2
                 
                 if (IsFunctionCall(prevToken.TokenType))
                 {
-                    opType |= OpType.FunctionCall;
+                    // todo
                 }
                 
                 stack.Push(new Op(token, opType, 0));
@@ -179,8 +184,6 @@ public class LjsAstBuilder2
                 
                 stack.Push(new Op(token, opType, opPriority));
             }
-
-            prevToken = token;
         }
 
         // check unclosed groups
@@ -279,4 +282,55 @@ public class LjsAstBuilder2
         LjsTokenType.OpParenthesesClose or
         LjsTokenType.OpSquareBracketsClose;
 
+    private class TokensReader
+    {
+        private readonly List<LjsToken> _tokens;
+
+        private int _currentIndex = -1;
+    
+        public TokensReader(List<LjsToken> tokens)
+        {
+            _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
+        }
+
+        public int CurrentIndex => _currentIndex;
+
+        public LjsToken this[int index] => _tokens[index];
+
+        public LjsToken CurrentToken => 
+            _currentIndex >= 0 && _currentIndex < _tokens.Count ? 
+                _tokens[_currentIndex] : default;
+
+        public LjsToken NextToken => 
+            _currentIndex + 1 < _tokens.Count ? 
+                _tokens[_currentIndex + 1] : default;
+
+        public LjsToken PrevToken => 
+            _currentIndex > 0 ?
+                _tokens[_currentIndex - 1] : default;
+
+        public bool HasNextToken => _currentIndex + 1 < _tokens.Count;
+
+        public bool HasCurrentToken => _currentIndex >= 0 && _currentIndex < _tokens.Count;
+
+        public bool HasPrevToken => _currentIndex > 0;
+
+        public void MoveForward()
+        {
+            if (!HasNextToken)
+            {
+                throw new IndexOutOfRangeException();
+            }
+        
+            ++_currentIndex;
+        }
+
+        public void MoveTo(int index)
+        {
+            if (index < 0 || index >= _tokens.Count)
+                throw new ArgumentException($"token index {index} out of range [0 .. {_tokens.Count}]");
+            _currentIndex = index;
+        }
+    }
+    
 }
