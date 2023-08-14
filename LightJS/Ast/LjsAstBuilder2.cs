@@ -126,6 +126,9 @@ public class LjsAstBuilder2
         var expressionStackPosition = new ExpressionStackPosition(
             _operatorsStack.Count, _postfixExpression.Count);
 
+        var operatorsStackStartingLn = _operatorsStack.Count;
+        var postfixExpressionStartingLn = _postfixExpression.Count;
+
         var startingToken = _tokensReader.CurrentToken;
         var parsingModeFinished = false;
 
@@ -195,9 +198,11 @@ public class LjsAstBuilder2
                     if (nextToken.TokenType == LjsTokenType.OpParenthesesClose)
                     {
                         // func call without arguments
-                        _operatorsStack.Push(new Op(
-                            token, OpType.FuncCall | OpType.UnaryPostfix, 
-                            LjsAstBuilderUtils.FuncCallOperatorPriority));
+                        PushOperatorToStack(
+                            new Op(token, OpType.FuncCall | OpType.UnaryPostfix,
+                                LjsAstBuilderUtils.FuncCallOperatorPriority), 
+                            
+                            operatorsStackStartingLn);
                         
                         _tokensReader.MoveForward(); // skip closing parentheses
                     }
@@ -215,9 +220,10 @@ public class LjsAstBuilder2
                             ++argumentsCount;
                         }
                         
-                        _operatorsStack.Push(new Op(
-                            token, OpType.FuncCall | OpType.UnaryPostfix, 
-                            LjsAstBuilderUtils.FuncCallOperatorPriority, argumentsCount));
+                        PushOperatorToStack(
+                            new Op(token, OpType.FuncCall | OpType.UnaryPostfix, 
+                                LjsAstBuilderUtils.FuncCallOperatorPriority, argumentsCount),
+                            operatorsStackStartingLn);
                     }
                     
                 }
@@ -230,7 +236,8 @@ public class LjsAstBuilder2
             
             else if (token.TokenType == LjsTokenType.OpParenthesesClose)
             {
-                while (_operatorsStack.Count > 0 && !IsParenthesesOpenOperator(_operatorsStack.Peek()))
+                while (_operatorsStack.Count > operatorsStackStartingLn && 
+                       !IsParenthesesOpenOperator(_operatorsStack.Peek()))
                 {
                     _postfixExpression.Add(_operatorsStack.Pop()); 
                 }
@@ -268,10 +275,9 @@ public class LjsAstBuilder2
 
                 var opPriority = LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, isUnary);
                 
-                while (_operatorsStack.Count > 0 && (_operatorsStack.Peek().Priority >= opPriority))
-                    _postfixExpression.Add(_operatorsStack.Pop());
-                
-                _operatorsStack.Push(new Op(token, opType, opPriority));
+                PushOperatorToStack(
+                    new Op(token, opType, opPriority), 
+                    operatorsStackStartingLn);
             }
         }
         
@@ -291,7 +297,7 @@ public class LjsAstBuilder2
         
         if (parenthesesCount > 0)
         {
-            while (_operatorsStack.Count > expressionStackPosition.OperatorsStackStartingLn)
+            while (_operatorsStack.Count > operatorsStackStartingLn)
             {
                 var op = _operatorsStack.Pop();
                 if (op.TokenType == LjsTokenType.OpParenthesesOpen)
@@ -303,7 +309,7 @@ public class LjsAstBuilder2
             throw new LjsSyntaxError("unclosed parentheses");
         }
         
-        while (_operatorsStack.Count > expressionStackPosition.OperatorsStackStartingLn)
+        while (_operatorsStack.Count > operatorsStackStartingLn)
         {
             _postfixExpression.Add(_operatorsStack.Pop());
         }
@@ -312,9 +318,8 @@ public class LjsAstBuilder2
         
         _locals.Clear();
 
-        var postfixExprStart = expressionStackPosition.PostfixExpressionStartingLn;
         
-        for (var i = postfixExprStart; i < _postfixExpression.Count; i++)
+        for (var i = postfixExpressionStartingLn; i < _postfixExpression.Count; i++)
         {
             var node = _postfixExpression[i];
             
@@ -347,7 +352,7 @@ public class LjsAstBuilder2
                     }
                 }
                 // property access
-                if ((op.OpType & OpType.PropAccess) != 0)
+                else if ((op.OpType & OpType.PropAccess) != 0)
                 {
                     var propNameNode =  _locals.Pop();
                     var operand = _locals.Pop();
@@ -419,9 +424,18 @@ public class LjsAstBuilder2
         }
         
         _postfixExpression.RemoveRange(
-            postfixExprStart, _postfixExpression.Count - postfixExprStart);
+            postfixExpressionStartingLn, _postfixExpression.Count - postfixExpressionStartingLn);
         
         return _locals.Pop();
+    }
+
+    private void PushOperatorToStack(Op op, int operatorsStackStartingLn)
+    {
+        while (_operatorsStack.Count > operatorsStackStartingLn && 
+               (_operatorsStack.Peek().Priority >= op.Priority))
+            _postfixExpression.Add(_operatorsStack.Pop());
+                
+        _operatorsStack.Push(op);
     }
 
     private static bool IsParenthesesOpenOperator(Op op) => (op.OpType & OpType.Parentheses) != 0 &&

@@ -6,6 +6,169 @@ namespace LightJS.Test;
 [TestFixture]
 public class LjsAstSimpleExpressionsTest
 {
+    [Test]
+    public void BuildPostfixIncrementExpression()
+    {
+        var rootNode = TestUtils.BuildAstNode("a++ + b--");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PostfixIncrement), 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PostfixIncrement), 
+                LjsAstBinaryOperationType.Plus));
+    }
+    
+    [Test]
+    public void BuildPrefixIncrementExpression()
+    {
+        var rootNode = TestUtils.BuildAstNode("++a + --b");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PrefixIncrement), 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PrefixDecrement), 
+                LjsAstBinaryOperationType.Plus));
+    }
+    
+    [Test]
+    public void BuildUnaryMinusExpression()
+    {
+        var rootNode = TestUtils.BuildAstNode("a + -b");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstGetVar("a"), 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.Minus), 
+                LjsAstBinaryOperationType.Plus));
+    }
+    
+    [Test]
+    public void BuildSimpleUnaryMinusAssignment()
+    {
+        var rootNode = TestUtils.BuildAstNode("a = -b");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetVar(
+                "a", 
+                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.Minus), 
+                LjsAstAssignMode.Normal));
+    }
+
+    [Test]
+    public void BuildSimpleExpression()
+    {
+        var rootNode = TestUtils.BuildAstNode("a + b");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstBinaryOperation(
+                new LjsAstGetVar("a"), 
+                new LjsAstGetVar("b"), 
+                LjsAstBinaryOperationType.Plus));
+    }
+    
+    [Test]
+    public void SimpleVarAssignTest()
+    {
+        var rootNode = TestUtils.BuildAstNode("a = b + c");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetVar("a",
+                new LjsAstBinaryOperation(
+                    new LjsAstGetVar("b"),
+                    new LjsAstGetVar("c"),
+                    LjsAstBinaryOperationType.Plus),
+                LjsAstAssignMode.Normal));
+    }
+
+    [Test]
+    public void SimplePropertyAssignTest()
+    {
+        var rootNode = TestUtils.BuildAstNode("a.foo = b + c");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetNamedProperty("foo", new LjsAstGetVar("a"),
+                new LjsAstBinaryOperation(
+                    new LjsAstGetVar("b"),
+                    new LjsAstGetVar("c"),
+                    LjsAstBinaryOperationType.Plus),
+                LjsAstAssignMode.Normal));
+    }
+
+    [Test]
+    public void SimpleSquareBracketsPropertyAssignTest()
+    {
+        var rootNode = TestUtils.BuildAstNode("a[0] = b + c");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstSetProperty(new LjsAstLiteral<int>(0), new LjsAstGetVar("a"),
+                new LjsAstBinaryOperation(
+                    new LjsAstGetVar("b"),
+                    new LjsAstGetVar("c"),
+                    LjsAstBinaryOperationType.Plus),
+                LjsAstAssignMode.Normal));
+    }
+    
+    [Test]
+    public void SimpleFunctionCallTest()
+    {
+        var rootNode = TestUtils.BuildAstNode("foo.bar(a,b)");
+
+        rootNode.Should().BeEquivalentTo(
+            new LjsAstFunctionCall(
+                new LjsAstGetNamedProperty("bar", new LjsAstGetVar("foo")),
+                new LjsAstGetVar("a"), new LjsAstGetVar("b")
+                ));
+    }
+    
+    
+    
+    /*[Test]
+    public void SimpleNodesPositionsInSourceCodeCheck()
+    {
+        var astBuilder = new LjsAstBuilder("a + b");
+        var model = astBuilder.Build();
+
+        var rootNode = model.RootNode;
+
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+        var binOp = (LjsAstBinaryOperation)rootNode;
+        
+        Assert.That(model.HasTokenPositionForNode(binOp), Is.True);
+        Assert.That(model.GetTokenPositionForNode(binOp), Is.EqualTo(new LjsTokenPosition(2,0,2)));
+        
+        Assert.That(model.HasTokenPositionForNode(binOp.LeftOperand), Is.True);
+        Assert.That(model.HasTokenPositionForNode(binOp.RightOperand), Is.True);
+        
+        Assert.That(model.GetTokenPositionForNode(binOp.LeftOperand), Is.EqualTo(new LjsTokenPosition(0,0,0)));
+        Assert.That(model.GetTokenPositionForNode(binOp.RightOperand), Is.EqualTo(new LjsTokenPosition(4,0,4)));
+        
+    }*/
+    
+    [Test]
+    public void BuildSimpleExpressionWithParentheses()
+    {
+        Check("(a+b)-(c+d)");
+        Check("((a+b)-(c+d))");
+        Check("(((a+b)-(c+d)))");
+        Check("(((a+b)-((c+d))))");
+        
+        void Check(string expression)
+        {
+            var rootNode = TestUtils.BuildAstNode(expression);
+        
+            rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+            rootNode.Should().BeEquivalentTo(
+                new LjsAstBinaryOperation(
+                    new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
+                    new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsAstBinaryOperationType.Plus),
+                    LjsAstBinaryOperationType.Minus));
+        }
+    }
+    
+    
+    
     
     [Test]
     public void BuildSimpleLiteral()
