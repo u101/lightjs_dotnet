@@ -116,5 +116,19 @@ public static class LsjAstNodesExt
     {
         return new LjsAstSetNamedProperty(propName, node, v, LjsAstAssignMode.Normal);
     }
+
+    public static ILjsAstNode FuncCall(this string funcName, params ILjsAstNode[] args)
+    {
+        var f = new LjsAstFunctionCall(new LjsAstGetVar(funcName));
+        f.Arguments.AddRange(args);
+        return f;
+    }
+    
+    public static ILjsAstNode FuncCall(this ILjsAstNode func, params ILjsAstNode[] args)
+    {
+        var f = new LjsAstFunctionCall(func);
+        f.Arguments.AddRange(args);
+        return f;
+    }
     
 }

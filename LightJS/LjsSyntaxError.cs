@@ -7,6 +7,8 @@ public class LjsSyntaxError : Exception
     public string ErrorMessage { get; }
     public int Line { get; }
     public int Col { get; }
+
+    public LjsSyntaxError(string errorMessage) : base($"syntax error : {errorMessage}") {}
     
     public LjsSyntaxError(string errorMessage, LjsTokenPosition tokenPosition):
         this(errorMessage, tokenPosition.Line, tokenPosition.Column)

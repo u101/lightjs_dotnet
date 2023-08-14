@@ -142,4 +142,15 @@ public class MatherAdvTests
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
 
+    [Test]
+    public void SimpleFuncCall()
+    {
+        var node = MatherAdv.Convert("x = foo(a, c-(a+b))");
+        var expected = "x".Assign("foo".FuncCall(
+            "a".ToVar(),
+            "c".Minus("a".Plus("b"))
+        ));
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+
 }

@@ -14,7 +14,8 @@ public static class MatherAdv
         UnaryPrefix = 1 << 1,
         UnaryPostfix = 1 << 2,
         Assign = 1 << 3,
-        Parentheses = 1 << 4
+        Parentheses = 1 << 4,
+        FunctionCall = 1 << 5
     }
 
     private class Op : ILjsAstNode
@@ -49,6 +50,7 @@ public static class MatherAdv
 
     public static ILjsAstNode Convert(List<LjsToken> tokens, string sourceCodeString)
     {
+        // TODO function call
         // TODO ternary opertaor .. ? .. : ..
         // TODO dot prop access
         
@@ -56,6 +58,8 @@ public static class MatherAdv
         var stack = new Stack<Op>();
 
         var prevToken = default(LjsToken);
+
+        var parenthesesCount = 0;
         
         
         for (var i = 0; i < tokens.Count; i++)
@@ -74,15 +78,26 @@ public static class MatherAdv
             
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
             {
-                stack.Push(new Op(token, OpType.Parentheses, 0));
+                var opType = OpType.Parentheses;
+                
+                if (IsFunctionCall(prevToken.TokenType))
+                {
+                    opType |= OpType.FunctionCall;
+                }
+                
+                stack.Push(new Op(token, opType, 0));
+                ++parenthesesCount;
             }
             
             else if (token.TokenType == LjsTokenType.OpParenthesesClose)
             {
                 while (stack.Count > 0 && stack.Peek().TokenType != LjsTokenType.OpParenthesesOpen)
+                {
                     postfixExpr.Add(stack.Pop()); 
+                }
                 
                 stack.Pop(); // remove opening parentheses from stack
+                --parenthesesCount;
             }
             else if (LjsAstBuilderUtils.IsOrdinaryOperator(token.TokenType))
             {
@@ -122,6 +137,21 @@ public static class MatherAdv
 
             prevToken = token;
         }
+
+        // check unclosed groups
+        
+        if (parenthesesCount > 0)
+        {
+            foreach (var op in stack)
+            {
+                if (op.TokenType == LjsTokenType.OpParenthesesOpen)
+                {
+                    throw new LjsSyntaxError("unclosed parentheses", op.Token.Position);
+                }
+            }
+
+            throw new LjsSyntaxError("unclosed parentheses");
+        }
         
         while (stack.Count > 0)
         {
@@ -153,6 +183,7 @@ public static class MatherAdv
 
                     if (op.TokenType == LjsTokenType.OpDot)
                     {
+                        // convert get var node into get named property
                         if (right is LjsAstGetVar getVar)
                         {
                             locals.Push(new LjsAstGetNamedProperty(getVar.VarName, left));
@@ -199,5 +230,10 @@ public static class MatherAdv
 
         
     }
-    
+
+    private static bool IsFunctionCall(LjsTokenType prevTokenType) => prevTokenType is
+        LjsTokenType.Identifier or
+        LjsTokenType.OpParenthesesClose or
+        LjsTokenType.OpSquareBracketsClose;
+
 }
