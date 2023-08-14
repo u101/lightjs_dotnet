@@ -193,6 +193,14 @@ public class LjsAstSimpleExpressionsTest
     }
     
     [Test]
+    public void BracketsPropertyNestedSimpleTest()
+    {
+        var node = TestUtils.BuildAstNode("x = a[foo[0]]");
+        var expected = "x".Assign("a".GetProp("foo".GetProp(0.ToLit())));
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+    
+    [Test]
     public void BracketsPropertyAssignSimpleTest()
     {
         var node = TestUtils.BuildAstNode("a['foo'] = x");
