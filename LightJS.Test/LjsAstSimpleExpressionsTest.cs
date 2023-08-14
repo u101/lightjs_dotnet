@@ -15,6 +15,33 @@ public class LjsAstSimpleExpressionsTest
     }
     
     [Test]
+    public void BuildSimpleLiteral()
+    {
+        ValidLiteralTest("123456789", 123456789);
+        ValidLiteralTest("0xff1267", 0xff1267);
+        ValidLiteralTest("0b010101", 0b010101);
+        
+        ValidLiteralTest("3.14", 3.14);
+        ValidLiteralTest("3.14e+3", 3.14e+3);
+        
+        ValidLiteralTest("true", true);
+        ValidLiteralTest("false", false);
+        
+        ValidLiteralTest<string>("\"Hello world\"", "Hello world");
+        ValidLiteralTest<string>("'Hello world'", "Hello world");
+    }
+
+    private static void ValidLiteralTest<TLiteralType>(
+        string literal, TLiteralType expectedValue)
+    {
+        var astBuilder = new LjsAstBuilder(literal);
+        var rootNode = astBuilder.Build().RootNode;
+
+        rootNode.Should().BeOfType<LjsAstLiteral<TLiteralType>>();
+        rootNode.Should().BeEquivalentTo(new LjsAstLiteral<TLiteralType>(expectedValue));
+    }
+    
+    [Test]
     public void SimpleTest()
     {
         var node = Parse("a + b + 5");
@@ -102,6 +129,21 @@ public class LjsAstSimpleExpressionsTest
 
         node.Should().BeEquivalentTo(
             "a".Plus("b".Minus("c")).Plus("d"));
+    }
+    
+    [Test]
+    public void ParenthesesSimpleExpressionTest()
+    {
+        Check("(a+b)-(c+d)");
+        Check("((a+b)-(c+d))");
+        Check("(((a+b)-(c+d)))");
+        Check("(((a+b)-((c+d))))");
+
+        void Check(string expression)
+        {
+            var node = Parse(expression);
+            node.Should().BeEquivalentTo(("a".Plus("b")).Minus("c".Plus("d")));
+        }
     }
     
     [Test]
