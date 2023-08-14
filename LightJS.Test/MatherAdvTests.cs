@@ -108,7 +108,7 @@ public class MatherAdvTests
     [Test]
     public void AssignSequenceTest()
     {
-        var node = MatherAdv.Convert("x = (y = (a = b + c))");
+        var node = MatherAdv.Convert("x = y = a = b + c");
 
         node.Should().BeEquivalentTo(
             "x".Assign("y".Assign("a".Assign(

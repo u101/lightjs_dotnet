@@ -19,7 +19,8 @@ public static class MatherAdv
 
     private class Op : ILjsAstNode
     {
-        public LjsTokenType TokenType { get; }
+        public LjsTokenType TokenType => Token.TokenType;
+        public LjsToken Token { get; }
         public OpType OpType { get; }
         public bool IsUnary => 
             ((this.OpType & OpType.UnaryPrefix) | (this.OpType & OpType.UnaryPostfix)) != 0;
@@ -30,9 +31,9 @@ public static class MatherAdv
         public bool IsAssign => (this.OpType & OpType.Assign) != 0;
         public int Priority { get; }
 
-        public Op(LjsTokenType tokenType, OpType opType, int priority)
+        public Op(LjsToken token, OpType opType, int priority)
         {
-            TokenType = tokenType;
+            Token = token;
             OpType = opType;
             Priority = priority;
         }
@@ -48,20 +49,19 @@ public static class MatherAdv
 
     public static ILjsAstNode Convert(List<LjsToken> tokens, string sourceCodeString)
     {
-        //	Выходная строка, содержащая постфиксную запись
+        // TODO ternary opertaor .. ? .. : ..
+        // TODO dot prop access
+        
         var postfixExpr = new List<ILjsAstNode>();
-        //	Инициализация стека, содержащий операторы в виде символов
         var stack = new Stack<Op>();
 
         var prevToken = default(LjsToken);
         
-        //	Перебираем строку
+        
         for (var i = 0; i < tokens.Count; i++)
         {
-            //	Текущий символ
             var token = tokens[i];
-
-            //	Если симовол - цифра
+            
             if (token.TokenType == LjsTokenType.Identifier)
             {
                 postfixExpr.Add(new LjsAstGetVar(
@@ -72,23 +72,19 @@ public static class MatherAdv
                 postfixExpr.Add( LjsAstBuilderUtils.CreateLiteralNode(token, sourceCodeString));
             }
             
-            //	Если открывающаяся скобка 
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
             {
-                //	Заносим её в стек
-                
-                stack.Push(new Op(token.TokenType, OpType.Parentheses, 0));
+                stack.Push(new Op(token, OpType.Parentheses, 0));
             }
-            //	Если закрывающая скобка
+            
             else if (token.TokenType == LjsTokenType.OpParenthesesClose)
             {
-                //	Заносим в выходную строку из стека всё вплоть до открывающей скобки
                 while (stack.Count > 0 && stack.Peek().TokenType != LjsTokenType.OpParenthesesOpen)
                     postfixExpr.Add(stack.Pop()); 
-                //	Удаляем открывающуюся скобку из стека
-                stack.Pop();
+                
+                stack.Pop(); // remove opening parentheses from stack
             }
-            //	Проверяем, содержится ли символ в списке операторов
+            
             else if (LjsAstBuilderUtils.IsCalculationOperator(token.TokenType))
             {
                 var isUnaryPrefix = LjsAstBuilderUtils.CanBeUnaryPrefixOp(token.TokenType) &&
@@ -118,19 +114,20 @@ public static class MatherAdv
                 // todo check isUnary equals isDefinitelyUnary() method and throw error if needed
 
                 var opPriority = LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, isUnary);
+                var isRightToLeft = (opType & OpType.Assign) != 0;
 
-                //	Заносим в выходную строку все операторы из стека, имеющие более высокий приоритет
-                while (stack.Count > 0 && (stack.Peek().Priority >= opPriority))
-                    postfixExpr.Add(stack.Pop());
+                if (!isRightToLeft)
+                {
+                    while (stack.Count > 0 && (stack.Peek().Priority >= opPriority))
+                        postfixExpr.Add(stack.Pop());
+                }
                 
-                //	Заносим в стек оператор
-                stack.Push(new Op(token.TokenType, opType, opPriority));
+                stack.Push(new Op(token, opType, opPriority));
             }
 
             prevToken = token;
         }
-
-        //	Заносим все оставшиеся операторы из стека в выходную строку
+        
         while (stack.Count > 0)
         {
             postfixExpr.Add(stack.Pop());
@@ -140,7 +137,7 @@ public static class MatherAdv
         
         var locals = new Stack<ILjsAstNode>();
 
-        //	Проходим по строке
+        
         for (var i = 0; i < postfixExpr.Count; i++)
         {
             var node = postfixExpr[i];
