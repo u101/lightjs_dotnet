@@ -54,7 +54,7 @@ public class LjsAstBuilder2
             throw new Exception("no tokens");
         }
 
-        var node = Convert(ParsingMode.None);
+        var node = Convert(ExpressionTerminationType.Eof);
 
         return new LjsAstModel(node, _tokenPositionsMap);
 
@@ -110,28 +110,57 @@ public class LjsAstBuilder2
         }
     }
     
-    private enum ParsingMode
+    [Flags]
+    private enum ExpressionTerminationType
     {
-        None,
-        FuncCall, // stop at comma or parentheses close
-        PropAccess, // property access with square brackets
-        UpToColon
+        None = 0,
+        Eof = 1 << 0,
+        Semicolon = 1 << 1,
+        ParenthesesClose = 1 << 2,
+        Comma = 1 << 3,
+        Colon = 1 << 4,
+        SquareBracketsClose = 1 << 5,
+        
+        FuncCall = ParenthesesClose | Comma,
     }
 
-    private ILjsAstNode Convert(ParsingMode parsingMode)
+    private static bool ShouldStopExpressionParsing(
+        LjsToken currentToken,
+        LjsToken prevToken,
+        ExpressionTerminationType terminationType)
+    {
+        return
+            ((terminationType & ExpressionTerminationType.ParenthesesClose) != 0 &&
+             currentToken.TokenType == LjsTokenType.OpParenthesesClose) ||
+
+            ((terminationType & ExpressionTerminationType.Semicolon) != 0 &&
+             currentToken.TokenType == LjsTokenType.OpSemicolon) ||
+
+            ((terminationType & ExpressionTerminationType.Comma) != 0 &&
+             currentToken.TokenType == LjsTokenType.OpComma) ||
+            
+            ((terminationType & ExpressionTerminationType.SquareBracketsClose) != 0 &&
+             currentToken.TokenType == LjsTokenType.OpSquareBracketsClose) ||
+
+            ((terminationType & ExpressionTerminationType.Colon) != 0 &&
+             currentToken.TokenType == LjsTokenType.OpColon)
+            ;
+    }
+
+    private ILjsAstNode Convert(ExpressionTerminationType terminationType)
     {
         // TODO ternary opertaor .. ? .. : ..
 
         var parenthesesCount = 0;
         
         var sourceCodeString = _sourceCodeString;
-        var expressionStackPosition = new ExpressionStackPosition(
-            _operatorsStack.Count, _postfixExpression.Count);
 
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
 
         var startingToken = _tokensReader.CurrentToken;
+        var lastProcessedToken = startingToken;
+        
         var parsingModeFinished = false;
 
         while (_tokensReader.HasNextToken)
@@ -142,35 +171,13 @@ public class LjsAstBuilder2
             var prevToken = _tokensReader.PrevToken;
             var nextToken = _tokensReader.NextToken;
 
-            if (parsingMode == ParsingMode.FuncCall)
+            if (ShouldStopExpressionParsing(token, prevToken, terminationType))
             {
-                if (token.TokenType == LjsTokenType.OpComma)
-                {
-                    parsingModeFinished = true;
-                    break;
-                }
-                if (parenthesesCount == 0 && token.TokenType == LjsTokenType.OpParenthesesClose)
-                {
-                    parsingModeFinished = true;
-                    break;
-                }
+                parsingModeFinished = true;
+                break;
             }
-            else if (parsingMode == ParsingMode.PropAccess)
-            {
-                if (token.TokenType == LjsTokenType.OpSquareBracketsClose)
-                {
-                    parsingModeFinished = true;
-                    break;
-                }
-            }
-            else if (parsingMode == ParsingMode.UpToColon)
-            {
-                if (token.TokenType == LjsTokenType.OpColon)
-                {
-                    parsingModeFinished = true;
-                    break;
-                }
-            }
+
+            lastProcessedToken = token;
             
             if (token.TokenType == LjsTokenType.Identifier)
             {
@@ -184,8 +191,10 @@ public class LjsAstBuilder2
             
             else if (token.TokenType == LjsTokenType.OpQuestionMark)
             {
-                var trueExpressionNode = Convert(ParsingMode.UpToColon);
-                var falseExpressionNode = Convert(ParsingMode.None);
+                var trueExpressionNode = Convert(ExpressionTerminationType.Colon);
+                var falseExpressionNode = Convert(terminationType);
+
+                parsingModeFinished = true;
 
                 _postfixExpression.Add(trueExpressionNode);
                 _postfixExpression.Add(falseExpressionNode);
@@ -202,7 +211,8 @@ public class LjsAstBuilder2
             {
                 if (IsPropertyAccess(prevToken.TokenType))
                 {
-                    var propAccessNode = Convert(ParsingMode.PropAccess);
+                    var propAccessNode = Convert(
+                        ExpressionTerminationType.SquareBracketsClose);
                     
                     _postfixExpression.Add(propAccessNode);
                     
@@ -235,13 +245,14 @@ public class LjsAstBuilder2
                     else
                     {
                         var argumentsCount = 1;
-                        var funcArg = Convert(ParsingMode.FuncCall);
+                        
+                        var funcArg = Convert(ExpressionTerminationType.FuncCall);
                         
                         _postfixExpression.Add(funcArg);
                         
                         while (_tokensReader.CurrentToken.TokenType != LjsTokenType.OpParenthesesClose)
                         {
-                            funcArg = Convert(ParsingMode.FuncCall);
+                            funcArg = Convert(ExpressionTerminationType.FuncCall);
                             _postfixExpression.Add(funcArg);
                             ++argumentsCount;
                         }
@@ -255,21 +266,9 @@ public class LjsAstBuilder2
                 }
                 else
                 {
-                    _operatorsStack.Push(new Op(token, OpType.Parentheses, 0));
-                    ++parenthesesCount;
+                    var enclosedOperation = Convert(ExpressionTerminationType.ParenthesesClose);
+                    _postfixExpression.Add(enclosedOperation);
                 }
-            }
-            
-            else if (token.TokenType == LjsTokenType.OpParenthesesClose)
-            {
-                while (_operatorsStack.Count > operatorsStackStartingLn && 
-                       !IsParenthesesOpenOperator(_operatorsStack.Peek()))
-                {
-                    _postfixExpression.Add(_operatorsStack.Pop()); 
-                }
-                
-                _operatorsStack.Pop(); // remove opening parentheses from stack
-                --parenthesesCount;
             }
             else if (LjsAstBuilderUtils.IsOrdinaryOperator(token.TokenType))
             {
@@ -307,36 +306,20 @@ public class LjsAstBuilder2
             }
             else
             {
-                throw new LjsSyntaxError("unexpected token", token.Position);
+                throw new LjsSyntaxError($"unexpected token {token.TokenType}", token.Position);
             }
         }
         
         // check correct exit in modes
         if (!parsingModeFinished)
         {
-            switch (parsingMode)
-            {
-                case ParsingMode.FuncCall:
-                    throw new LjsSyntaxError("invalid function call", startingToken.Position);
-                case ParsingMode.PropAccess:
-                    throw new LjsSyntaxError("invalid [] prop access", startingToken.Position);
-            }
-        }
+            var eofTermination = 
+                (terminationType & ExpressionTerminationType.Eof) != 0 && !_tokensReader.HasNextToken;
 
-        // check unclosed groups
-        
-        if (parenthesesCount > 0)
-        {
-            while (_operatorsStack.Count > operatorsStackStartingLn)
+            if (!eofTermination)
             {
-                var op = _operatorsStack.Pop();
-                if (op.TokenType == LjsTokenType.OpParenthesesOpen)
-                {
-                    throw new LjsSyntaxError("unclosed parentheses", op.Token.Position);
-                }
+                throw new LjsSyntaxError("unterminated expression", lastProcessedToken.Position);
             }
-
-            throw new LjsSyntaxError("unclosed parentheses");
         }
         
         while (_operatorsStack.Count > operatorsStackStartingLn)
@@ -347,7 +330,6 @@ public class LjsAstBuilder2
         // --------- CREATE NODES
         
         _locals.Clear();
-
         
         for (var i = postfixExpressionStartingLn; i < _postfixExpression.Count; i++)
         {
@@ -475,9 +457,6 @@ public class LjsAstBuilder2
                 
         _operatorsStack.Push(op);
     }
-
-    private static bool IsParenthesesOpenOperator(Op op) => (op.OpType & OpType.Parentheses) != 0 &&
-                                                             op.TokenType == LjsTokenType.OpParenthesesOpen;
     
     private static bool IsFunctionCall(LjsTokenType prevTokenType) => prevTokenType is
         LjsTokenType.Identifier or
@@ -500,10 +479,6 @@ public class LjsAstBuilder2
             _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
         }
 
-        public int CurrentIndex => _currentIndex;
-
-        public LjsToken this[int index] => _tokens[index];
-
         public LjsToken CurrentToken => 
             _currentIndex >= 0 && _currentIndex < _tokens.Count ? 
                 _tokens[_currentIndex] : default;
@@ -518,10 +493,6 @@ public class LjsAstBuilder2
 
         public bool HasNextToken => _currentIndex + 1 < _tokens.Count;
 
-        public bool HasCurrentToken => _currentIndex >= 0 && _currentIndex < _tokens.Count;
-
-        public bool HasPrevToken => _currentIndex > 0;
-
         public void MoveForward()
         {
             if (!HasNextToken)
@@ -530,13 +501,6 @@ public class LjsAstBuilder2
             }
         
             ++_currentIndex;
-        }
-
-        public void MoveTo(int index)
-        {
-            if (index < 0 || index >= _tokens.Count)
-                throw new ArgumentException($"token index {index} out of range [0 .. {_tokens.Count}]");
-            _currentIndex = index;
         }
     }
     
