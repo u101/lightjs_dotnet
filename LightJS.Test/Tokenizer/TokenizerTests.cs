@@ -1,10 +1,10 @@
 using FluentAssertions;
 using LightJS.Tokenizer;
 
-namespace LightJS.Test;
+namespace LightJS.Test.Tokenizer;
 
 [TestFixture]
-public class LjsTokenizerTest
+public class TokenizerTests
 {
 
      [Test]

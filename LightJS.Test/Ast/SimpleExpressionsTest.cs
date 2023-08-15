@@ -1,10 +1,10 @@
 using LightJS.Ast;
 using FluentAssertions;
 
-namespace LightJS.Test;
+namespace LightJS.Test.Ast;
 
 [TestFixture]
-public class LjsAstSimpleExpressionsTest
+public class SimpleExpressionsTest
 {
     [Test]
     public void BuildPostfixIncrementExpression()
