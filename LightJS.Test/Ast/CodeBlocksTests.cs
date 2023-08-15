@@ -30,4 +30,24 @@ public class CodeBlocksTests
         Match(node, expected);
     }
     
+    [Test]
+    public void SimpleIfBlockTest()
+    {
+        var code = """
+        if (a)
+            x = b
+        else
+            x = c
+        """;
+        
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = IfBlock(
+            "a".ToVar(), "x".Assign("b".ToVar())).
+            
+            Else("x".Assign("c".ToVar()));
+            
+        Match(node, expected);
+    }
+    
 }

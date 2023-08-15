@@ -88,7 +88,9 @@ public enum LjsTokenType
     Continue,
     
     If,
+    ElseIf,
     Else,
+    
     While,
     Do,
     For,

@@ -162,6 +162,17 @@ public static class NodesExtensions
         return new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression);
     }
 
-    
+    public static LjsAstIfBlock ElseIf(this LjsAstIfBlock ifBlock, ILjsAstNode condition, ILjsAstNode expression)
+    {
+        var e = new LjsAstConditionalExpression(condition, expression);
+        ifBlock.ConditionalAlternatives.Add(e);
+        return ifBlock;
+    }
+
+    public static LjsAstIfBlock Else(this LjsAstIfBlock ifBlock, ILjsAstNode expression)
+    {
+        ifBlock.ElseBlock = expression;
+        return ifBlock;
+    }
     
 }

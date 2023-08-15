@@ -404,6 +404,8 @@ public class LjsTokenizer
             LjsTokenType.OpBitAnd when nexOp == LjsTokenType.OpBitAnd => LjsTokenType.OpLogicalAnd,
             LjsTokenType.OpBitOr when nexOp == LjsTokenType.OpBitOr => LjsTokenType.OpLogicalOr,
             
+            LjsTokenType.If when nexOp == LjsTokenType.Else => LjsTokenType.ElseIf,
+            
             
             _ => LjsTokenType.None
         };
