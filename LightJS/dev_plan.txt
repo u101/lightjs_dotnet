@@ -10,3 +10,11 @@
 4) object initialization literal {"a":1,"b":2}
 
 5) function declaration : function(a,b,c) {  }
+
+0) VAR declaration
+1) if block
+2) while block
+3) for(;;) loop block
+4) function declaration : function(a,b,c) {  }
+
+10) expressions end guessing without semicolons!
