@@ -378,6 +378,16 @@ public class LjsAstSimpleExpressionsTest
         var expected = "a".ToVar().TernaryIf("b".ToVar(), "c".ToVar());
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
+    
+    [Test]
+    public void BuildNestedInParenthesesTernaryIfExpression()
+    {
+        var node = TestUtils.BuildAstNode("a ? (x?y:z) : c");
+        var expected = "a".ToVar().TernaryIf(
+            "x".ToVar().TernaryIf("y".ToVar(), "z".ToVar()), 
+            "c".ToVar());
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
 
     
 }
