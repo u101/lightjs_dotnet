@@ -9,6 +9,11 @@ public class LjsAstSequence : ILjsAstNode
     
     public LjsAstSequence() {}
 
+    public LjsAstSequence(IEnumerable<ILjsAstNode> nodes)
+    {
+        _nodes.AddRange(nodes);
+    }
+
     public LjsAstSequence(params ILjsAstNode[] nodes)
     {
         _nodes.AddRange(nodes);

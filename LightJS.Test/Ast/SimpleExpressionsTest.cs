@@ -409,6 +409,39 @@ public class SimpleExpressionsTest
         
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
+    
+    [Test]
+    public void BuildSimpleExpressionWithOperatorsPriority()
+    {
+        var rootNode = TestUtils.BuildAstNode("a + b/c + d");
+        
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+
+        var expectedResult = new LjsAstBinaryOperation(
+            new LjsAstBinaryOperation(
+                new LjsAstGetVar("a"),
+                new LjsAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsAstBinaryOperationType.Div),
+                LjsAstBinaryOperationType.Plus),
+            new LjsAstGetVar("d"),
+            LjsAstBinaryOperationType.Plus);
+
+        rootNode.Should().BeEquivalentTo(expectedResult);
+    }
+    
+    [Test]
+    public void BuildSimpleLogicalExpression()
+    {
+        var rootNode = TestUtils.BuildAstNode("a + b != c + d");
+        
+        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
+        
+        var expectedResult = new LjsAstBinaryOperation(
+            new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
+            new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsAstBinaryOperationType.Plus),
+            LjsAstBinaryOperationType.NotEqual);
+
+        rootNode.Should().BeEquivalentTo(expectedResult);
+    }
 
     
 }

@@ -56,24 +56,6 @@ public class LjsAstBuilderTest
     
     
     
-
-    [Test]
-    public void BuildSimpleTernaryIfExpression()
-    {
-        var astBuilder = new LjsAstBuilder("a ? b : c");
-        var rootNode = astBuilder.Build().RootNode;
-        
-        rootNode.Should().BeOfType<LjsAstTernaryIfOperation>();
-
-        rootNode.Should().BeEquivalentTo(
-            new LjsAstTernaryIfOperation(
-                new LjsAstGetVar("a"),
-                new LjsAstGetVar("b"),
-                new LjsAstGetVar("c")));
-    }
-    
-    
-    
     
     
 
@@ -98,40 +80,7 @@ public class LjsAstBuilderTest
         Assert.Throws<LjsSyntaxError>(() => astBuilder.Build());
     }
     
-    [Test]
-    public void BuildSimpleExpressionWithOperatorsPriority()
-    {
-        var astBuilder = new LjsAstBuilder("a + b/c + d");
-        var rootNode = astBuilder.Build().RootNode;
-        
-        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
-
-        var expectedResult = new LjsAstBinaryOperation(
-            new LjsAstBinaryOperation(
-                new LjsAstGetVar("a"),
-                new LjsAstBinaryOperation(new LjsAstGetVar("b"), new LjsAstGetVar("c"), LjsAstBinaryOperationType.Div),
-                LjsAstBinaryOperationType.Plus),
-            new LjsAstGetVar("d"),
-            LjsAstBinaryOperationType.Plus);
-
-        rootNode.Should().BeEquivalentTo(expectedResult);
-    }
     
-    [Test]
-    public void BuildSimpleLogicalExpression()
-    {
-        var astBuilder = new LjsAstBuilder("a + b != c + d");
-        var rootNode = astBuilder.Build().RootNode;
-        
-        rootNode.Should().BeOfType<LjsAstBinaryOperation>();
-        
-        var expectedResult = new LjsAstBinaryOperation(
-            new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
-            new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsAstBinaryOperationType.Plus),
-            LjsAstBinaryOperationType.NotEqual);
-
-        rootNode.Should().BeEquivalentTo(expectedResult);
-    }
     
     
     [Test]

@@ -2,7 +2,7 @@ using LightJS.Ast;
 
 namespace LightJS.Test.Ast;
 
-public static class LsjAstNodesExtensions
+public static class NodesExtensions
 {
     public static LjsAstLiteral<int> ToLit(this int x)
     {
@@ -161,5 +161,7 @@ public static class LsjAstNodesExtensions
     {
         return new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression);
     }
+
+    
     
 }
