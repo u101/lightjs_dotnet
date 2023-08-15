@@ -18,4 +18,16 @@ public class CodeBlocksTests
         Match(node, expected);
     }
     
+    [Test]
+    public void SimpleExpressionsSequenceWithRedundantSemicolonsTest()
+    {
+        var node = TestUtils.BuildAstNode(";a = b + c;;;\n;\n;;x = y - z;;;");
+        
+        var expected = Sequence(
+            "a".Assign("b".Plus("c")),
+            "x".Assign("y".Minus("z"))
+        );
+        Match(node, expected);
+    }
+    
 }

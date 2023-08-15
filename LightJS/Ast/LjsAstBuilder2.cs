@@ -54,23 +54,9 @@ public class LjsAstBuilder2
             throw new Exception("no tokens");
         }
 
-        const ExpressionTerminationType expressionTerminationType = 
-            ExpressionTerminationType.Eof | ExpressionTerminationType.Semicolon;
-
-        var firstExpression = Process(expressionTerminationType);
+        var node = ProcessBlock(ExpressionTerminationType.Eof);
         
-        if (!_tokensReader.HasNextToken)
-            return new LjsAstModel(firstExpression, _tokenPositionsMap);
-        
-        var sq = new LjsAstSequence();
-        sq.AddNode(firstExpression);
-
-        while (_tokensReader.HasNextToken)
-        {
-            sq.AddNode(Process(expressionTerminationType));
-        }
-
-        return new LjsAstModel(sq, _tokenPositionsMap);
+        return new LjsAstModel(node, _tokenPositionsMap);
 
     }
     
@@ -155,25 +141,59 @@ public class LjsAstBuilder2
         var terminator = 
             terminationType | ExpressionTerminationType.Semicolon;
         
+        SkipRedundantSemicolons();
+        
+        CheckEarlyEof(terminationType);
+        
         var firstExpression = Process(terminator);
 
-        if (!_tokensReader.HasNextToken)
-        {
-            if ((terminationType & ExpressionTerminationType.Eof) != 0)
-                return firstExpression;
+        SkipRedundantSemicolons();
+        
+        CheckEarlyEof(terminationType);
 
-            throw new LjsSyntaxError("unexpected EOF", _tokensReader.CurrentToken.Position);
+        if (!_tokensReader.HasNextToken && 
+            (terminationType & ExpressionTerminationType.Eof) != 0)
+        {
+            return firstExpression;
         }
         
         var sq = new LjsAstSequence();
         sq.AddNode(firstExpression);
 
-        while (_tokensReader.HasNextToken)
+        while (_tokensReader.HasNextToken && 
+               !ShouldStopExpressionParsing(
+                   _tokensReader.NextToken, _tokensReader.CurrentToken, terminationType))
         {
             sq.AddNode(Process(terminator));
+            SkipRedundantSemicolons();
+            CheckEarlyEof(terminationType);
+        }
+
+        // skip last semicolon
+        while (_tokensReader.HasNextToken && 
+               _tokensReader.CurrentToken.TokenType == LjsTokenType.OpSemicolon)
+        {
+            _tokensReader.MoveForward();
         }
 
         return sq;
+    }
+
+    private void CheckEarlyEof(ExpressionTerminationType terminationType)
+    {
+        if (!_tokensReader.HasNextToken && (terminationType & ExpressionTerminationType.Eof) == 0)
+        {
+            throw new LjsSyntaxError("unexpected EOF", _tokensReader.CurrentToken.Position);
+        }
+    }
+
+    private void SkipRedundantSemicolons()
+    {
+        while (_tokensReader.HasNextToken &&
+               _tokensReader.NextToken.TokenType == LjsTokenType.OpSemicolon)
+        {
+            _tokensReader.MoveForward();
+        }
     }
     
     private ILjsAstNode Process(ExpressionTerminationType terminationType)
