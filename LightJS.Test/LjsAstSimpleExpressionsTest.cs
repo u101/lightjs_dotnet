@@ -313,7 +313,7 @@ public class LjsAstSimpleExpressionsTest
     [Test]
     public void AssignSequenceTest()
     {
-        var node = TestUtils.BuildAstNode("x = (y = (a = b + c))");
+        var node = TestUtils.BuildAstNode("x = y = a = b + c");
 
         node.Should().BeEquivalentTo(
             "x".Assign("y".Assign("a".Assign(
@@ -397,6 +397,15 @@ public class LjsAstSimpleExpressionsTest
         var expected = "a".ToVar().TernaryIf(
             "b".ToVar().TernaryIf("b1".ToVar(), "b2".ToVar()), 
             "c".ToVar());
+        
+        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+    }
+    
+    [Test]
+    public void BuildTernaryIfExpressionWithAssignment()
+    {
+        var node = TestUtils.BuildAstNode("x = a ? b : c");
+        var expected = "x".Assign("a".ToVar().TernaryIf("b".ToVar(), "c".ToVar()));
         
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }

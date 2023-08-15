@@ -97,7 +97,6 @@ public class LjsAstBuilder2
         public bool IsUnaryPrefix => (this.OpType & OpType.UnaryPrefix) != 0;
         public bool IsUnaryPostfix => (this.OpType & OpType.UnaryPostfix) != 0;
         public bool IsBinary => (this.OpType & OpType.Binary) != 0;
-        public bool IsAssign => (this.OpType & OpType.Assign) != 0;
         public int Priority { get; }
         public int InnerMembersCount { get; }
 
@@ -149,9 +148,6 @@ public class LjsAstBuilder2
 
     private ILjsAstNode Convert(ExpressionTerminationType terminationType)
     {
-        // TODO ternary opertaor .. ? .. : ..
-
-        var parenthesesCount = 0;
         
         var sourceCodeString = _sourceCodeString;
 
@@ -270,6 +266,26 @@ public class LjsAstBuilder2
                     _postfixExpression.Add(enclosedOperation);
                 }
             }
+            else if (LjsAstBuilderUtils.IsAssignOperator(token.TokenType))
+            {
+                // we do recursive assignment operations processing for preserving right to left order of operations in assignment chain
+                var assignExpression = Convert(terminationType);
+                
+                while (_operatorsStack.Count > operatorsStackStartingLn)
+                {
+                    _postfixExpression.Add(_operatorsStack.Pop());
+                }
+                
+                _postfixExpression.Add(assignExpression);
+                _postfixExpression.Add(new Op(token, OpType.Assign, 0));
+                
+
+                parsingModeFinished = true;
+                
+                break;
+                
+            }
+            
             else if (LjsAstBuilderUtils.IsOrdinaryOperator(token.TokenType))
             {
                 var isUnaryPrefix = LjsAstBuilderUtils.CanBeUnaryPrefixOp(token.TokenType) &&
@@ -290,10 +306,6 @@ public class LjsAstBuilder2
                 if (!isUnary)
                 {
                     opType |= OpType.Binary;
-                    if (LjsAstBuilderUtils.IsAssignOperator(token.TokenType))
-                    {
-                        opType |= OpType.Assign;
-                    }
                 }
                 
                 // todo check isUnary equals isDefinitelyUnary() method and throw error if needed
@@ -405,7 +417,7 @@ public class LjsAstBuilder2
                         }
                     }
 
-                    else if (op.IsAssign)
+                    else if ((op.OpType & OpType.Assign) != 0)
                     {
                         // replace getter nodes by setter nodes
                         switch (left)

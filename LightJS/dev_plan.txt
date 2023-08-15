@@ -5,7 +5,6 @@
 0.1) multiline blocks of code
 0.2) if / else blocks
 0.3) while loops
-0.4) ternary if expression
 
 3) array initialization literal [a,b,c]
 4) object initialization literal {"a":1,"b":2}
