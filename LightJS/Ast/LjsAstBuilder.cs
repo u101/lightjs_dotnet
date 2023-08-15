@@ -5,6 +5,7 @@ namespace LightJS.Ast;
 /// <summary>
 /// Abstract syntax tree builder
 /// </summary>
+[Obsolete]
 public class LjsAstBuilder
 {
     private readonly string _sourceCodeString;
