@@ -228,5 +228,15 @@ public static class LjsAstBuilderUtils
                 throw new Exception($"unsupported literal token type {token.TokenType}");
         }
     }
+
+    public static bool ShouldAutoTerminateExpression(LjsToken currentToken, LjsToken nextToken)
+    {
+        if (nextToken.Position.Line == currentToken.Position.Line) return false;
+
+        if (IsBinaryOp(currentToken.TokenType) ||
+            IsBinaryOp(nextToken.TokenType)) return false;
+
+        return true;
+    }
     
 }
