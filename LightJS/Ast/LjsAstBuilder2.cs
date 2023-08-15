@@ -68,7 +68,6 @@ public class LjsAstBuilder2
         UnaryPrefix = 1 << 1,
         UnaryPostfix = 1 << 2,
         Assign = 1 << 3,
-        Parentheses = 1 << 4,
         FuncCall = 1 << 5,
         PropAccess = 1 << 6,
         TernaryIf = 1 << 7
@@ -145,7 +144,7 @@ public class LjsAstBuilder2
         
         CheckEarlyEof(terminationType);
         
-        var firstExpression = Process(terminator);
+        var firstExpression = ProcessExpression(terminator);
 
         SkipRedundantSemicolons();
         
@@ -164,7 +163,7 @@ public class LjsAstBuilder2
                !ShouldStopExpressionParsing(
                    _tokensReader.NextToken, _tokensReader.CurrentToken, terminationType))
         {
-            sq.AddNode(Process(terminator));
+            sq.AddNode(ProcessExpression(terminator));
             SkipRedundantSemicolons();
             CheckEarlyEof(terminationType);
         }
@@ -196,11 +195,8 @@ public class LjsAstBuilder2
         }
     }
     
-    private ILjsAstNode Process(ExpressionTerminationType terminationType)
+    private ILjsAstNode ProcessExpression(ExpressionTerminationType terminationType)
     {
-        
-        var sourceCodeString = _sourceCodeString;
-
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
 
@@ -228,17 +224,17 @@ public class LjsAstBuilder2
             if (token.TokenType == LjsTokenType.Identifier)
             {
                 _postfixExpression.Add(new LjsAstGetVar(
-                    sourceCodeString.Substring(token.Position.CharIndex, token.StringLength)));
+                    _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength)));
             }
             else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
-                _postfixExpression.Add( LjsAstBuilderUtils.CreateLiteralNode(token, sourceCodeString));
+                _postfixExpression.Add( LjsAstBuilderUtils.CreateLiteralNode(token, _sourceCodeString));
             }
             
             else if (token.TokenType == LjsTokenType.OpQuestionMark)
             {
-                var trueExpressionNode = Process(ExpressionTerminationType.Colon);
-                var falseExpressionNode = Process(terminationType);
+                var trueExpressionNode = ProcessExpression(ExpressionTerminationType.Colon);
+                var falseExpressionNode = ProcessExpression(terminationType);
 
                 parsingModeFinished = true;
 
@@ -257,7 +253,7 @@ public class LjsAstBuilder2
             {
                 if (IsPropertyAccess(prevToken.TokenType))
                 {
-                    var propAccessNode = Process(
+                    var propAccessNode = ProcessExpression(
                         ExpressionTerminationType.SquareBracketsClose);
                     
                     _postfixExpression.Add(propAccessNode);
@@ -292,13 +288,13 @@ public class LjsAstBuilder2
                     {
                         var argumentsCount = 1;
                         
-                        var funcArg = Process(ExpressionTerminationType.FuncCall);
+                        var funcArg = ProcessExpression(ExpressionTerminationType.FuncCall);
                         
                         _postfixExpression.Add(funcArg);
                         
                         while (_tokensReader.CurrentToken.TokenType != LjsTokenType.OpParenthesesClose)
                         {
-                            funcArg = Process(ExpressionTerminationType.FuncCall);
+                            funcArg = ProcessExpression(ExpressionTerminationType.FuncCall);
                             _postfixExpression.Add(funcArg);
                             ++argumentsCount;
                         }
@@ -312,14 +308,14 @@ public class LjsAstBuilder2
                 }
                 else
                 {
-                    var enclosedOperation = Process(ExpressionTerminationType.ParenthesesClose);
+                    var enclosedOperation = ProcessExpression(ExpressionTerminationType.ParenthesesClose);
                     _postfixExpression.Add(enclosedOperation);
                 }
             }
             else if (LjsAstBuilderUtils.IsAssignOperator(token.TokenType))
             {
                 // we do recursive assignment operations processing for preserving right to left order of operations in assignment chain
-                var assignExpression = Process(terminationType);
+                var assignExpression = ProcessExpression(terminationType);
                 
                 while (_operatorsStack.Count > operatorsStackStartingLn)
                 {
