@@ -158,7 +158,7 @@ public class LjsAstBuilder2
         
         CheckEarlyEof(terminationType);
         
-        var firstExpression = ProcessExpression(terminator);
+        var firstExpression = ProcessCodeLine(terminator);
 
         SkipRedundantSemicolons();
         
@@ -176,7 +176,7 @@ public class LjsAstBuilder2
         while (_tokensReader.HasNextToken && 
                !ShouldStopExpressionParsing(_tokensReader.NextToken, terminationType))
         {
-            sq.AddNode(ProcessExpression(terminator));
+            sq.AddNode(ProcessCodeLine(terminator));
             SkipRedundantSemicolons();
             CheckEarlyEof(terminationType);
         }
@@ -213,6 +213,105 @@ public class LjsAstBuilder2
         {
             _tokensReader.MoveForward();
         }
+    }
+
+    private ILjsAstNode ProcessCodeLine(ExpressionTerminationType terminationType)
+    {
+        CheckEarlyEof();
+
+        var nextToken = _tokensReader.NextToken;
+
+        switch (nextToken.TokenType)
+        {
+            case LjsTokenType.If:
+                return ProcessIfBlock(terminationType);
+            default:
+                return ProcessExpression(terminationType);
+        }
+    }
+
+    private ILjsAstNode ProcessIfBlock(ExpressionTerminationType terminationType)
+    {
+        _tokensReader.MoveForward();
+
+        CheckEarlyEof();
+
+        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesOpen)
+        {
+            throw new LjsSyntaxError("expected '(' after 'if'", _tokensReader.CurrentToken.Position);
+        }
+
+        var condition =
+            ProcessExpression(ExpressionTerminationType.ParenthesesClose);
+
+        CheckEarlyEof();
+
+        var hasBrackets =
+            _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+
+        if (hasBrackets) _tokensReader.MoveForward();
+
+        var ifBodyTerminator = hasBrackets
+            ? ExpressionTerminationType.BracketClose
+            : ExpressionTerminationType.Auto | ExpressionTerminationType.ElseIf;
+
+        var ifBlockBody = ProcessBlock(ifBodyTerminator);
+
+        var ifBlock = new LjsAstIfBlock(
+            new LjsAstConditionalExpression(condition, ifBlockBody));
+
+        if (_tokensReader.CurrentToken.TokenType == LjsTokenType.OpBracketClose &&
+            (_tokensReader.NextToken.TokenType == LjsTokenType.ElseIf ||
+             _tokensReader.NextToken.TokenType == LjsTokenType.Else))
+        {
+            _tokensReader.MoveForward();
+        }
+
+        while (_tokensReader.CurrentToken.TokenType == LjsTokenType.ElseIf)
+        {
+            var altCondition =
+                ProcessExpression(ExpressionTerminationType.ParenthesesClose);
+
+            CheckEarlyEof();
+
+            hasBrackets =
+                _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+
+            if (hasBrackets) _tokensReader.MoveForward();
+
+            ifBodyTerminator = hasBrackets
+                ? ExpressionTerminationType.BracketClose
+                : ExpressionTerminationType.Auto | ExpressionTerminationType.ElseIf;
+
+            var altBody = ProcessBlock(ifBodyTerminator);
+
+            ifBlock.ConditionalAlternatives.Add(
+                new LjsAstConditionalExpression(altCondition, altBody));
+
+            if (_tokensReader.CurrentToken.TokenType == LjsTokenType.OpBracketClose &&
+                (_tokensReader.NextToken.TokenType == LjsTokenType.ElseIf ||
+                 _tokensReader.NextToken.TokenType == LjsTokenType.Else))
+            {
+                _tokensReader.MoveForward();
+            }
+        }
+
+        if (_tokensReader.CurrentToken.TokenType == LjsTokenType.Else)
+        {
+            CheckEarlyEof();
+
+            hasBrackets =
+                _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+
+            if (hasBrackets) _tokensReader.MoveForward();
+
+            ifBodyTerminator =
+                hasBrackets ? ExpressionTerminationType.BracketClose : ExpressionTerminationType.Auto;
+
+            ifBlock.ElseBlock = ProcessBlock(ifBodyTerminator);
+        }
+
+        return ifBlock;
     }
     
     private ILjsAstNode ProcessExpression(ExpressionTerminationType terminationType)
@@ -266,99 +365,6 @@ public class LjsAstBuilder2
                 _tokenPositionsMap[literalNode] = token.Position;
                 
                 _postfixExpression.Add( literalNode);
-            }
-            
-            //branching and loops
-            else if (token.TokenType == LjsTokenType.If)
-            {
-                if (_postfixExpression.Count != postfixExpressionStartingLn ||
-                    _operatorsStack.Count != operatorsStackStartingLn)
-                {
-                    throw new LjsSyntaxError("unexpected token 'if'", token.Position);
-                }
-                CheckEarlyEof();
-                
-                if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesOpen)
-                {
-                    throw new LjsSyntaxError("expected '(' after 'if'", token.Position);
-                }
-
-                var condition = 
-                    ProcessExpression(ExpressionTerminationType.ParenthesesClose);
-                
-                CheckEarlyEof();
-
-                var hasBrackets = 
-                    _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
-                
-                if (hasBrackets) _tokensReader.MoveForward();
-
-                var ifBodyTerminator = hasBrackets ?
-                    ExpressionTerminationType.BracketClose :
-                    ExpressionTerminationType.Auto | ExpressionTerminationType.ElseIf;
-
-                var ifBlockBody = ProcessBlock(ifBodyTerminator);
-
-                var ifBlock = new LjsAstIfBlock(
-                    new LjsAstConditionalExpression(condition, ifBlockBody));
-
-                if (_tokensReader.CurrentToken.TokenType == LjsTokenType.OpBracketClose &&
-                    (_tokensReader.NextToken.TokenType == LjsTokenType.ElseIf ||
-                     _tokensReader.NextToken.TokenType == LjsTokenType.Else))
-                {
-                    _tokensReader.MoveForward();
-                }
-
-                while (_tokensReader.CurrentToken.TokenType == LjsTokenType.ElseIf)
-                {
-                    var altCondition = 
-                        ProcessExpression(ExpressionTerminationType.ParenthesesClose);
-                    
-                    CheckEarlyEof();
-
-                    hasBrackets = 
-                        _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
-                
-                    if (hasBrackets) _tokensReader.MoveForward();
-
-                    ifBodyTerminator = hasBrackets ?
-                        ExpressionTerminationType.BracketClose :
-                        ExpressionTerminationType.Auto | ExpressionTerminationType.ElseIf;
-
-                    var altBody = ProcessBlock(ifBodyTerminator);
-                    
-                    ifBlock.ConditionalAlternatives.Add(
-                        new LjsAstConditionalExpression(altCondition, altBody));
-                    
-                    if (_tokensReader.CurrentToken.TokenType == LjsTokenType.OpBracketClose &&
-                        (_tokensReader.NextToken.TokenType == LjsTokenType.ElseIf ||
-                         _tokensReader.NextToken.TokenType == LjsTokenType.Else))
-                    {
-                        _tokensReader.MoveForward();
-                    }
-                }
-
-                if (_tokensReader.CurrentToken.TokenType == LjsTokenType.Else)
-                {
-                    CheckEarlyEof();
-
-                    hasBrackets = 
-                        _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
-                
-                    if (hasBrackets) _tokensReader.MoveForward();
-
-                    ifBodyTerminator =
-                        hasBrackets ? ExpressionTerminationType.BracketClose :
-                            ExpressionTerminationType.Auto;
-                    
-                    ifBlock.ElseBlock = ProcessBlock(ifBodyTerminator);
-                }
-                
-                _postfixExpression.Add(ifBlock);
-
-
-                // TODO
-                throw new NotImplementedException();
             }
             
             else if (token.TokenType == LjsTokenType.OpQuestionMark)
