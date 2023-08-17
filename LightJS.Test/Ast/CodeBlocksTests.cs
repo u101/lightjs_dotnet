@@ -33,21 +33,34 @@ public class CodeBlocksTests
     [Test]
     public void SimpleIfBlockTest()
     {
-        var code = """
+        CheckVariant("""
+        if (a) {
+            x = b
+        } else {
+            x = c
+        }
+        """);
+        
+        CheckVariant("""
         if (a)
             x = b
         else
             x = c
-        """;
-        
-        var node = TestUtils.BuildAstNode(code);
+        """);
 
-        var expected = IfBlock(
-            "a".ToVar(), "x".Assign("b".ToVar())).
+        void CheckVariant(string code)
+        {
+            var node = TestUtils.BuildAstNode(code);
+
+            var expected = IfBlock(
+                    "a".ToVar(), "x".Assign("b".ToVar())).
             
-            Else("x".Assign("c".ToVar()));
+                Else("x".Assign("c".ToVar()));
             
-        Match(node, expected);
+            Match(node, expected);
+        }
+        
+        
     }
     
 }
