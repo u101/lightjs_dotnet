@@ -72,6 +72,25 @@ public static class LjsAstBuilderUtils
         return OperatorsPriorityMap.TryGetValue(tokenType, out var priority) ? priority : 0;
     }
 
+    private static readonly HashSet<LjsTokenType> KeywordsSet = new()
+    {
+        LjsTokenType.Var,
+        LjsTokenType.Const,
+        LjsTokenType.Function,
+    
+        LjsTokenType.Return,
+        LjsTokenType.Break,
+        LjsTokenType.Continue,
+    
+        LjsTokenType.If,
+        LjsTokenType.ElseIf,
+        LjsTokenType.Else,
+    
+        LjsTokenType.While,
+        LjsTokenType.Do,
+        LjsTokenType.For,
+    };
+
     private static readonly HashSet<LjsTokenType> LiteralTypesSet = new()
     {
         LjsTokenType.True,
@@ -174,6 +193,15 @@ public static class LjsAstBuilderUtils
             ? op
             : throw new ArgumentException($"unsupported binary operator token {tokenType}");
 
+    public static bool CanBePrefixUnaryOperator(LjsTokenType tokenType) =>
+        PrefixUnaryOperationsMap.ContainsKey(tokenType);
+
+    public static bool IsDefinitelyPrefixUnaryOperator(LjsTokenType tokenType) => tokenType is
+        LjsTokenType.OpLogicalNot or
+        LjsTokenType.OpBitNot or
+        LjsTokenType.OpIncrement or
+        LjsTokenType.OpDecrement;
+    
     public static LjsAstUnaryOperationType GetUnaryPrefixOperationType(LjsTokenType tokenType) =>
         PrefixUnaryOperationsMap.TryGetValue(tokenType, out var op) ? op
             : throw new ArgumentException($"unsupported unary operation token type {tokenType}");
@@ -229,14 +257,6 @@ public static class LjsAstBuilderUtils
         }
     }
 
-    public static bool ShouldAutoTerminateExpression(LjsToken currentToken, LjsToken nextToken)
-    {
-        if (nextToken.Position.Line == currentToken.Position.Line) return false;
+    public static bool IsKeyword(LjsTokenType tokenType) => KeywordsSet.Contains(tokenType);
 
-        if (IsBinaryOp(currentToken.TokenType) ||
-            IsBinaryOp(nextToken.TokenType)) return false;
-
-        return true;
-    }
-    
 }

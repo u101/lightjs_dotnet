@@ -47,6 +47,20 @@ public class CodeBlocksTests
         else
             x = c
         """);
+        
+        CheckVariant("""
+        if (a) x = b
+        else
+            x = c
+        """);
+        
+        CheckVariant("""
+        if (a) x = b
+        else x = c
+        """);
+        
+        CheckVariant("if (a) x = b; else x = c");
+        CheckVariant("if (a) {x = b} else x = c");
 
         void CheckVariant(string code)
         {
