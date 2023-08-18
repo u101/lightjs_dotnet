@@ -359,7 +359,8 @@ public class LjsAstBuilder2
             _tokensReader.MoveForward();
 
             var token = _tokensReader.CurrentToken;
-            var prevToken = _tokensReader.PrevToken;
+            var prevToken = lastProcessedToken.TokenType != LjsTokenType.None ?
+                _tokensReader.PrevToken : lastProcessedToken;
             var nextToken = _tokensReader.NextToken;
             
             if (mode == ProcessExpressionMode.StopBeforeStopSymbol)
@@ -627,6 +628,11 @@ public class LjsAstBuilder2
                 }
                 else
                 {
+                    if (_locals.Count < 2)
+                    {
+                        throw new LjsSyntaxError("invalid binary operation", op.Token.Position);
+                    }
+                    
                     // binary operation
                     var right = _locals.Pop();
                     var left = _locals.Pop();

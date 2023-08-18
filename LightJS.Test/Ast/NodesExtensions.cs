@@ -18,6 +18,11 @@ public static class NodesExtensions
         return new LjsAstGetVar(x);
     }
     
+    public static LjsAstUnaryOperation WithUnaryOp(this ILjsAstNode node, LjsAstUnaryOperationType unaryOperationType)
+    {
+        return new LjsAstUnaryOperation(node, unaryOperationType);
+    }
+    
     public static LjsAstUnaryOperation WithUnaryMinus(this ILjsAstNode node)
     {
         return new LjsAstUnaryOperation(node, LjsAstUnaryOperationType.Minus);
@@ -99,6 +104,16 @@ public static class NodesExtensions
     public static LjsAstBinaryOperation Minus(this string x, string y)
     {
         return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstGetVar(y), LjsAstBinaryOperationType.Minus);
+    }
+    
+    public static LjsAstBinaryOperation MultiplyBy(this ILjsAstNode x, ILjsAstNode y)
+    {
+        return new LjsAstBinaryOperation(x, y, LjsAstBinaryOperationType.Multiply);
+    }
+    
+    public static LjsAstBinaryOperation MultiplyBy(this ILjsAstNode x, string y)
+    {
+        return new LjsAstBinaryOperation(x, new LjsAstGetVar(y), LjsAstBinaryOperationType.Multiply);
     }
     
     public static LjsAstSetVar Assign(this string varName, ILjsAstNode other)

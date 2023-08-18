@@ -190,8 +190,7 @@ public class SimpleExpressionsTest
     private static void ValidLiteralTest<TLiteralType>(
         string literal, TLiteralType expectedValue)
     {
-        var astBuilder = new LjsAstBuilder(literal);
-        var rootNode = astBuilder.Build().RootNode;
+        var rootNode = TestUtils.BuildAstNode(literal);
 
         rootNode.Should().BeOfType<LjsAstLiteral<TLiteralType>>();
         rootNode.Should().BeEquivalentTo(new LjsAstLiteral<TLiteralType>(expectedValue));
@@ -448,6 +447,24 @@ public class SimpleExpressionsTest
             LjsAstBinaryOperationType.NotEqual);
 
         rootNode.Should().BeEquivalentTo(expectedResult);
+    }
+    
+    [Test]
+    public void BuildInvalidParenthesesExpression()
+    {
+        BuildInvalidExpression("(a+b))");
+        BuildInvalidExpression("(a+b");
+    }
+    
+    [Test]
+    public void BuildInvalidOperatorsExpression()
+    {
+        BuildInvalidExpression("a * * * b");
+    }
+
+    private static void BuildInvalidExpression(string expression)
+    {
+        Assert.Throws<LjsSyntaxError>(() => TestUtils.BuildAstNode(expression));
     }
 
     
