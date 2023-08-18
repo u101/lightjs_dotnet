@@ -76,5 +76,32 @@ public class CodeBlocksTests
         
         
     }
+
+    [Test]
+    public void NestedIfBlockTest()
+    {
+        var code = """
+        if (a) {
+            if (a.a) x = a.a
+        } else {
+            if (a.b) x = b
+        }
+        """;
+        
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected =
+            IfBlock(
+                "a".ToVar(),
+                IfBlock(
+                    "a".GetProp("a"), 
+                    "x".Assign("a".GetProp("a")))
+                )
+                .Else(IfBlock(
+                    "a".GetProp("b"), 
+                    "x".Assign("b".ToVar()))
+                );
+        Match(node, expected);
+    }
     
 }

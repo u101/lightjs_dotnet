@@ -284,7 +284,7 @@ public class LjsAstBuilder2
 
         var mainBody = hasBrackets ? 
             ProcessBlockInBrackets() : 
-            ProcessExpression(terminationType | StopSymbolType.Semicolon | StopSymbolType.Auto);
+            ProcessCodeLine(terminationType | StopSymbolType.Semicolon | StopSymbolType.Auto);
         
         SkipRedundantSemicolons();
         
@@ -308,7 +308,7 @@ public class LjsAstBuilder2
 
             var altBody = hasBrackets
                 ? ProcessBlockInBrackets()
-                : ProcessExpression(terminationType | StopSymbolType.Semicolon | StopSymbolType.Auto);
+                : ProcessCodeLine(terminationType | StopSymbolType.Semicolon | StopSymbolType.Auto);
             
             SkipRedundantSemicolons();
 
@@ -327,7 +327,7 @@ public class LjsAstBuilder2
 
             var elseBody = hasBrackets
                 ? ProcessBlockInBrackets()
-                : ProcessExpression(terminationType | StopSymbolType.Semicolon | StopSymbolType.Auto);
+                : ProcessCodeLine(terminationType | StopSymbolType.Semicolon | StopSymbolType.Auto);
             
             SkipRedundantSemicolons();
 
