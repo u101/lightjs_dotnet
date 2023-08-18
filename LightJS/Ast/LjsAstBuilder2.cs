@@ -337,7 +337,15 @@ public class LjsAstBuilder2
         return ifBlock;
     }
     
-    private ILjsAstNode ProcessExpression(StopSymbolType terminationType)
+    private enum ProcessExpressionMode
+    {
+        StopBeforeStopSymbol,
+        StopAtStopSymbol
+    }
+    
+    private ILjsAstNode ProcessExpression(
+        StopSymbolType stopSymbolType, 
+        ProcessExpressionMode mode = ProcessExpressionMode.StopBeforeStopSymbol)
     {
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
@@ -353,17 +361,27 @@ public class LjsAstBuilder2
             var token = _tokensReader.CurrentToken;
             var prevToken = _tokensReader.PrevToken;
             var nextToken = _tokensReader.NextToken;
-
-            if (IsStopSymbol(nextToken.TokenType, terminationType))
+            
+            if (mode == ProcessExpressionMode.StopBeforeStopSymbol)
             {
-                processFinished = true;
+                if (IsStopSymbol(_tokensReader.NextToken.TokenType, stopSymbolType))
+                {
+                    processFinished = true;
+                }
             }
             
             if (!processFinished &&
-                (terminationType & StopSymbolType.Auto) != 0 && 
+                (stopSymbolType & StopSymbolType.Auto) != 0 && 
                 ShouldAutoTerminateExpression(token, nextToken))
             {
                 processFinished = true;
+            }
+
+            if (mode == ProcessExpressionMode.StopAtStopSymbol &&
+                IsStopSymbol(token.TokenType, stopSymbolType))
+            {
+                processFinished = true;
+                break;
             }
 
             lastProcessedToken = token;
@@ -388,11 +406,10 @@ public class LjsAstBuilder2
             
             else if (token.TokenType == LjsTokenType.OpQuestionMark)
             {
-                var trueExpressionNode = ProcessExpression(StopSymbolType.Colon);
+                var trueExpressionNode = ProcessExpression(
+                    StopSymbolType.Colon, ProcessExpressionMode.StopAtStopSymbol);
                 
-                CheckExpectedNextAndMoveForward(LjsTokenType.OpColon);
-                
-                var falseExpressionNode = ProcessExpression(terminationType);
+                var falseExpressionNode = ProcessExpression(stopSymbolType, mode);
 
                 processFinished = true;
 
@@ -411,10 +428,10 @@ public class LjsAstBuilder2
             {
                 if (IsPropertyAccess(prevToken.TokenType))
                 {
-                    var propAccessNode = ProcessExpression(StopSymbolType.SquareBracketsClose);
-                    
-                    CheckExpectedNextAndMoveForward(LjsTokenType.OpSquareBracketsClose);
-                    
+                    var propAccessNode = ProcessExpression(
+                        StopSymbolType.SquareBracketsClose, 
+                        ProcessExpressionMode.StopAtStopSymbol);
+
                     _postfixExpression.Add(propAccessNode);
                     
                     _operatorsStack.Push(new Op(
@@ -447,20 +464,18 @@ public class LjsAstBuilder2
                     {
                         var argumentsCount = 1;
                         
-                        var funcArg = ProcessExpression(StopSymbolType.FuncCall);
+                        var funcArg = ProcessExpression(
+                            StopSymbolType.FuncCall, ProcessExpressionMode.StopAtStopSymbol);
                         
                         _postfixExpression.Add(funcArg);
                         
-                        while (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
+                        while (_tokensReader.CurrentToken.TokenType == LjsTokenType.OpComma)
                         {
-                            _tokensReader.MoveForward();
-                            
-                            funcArg = ProcessExpression(StopSymbolType.FuncCall);
+                            funcArg = ProcessExpression(
+                                StopSymbolType.FuncCall, ProcessExpressionMode.StopAtStopSymbol);
                             _postfixExpression.Add(funcArg);
                             ++argumentsCount;
                         }
-                        
-                        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
                         
                         PushOperatorToStack(
                             new Op(token, OpType.FuncCall | OpType.UnaryPostfix, 
@@ -471,9 +486,8 @@ public class LjsAstBuilder2
                 }
                 else
                 {
-                    var enclosedOperation = ProcessExpression(StopSymbolType.ParenthesesClose);
-                    
-                    CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
+                    var enclosedOperation = ProcessExpression(
+                        StopSymbolType.FuncCall, ProcessExpressionMode.StopAtStopSymbol);
                     
                     _postfixExpression.Add(enclosedOperation);
                 }
@@ -481,7 +495,8 @@ public class LjsAstBuilder2
             else if (LjsAstBuilderUtils.IsAssignOperator(token.TokenType))
             {
                 // we do recursive assignment operations processing for preserving right to left order of operations in assignment chain
-                var assignExpression = ProcessExpression(terminationType);
+                var assignExpression = ProcessExpression(
+                    stopSymbolType, mode);
                 
                 while (_operatorsStack.Count > operatorsStackStartingLn)
                 {
@@ -538,7 +553,7 @@ public class LjsAstBuilder2
         if (!processFinished)
         {
             var eofTermination = 
-                (terminationType & StopSymbolType.Eof) != 0 && !_tokensReader.HasNextToken;
+                (stopSymbolType & StopSymbolType.Eof) != 0 && !_tokensReader.HasNextToken;
 
             if (!eofTermination)
             {

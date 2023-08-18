@@ -286,6 +286,13 @@ public class SimpleExpressionsTest
         node.Should().BeEquivalentTo(
             "a".Plus("b".Minus("c")).Plus("d"));
     }
+
+    [Test]
+    public void ParenthesesSimpleExpressionTest2()
+    {
+        var node = TestUtils.BuildAstNode("((a)+(b))");
+        node.Should().BeEquivalentTo(("a".Plus("b")));
+    }
     
     [Test]
     public void ParenthesesSimpleExpressionTest()
