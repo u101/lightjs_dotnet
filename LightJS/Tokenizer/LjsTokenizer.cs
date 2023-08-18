@@ -18,7 +18,104 @@ public class LjsTokenizer
     private int _currentLine = 0;
     private int _currentCol = -1;
 
-    private static readonly Dictionary<string, LjsTokenType> _keywordsMap = new()
+    private static readonly Dictionary<OpCompositionKey, OpCompositionEntry> OpCompositionMap = new()
+    {
+        {
+            new OpCompositionKey(LjsTokenType.OpPlus, LjsTokenType.OpPlus),
+            new OpCompositionEntry(LjsTokenType.OpIncrement, true)
+        },
+
+        {
+            new OpCompositionKey(LjsTokenType.OpMinus, LjsTokenType.OpMinus),
+            new OpCompositionEntry(LjsTokenType.OpDecrement, true)
+        },
+
+        {
+            new OpCompositionKey(LjsTokenType.OpPlus, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpPlusAssign, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpMinus, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpMinusAssign, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpMultiply, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpMultAssign, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpDiv, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpDivAssign, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpBitOr, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpBitOrAssign, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpBitAnd, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpBitAndAssign, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpLogicalOr, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpLogicalOrAssign, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpLogicalAnd, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpLogicalAndAssign, true)
+        },
+
+        {
+            new OpCompositionKey(LjsTokenType.OpAssign, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpEquals, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpEquals, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpEqualsStrict, true)
+        },
+
+        {
+            new OpCompositionKey(LjsTokenType.OpGreater, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpGreaterOrEqual, true)
+        },
+
+        {
+            new OpCompositionKey(LjsTokenType.OpGreater, LjsTokenType.OpGreater),
+            new OpCompositionEntry(LjsTokenType.OpBitRightShift, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpBitRightShift, LjsTokenType.OpGreater),
+            new OpCompositionEntry(LjsTokenType.OpBitUnsignedRightShift, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpLess, LjsTokenType.OpLess),
+            new OpCompositionEntry(LjsTokenType.OpBitLeftShift, true)
+        },
+
+        {
+            new OpCompositionKey(LjsTokenType.OpLess, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpLessOrEqual, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpLogicalNot, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpNotEqual, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpNotEqual, LjsTokenType.OpAssign),
+            new OpCompositionEntry(LjsTokenType.OpNotEqualStrict, true)
+        },
+
+        {
+            new OpCompositionKey(LjsTokenType.OpBitAnd, LjsTokenType.OpBitAnd),
+            new OpCompositionEntry(LjsTokenType.OpLogicalAnd, true)
+        },
+        {
+            new OpCompositionKey(LjsTokenType.OpBitOr, LjsTokenType.OpBitOr),
+            new OpCompositionEntry(LjsTokenType.OpLogicalOr, true)
+        },
+
+        { new OpCompositionKey(LjsTokenType.Else, LjsTokenType.If), new OpCompositionEntry(LjsTokenType.ElseIf, false) },
+    };
+
+    private static readonly Dictionary<string, LjsTokenType> KeywordsMap = new()
     {
         {"null", LjsTokenType.Null},
         {"undefined", LjsTokenType.Undefined},
@@ -175,19 +272,22 @@ public class LjsTokenizer
 
                 var wordSpan = _sourceCodeString.Substring(startIndex, ln);
 
-                if (_keywordsMap.TryGetValue(wordSpan, out var tokenType))
+                if (KeywordsMap.TryGetValue(wordSpan, out var tokenType))
                 {
-                    switch (tokenType)
+                    var prevToken = PreviousToken;
+                    
+                    var opCompositionKey = new OpCompositionKey(prevToken.TokenType, tokenType);
+                    var opCompositionEntry = OpCompositionMap.TryGetValue(opCompositionKey, out var e) ? e : default;
+                
+                    if (opCompositionEntry.ResultTokenType != LjsTokenType.None &&
+                        (!opCompositionEntry.RequireToBeAdjacent || prevToken.Position.IsAdjacentTo(tokenPos, prevToken.StringLength)))
                     {
-                        case LjsTokenType.Null:
-                        case LjsTokenType.Undefined:
-                        case LjsTokenType.True:
-                        case LjsTokenType.False:
-                            AddToken(new LjsToken(tokenType, tokenPos, ln));
-                            break;
-                        default:
-                            AddToken(new LjsToken(tokenType, tokenPos, ln));
-                            break;
+                        ReplaceLastToken(new LjsToken(
+                            opCompositionEntry.ResultTokenType, prevToken.Position, (startIndex + ln) - prevToken.Position.CharIndex));
+                    }
+                    else
+                    {
+                        AddToken(new LjsToken(tokenType, tokenPos, ln));
                     }
                 }
                 else
@@ -320,18 +420,23 @@ public class LjsTokenizer
                 var prevToken = PreviousToken;
                 var opPosition = new LjsTokenPosition(_reader.CurrentIndex, _currentLine, _currentCol);
                 var opType = GetOperatorTokenType(c);
-                var compOp = LjsTokenType.None;
+                
+                const int strLn = 1;
 
-                if (prevToken.Position.IsAdjacentTo(opPosition, prevToken.StringLength) && 
-                    (compOp = GetOperatorComposition(prevToken.TokenType, opType)) != LjsTokenType.None)
+                var opCompositionKey = new OpCompositionKey(prevToken.TokenType, opType);
+                var opCompositionEntry = OpCompositionMap.TryGetValue(opCompositionKey, out var e) ? e : default;
+                
+                if (opCompositionEntry.ResultTokenType != LjsTokenType.None &&
+                    (!opCompositionEntry.RequireToBeAdjacent || prevToken.Position.IsAdjacentTo(opPosition, prevToken.StringLength)))
                 {
                     ReplaceLastToken(new LjsToken(
-                        compOp, prevToken.Position, prevToken.StringLength + 1));
+                        opCompositionEntry.ResultTokenType, prevToken.Position, 
+                        (opPosition.CharIndex + strLn) - prevToken.Position.CharIndex));
                 }
                 else
                 {
                     AddToken(new LjsToken(
-                        opType, opPosition,1));
+                        opType, opPosition,strLn));
                 }
             }
             else
@@ -370,46 +475,6 @@ public class LjsTokenizer
 
     private LjsToken PreviousToken => 
         _tokens.Count > 0 ? _tokens[^1] : default;
-
-    private static LjsTokenType GetOperatorComposition(LjsTokenType prevOp, LjsTokenType nexOp)
-    {
-        return prevOp switch
-        {
-            LjsTokenType.OpPlus when nexOp == LjsTokenType.OpPlus => LjsTokenType.OpIncrement,
-            
-            LjsTokenType.OpMinus when nexOp == LjsTokenType.OpMinus => LjsTokenType.OpDecrement,
-            
-            LjsTokenType.OpPlus when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpPlusAssign,
-            LjsTokenType.OpMinus when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpMinusAssign,
-            LjsTokenType.OpMultiply when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpMultAssign,
-            LjsTokenType.OpDiv when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpDivAssign,
-            LjsTokenType.OpBitOr when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpBitOrAssign,
-            LjsTokenType.OpBitAnd when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpBitAndAssign,
-            LjsTokenType.OpLogicalOr when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpLogicalOrAssign,
-            LjsTokenType.OpLogicalAnd when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpLogicalAndAssign,
-            
-            LjsTokenType.OpAssign when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpEquals,
-            LjsTokenType.OpEquals when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpEqualsStrict,
-            
-            LjsTokenType.OpGreater when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpGreaterOrEqual,
-            
-            LjsTokenType.OpGreater when nexOp == LjsTokenType.OpGreater => LjsTokenType.OpBitRightShift,
-            LjsTokenType.OpBitRightShift when nexOp == LjsTokenType.OpGreater => LjsTokenType.OpBitUnsignedRightShift,
-            LjsTokenType.OpLess when nexOp == LjsTokenType.OpLess => LjsTokenType.OpBitLeftShift,
-            
-            LjsTokenType.OpLess when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpLessOrEqual,
-            LjsTokenType.OpLogicalNot when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpNotEqual,
-            LjsTokenType.OpNotEqual when nexOp == LjsTokenType.OpAssign => LjsTokenType.OpNotEqualStrict,
-            
-            LjsTokenType.OpBitAnd when nexOp == LjsTokenType.OpBitAnd => LjsTokenType.OpLogicalAnd,
-            LjsTokenType.OpBitOr when nexOp == LjsTokenType.OpBitOr => LjsTokenType.OpLogicalOr,
-            
-            LjsTokenType.If when nexOp == LjsTokenType.Else => LjsTokenType.ElseIf,
-            
-            
-            _ => LjsTokenType.None
-        };
-    }
     
     private static LjsTokenType GetOperatorTokenType(char c)
     {
@@ -483,6 +548,61 @@ public class LjsTokenizer
             (charCode >= 65 && charCode <= 70) ||
             // a-f
             (charCode >= 97 && charCode <= 102);
+    }
+    
+    private readonly struct OpCompositionKey : IEquatable<OpCompositionKey>
+    {
+        public LjsTokenType FirstTokenType { get; }
+        public LjsTokenType NextTokenType { get; }
+
+        public OpCompositionKey(LjsTokenType firstTokenType, LjsTokenType nextTokenType)
+        {
+            FirstTokenType = firstTokenType;
+            NextTokenType = nextTokenType;
+        }
+
+        public bool Equals(OpCompositionKey other)
+        {
+            return FirstTokenType == other.FirstTokenType && NextTokenType == other.NextTokenType;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is OpCompositionKey other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine((int)FirstTokenType, (int)NextTokenType);
+        }
+    }
+    
+    private readonly struct OpCompositionEntry : IEquatable<OpCompositionEntry>
+    {
+        public LjsTokenType ResultTokenType { get; }
+        public bool RequireToBeAdjacent { get; }
+
+        public OpCompositionEntry(LjsTokenType resultTokenType, bool requireToBeAdjacent)
+        {
+            ResultTokenType = resultTokenType;
+            RequireToBeAdjacent = requireToBeAdjacent;
+        }
+
+        public bool Equals(OpCompositionEntry other)
+        {
+            return ResultTokenType == other.ResultTokenType && 
+                   RequireToBeAdjacent == other.RequireToBeAdjacent;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is OpCompositionEntry other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine((int)ResultTokenType, RequireToBeAdjacent);
+        }
     }
     
     private class SourceCodeCharsReader
