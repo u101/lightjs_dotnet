@@ -2,7 +2,7 @@ using LightJS.Tokenizer;
 
 namespace LightJS.Ast;
 
-public class LjsAstBuilder2
+public class LjsAstBuilder
 {
     private readonly string _sourceCodeString;
     private readonly TokensReader _tokensReader;
@@ -16,7 +16,7 @@ public class LjsAstBuilder2
     /// </summary>
     private readonly Dictionary<ILjsAstNode, LjsTokenPosition> _tokenPositionsMap = new();
 
-    public LjsAstBuilder2(string sourceCodeString)
+    public LjsAstBuilder(string sourceCodeString)
     {
         if (string.IsNullOrEmpty(sourceCodeString))
         {
@@ -30,7 +30,7 @@ public class LjsAstBuilder2
         _tokensReader = new TokensReader(tokens);
     }
     
-    public LjsAstBuilder2(string sourceCodeString, List<LjsToken> tokens)
+    public LjsAstBuilder(string sourceCodeString, List<LjsToken> tokens)
     {
         if (string.IsNullOrEmpty(sourceCodeString))
         {

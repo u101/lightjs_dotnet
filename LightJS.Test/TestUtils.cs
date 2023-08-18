@@ -13,7 +13,7 @@ public static class TestUtils
 
     public static ILjsAstNode BuildAstNode(string sourceCode)
     {
-        var builder = new LjsAstBuilder2(sourceCode);
+        var builder = new LjsAstBuilder(sourceCode);
         var model = builder.Build();
         return model.RootNode;
     }
