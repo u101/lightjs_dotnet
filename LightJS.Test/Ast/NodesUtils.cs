@@ -20,4 +20,52 @@ public static class NodesUtils
     {
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
+
+    public static LjsAstFunctionDeclaration Func(ILjsAstNode funcBody)
+    {
+        return new LjsAstFunctionDeclaration(
+            Array.Empty<LjsAstFunctionDeclarationParameter>(),funcBody);
+    }
+    
+    public static LjsAstFunctionDeclaration Func(string argName0, ILjsAstNode funcBody)
+    {
+        return new LjsAstFunctionDeclaration(
+            new []
+            {
+                new LjsAstFunctionDeclarationParameter(argName0)
+            },funcBody);
+    }
+    public static LjsAstFunctionDeclaration Func(string argName0, string argName1, ILjsAstNode funcBody)
+    {
+        return new LjsAstFunctionDeclaration(
+            new []
+            {
+                new LjsAstFunctionDeclarationParameter(argName0),
+                new LjsAstFunctionDeclarationParameter(argName1),
+            },funcBody);
+    }
+    
+    public static LjsAstFunctionDeclaration Func(
+        string argName0, string argName1, string argName2,
+        ILjsAstNode funcBody)
+    {
+        return new LjsAstFunctionDeclaration(
+            new []
+            {
+                new LjsAstFunctionDeclarationParameter(argName0),
+                new LjsAstFunctionDeclarationParameter(argName1),
+                new LjsAstFunctionDeclarationParameter(argName2),
+            },funcBody);
+    }
+    
+    public static LjsAstFunctionDeclaration Func(string[] args, ILjsAstNode funcBody)
+    {
+        return new LjsAstFunctionDeclaration(
+            args.Select(s => new LjsAstFunctionDeclarationParameter(s)).ToArray(),
+            funcBody);
+    }
+
+    public static LjsAstReturn Return(ILjsAstNode returnValue) => new LjsAstReturn(returnValue);
+    public static LjsAstReturn Return() => new LjsAstReturn();
+    
 }

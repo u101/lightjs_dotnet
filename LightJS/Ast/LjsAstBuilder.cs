@@ -424,6 +424,18 @@ public class LjsAstBuilder
                 
                 break;
             }
+            else if (token.TokenType == LjsTokenType.Function)
+            {
+                if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesOpen)
+                {
+                    throw new LjsSyntaxError("expected '(' after function", _tokensReader.NextToken.Position);
+                }
+                
+                _tokensReader.MoveForward();
+                // read function arguments
+                throw new NotImplementedException();
+
+            }
             
             else if (token.TokenType == LjsTokenType.OpSquareBracketsOpen)
             {
