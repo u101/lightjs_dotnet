@@ -7,6 +7,20 @@ namespace LightJS.Test.Ast;
 
 public class FunctionDeclarationTests
 {
+    [Test]
+    public void FunctionAsParameterInFunctionCallTest()
+    {
+        var node = TestUtils.BuildAstNode(
+            "x = foo(a, b, function(x) { return x+x })");
+        var expected = "x".Assign("foo".FuncCall(
+            "a".ToVar(),
+            "b".ToVar(),
+            Func("x", Return("x".Plus("x")))
+        ));
+        Match(node, expected);
+    }
+    
+    
 
     [Test]
     public void NestedFunctionsTest()
