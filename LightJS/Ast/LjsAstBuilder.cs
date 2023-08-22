@@ -285,7 +285,8 @@ public class LjsAstBuilder
                     ShouldProcessReturnStatementExpression(
                         _tokensReader.CurrentToken, _tokensReader.NextToken))
                 {
-                    returnExpression = ProcessExpression(expressionStopSymbolType);
+                    returnExpression = ProcessExpression(
+                        expressionStopSymbolType | StopSymbolType.BracketClose);
                 }
                 
                 return new LjsAstReturn(returnExpression);
@@ -489,7 +490,6 @@ public class LjsAstBuilder
                 var functionDeclaration = ProcessFunctionDeclaration();
                 
                 _postfixExpression.Add(functionDeclaration);
-
             }
             
             else if (token.TokenType == LjsTokenType.OpSquareBracketsOpen)
@@ -891,6 +891,16 @@ public class LjsAstBuilder
             }
         
             ++_currentIndex;
+        }
+        
+        public void MoveBackward()
+        {
+            if (_currentIndex <= 0)
+            {
+                throw new IndexOutOfRangeException();
+            }
+        
+            --_currentIndex;
         }
         
     }

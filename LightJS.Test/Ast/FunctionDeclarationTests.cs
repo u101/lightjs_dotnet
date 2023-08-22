@@ -9,6 +9,26 @@ public class FunctionDeclarationTests
 {
 
     [Test]
+    public void NestedFunctionsTest()
+    {
+        var code = """
+        function foo() {
+            return function(a,b) {
+                return a + b
+            }
+        }
+        """;
+        
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = NamedFunc("foo",Return(
+            Func("a", "b", Return("a".Plus("b")))
+            ));
+        
+        Match(node, expected);
+    }
+    
+    [Test]
     public void NamedFunctionTest()
     {
         var code = """
