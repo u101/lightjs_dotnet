@@ -289,6 +289,23 @@ public class LjsAstBuilder
                 }
                 
                 return new LjsAstReturn(returnExpression);
+            
+            case LjsTokenType.Function:
+                
+                _tokensReader.MoveForward();
+
+                if (_tokensReader.NextToken.TokenType != LjsTokenType.Identifier)
+                {
+                    throw new LjsSyntaxError("expected identifier", _tokensReader.NextToken.Position);
+                }
+                
+                _tokensReader.MoveForward();
+
+                var funcName = LjsTokenizerUtils.GetTokenStringValue(
+                    _sourceCodeString, _tokensReader.CurrentToken);
+
+                return ProcessFunctionDeclaration(funcName);
+            
             default:
                 return ProcessExpression(expressionStopSymbolType);
         }
@@ -765,7 +782,7 @@ public class LjsAstBuilder
 
     private readonly List<LjsAstFunctionDeclarationParameter> _functionDeclarationParameters = new();
 
-    private ILjsAstNode ProcessFunctionDeclaration()
+    private ILjsAstNode ProcessFunctionDeclaration(string functionName = null)
     {
         _functionDeclarationParameters.Clear();
         
@@ -835,7 +852,9 @@ public class LjsAstBuilder
 
         var functionBody = ProcessBlockInBrackets();
 
-        return new LjsAstFunctionDeclaration(parameters, functionBody);
+        return string.IsNullOrEmpty(functionName) ? 
+            new LjsAstFunctionDeclaration(parameters, functionBody) : 
+            new LjsAstNamedFunctionDeclaration(functionName, parameters, functionBody);
 
     }
 

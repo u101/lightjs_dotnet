@@ -10,7 +10,18 @@ public class LjsAstFunctionDeclaration : ILjsAstNode
         Parameters = parameters;
         FunctionBody = functionBody;
     }
-    
+}
+
+public class LjsAstNamedFunctionDeclaration : LjsAstFunctionDeclaration
+{
+    public string Name { get; }
+
+    public LjsAstNamedFunctionDeclaration(
+        string name,
+        LjsAstFunctionDeclarationParameter[] parameters, ILjsAstNode functionBody) : base(parameters, functionBody)
+    {
+        Name = name;
+    }
 }
 
 public class LjsAstFunctionDeclarationParameter

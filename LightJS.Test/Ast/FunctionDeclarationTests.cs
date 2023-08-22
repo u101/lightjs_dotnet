@@ -9,6 +9,23 @@ public class FunctionDeclarationTests
 {
 
     [Test]
+    public void NamedFunctionTest()
+    {
+        var code = """
+        function foo() {
+            return y
+        }
+        """;
+        
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = NamedFunc("foo",Return("y".ToVar()));
+        
+        Match(node, expected);
+    }
+    
+
+    [Test]
     public void EmptyFunctionTest()
     {
         var node = TestUtils.BuildAstNode("x = function() {}");
