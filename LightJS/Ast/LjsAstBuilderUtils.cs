@@ -201,6 +201,11 @@ public static class LjsAstBuilderUtils
         LjsTokenType.OpBitNot or
         LjsTokenType.OpIncrement or
         LjsTokenType.OpDecrement;
+
+    public static bool IsPossiblyPrefixUnaryOperator(LjsTokenType tokenType) =>
+        IsDefinitelyPrefixUnaryOperator(tokenType) || 
+        tokenType == LjsTokenType.OpPlus ||
+        tokenType == LjsTokenType.OpMinus;
     
     public static LjsAstUnaryOperationType GetUnaryPrefixOperationType(LjsTokenType tokenType) =>
         PrefixUnaryOperationsMap.TryGetValue(tokenType, out var op) ? op
@@ -235,7 +240,7 @@ public static class LjsAstBuilderUtils
                     
             case LjsTokenType.StringLiteral:
                 return new LjsAstLiteral<string>(
-                    sourceCodeString.Substring(token.Position.CharIndex, token.StringLength));
+                    LjsTokenizerUtils.GetTokenStringValue(sourceCodeString, token));
                     
             case LjsTokenType.True:
                         

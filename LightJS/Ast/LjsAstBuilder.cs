@@ -109,7 +109,7 @@ public class LjsAstBuilder
         BracketClose = 1 << 6,
         
         Auto = 1 << 8,
-        
+
         FuncCall = ParenthesesClose | Comma,
     }
 
@@ -135,6 +135,26 @@ public class LjsAstBuilder
                 ((terminationType & StopSymbolType.Colon) != 0 &&
                  tokenType == LjsTokenType.OpColon)
             ;
+    }
+
+    private static bool ShouldProcessReturnStatementExpression(LjsToken currentToken, LjsToken nextToken)
+    {
+        if (nextToken.TokenType == LjsTokenType.OpSemicolon) return false;
+        
+        if (nextToken.Position.Line == currentToken.Position.Line) return true;
+        
+        var nextType = nextToken.TokenType;
+
+        if (nextType == LjsTokenType.Function) return true;
+        
+        if (LjsAstBuilderUtils.IsKeyword(nextType)) return false;
+
+        return nextType == LjsTokenType.Identifier ||
+               nextType == LjsTokenType.OpParenthesesOpen ||
+               nextType == LjsTokenType.OpSquareBracketsOpen ||
+               nextType == LjsTokenType.OpBracketOpen ||
+               LjsAstBuilderUtils.IsLiteral(nextType) ||
+               LjsAstBuilderUtils.IsPossiblyPrefixUnaryOperator(nextType);
     }
     
     private static bool ShouldAutoTerminateExpression(LjsToken currentToken, LjsToken nextToken)
@@ -182,7 +202,7 @@ public class LjsAstBuilder
         return sq;
     }
 
-    private ILjsAstNode ProcessBlockInBrackets()
+    private ILjsAstNode ProcessBlockInBrackets(bool allowEmptyBlock = true)
     {
         // starting token - just before brackets open
         
@@ -191,6 +211,12 @@ public class LjsAstBuilder
         SkipRedundantSemicolons();
         
         CheckEarlyEof();
+
+        if (allowEmptyBlock && _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketClose)
+        {
+            _tokensReader.MoveForward();
+            return LjsAstEmptyNode.Instance;
+        }
         
         var firstExpression = ProcessCodeLine(StopSymbolType.BracketClose);
 
@@ -241,13 +267,30 @@ public class LjsAstBuilder
 
         var nextToken = _tokensReader.NextToken;
 
+        var expressionStopSymbolType = 
+            stopSymbolType | StopSymbolType.Auto | StopSymbolType.Semicolon;
+        
         switch (nextToken.TokenType)
         {
             case LjsTokenType.If:
                 return ProcessIfBlock(stopSymbolType);
+            
+            case LjsTokenType.Return:
+                
+                _tokensReader.MoveForward();
+
+                var returnExpression = LjsAstEmptyNode.Instance;
+                
+                if (_tokensReader.HasNextToken &&
+                    ShouldProcessReturnStatementExpression(
+                        _tokensReader.CurrentToken, _tokensReader.NextToken))
+                {
+                    returnExpression = ProcessExpression(expressionStopSymbolType);
+                }
+                
+                return new LjsAstReturn(returnExpression);
             default:
-                return ProcessExpression(
-                    stopSymbolType | StopSymbolType.Auto | StopSymbolType.Semicolon);
+                return ProcessExpression(expressionStopSymbolType);
         }
     }
 
@@ -390,7 +433,7 @@ public class LjsAstBuilder
             if (token.TokenType == LjsTokenType.Identifier)
             {
                 var getVar = new LjsAstGetVar(
-                    _sourceCodeString.Substring(token.Position.CharIndex, token.StringLength));
+                    LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, token));
                 
                 _tokenPositionsMap[getVar] = token.Position;
                 
@@ -426,14 +469,9 @@ public class LjsAstBuilder
             }
             else if (token.TokenType == LjsTokenType.Function)
             {
-                if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesOpen)
-                {
-                    throw new LjsSyntaxError("expected '(' after function", _tokensReader.NextToken.Position);
-                }
+                var functionDeclaration = ProcessFunctionDeclaration();
                 
-                _tokensReader.MoveForward();
-                // read function arguments
-                throw new NotImplementedException();
+                _postfixExpression.Add(functionDeclaration);
 
             }
             
@@ -724,6 +762,82 @@ public class LjsAstBuilder
         LjsTokenType.Identifier or
         LjsTokenType.OpParenthesesClose or
         LjsTokenType.OpSquareBracketsClose;
+
+    private readonly List<LjsAstFunctionDeclarationParameter> _functionDeclarationParameters = new();
+
+    private ILjsAstNode ProcessFunctionDeclaration()
+    {
+        _functionDeclarationParameters.Clear();
+        
+        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesOpen)
+        {
+            throw new LjsSyntaxError("expected '(' after function", _tokensReader.NextToken.Position);
+        }
+                
+        _tokensReader.MoveForward();
+
+        while (_tokensReader.HasNextToken && 
+               _tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
+        {
+            
+            _tokensReader.MoveForward();
+
+            var argNameToken = _tokensReader.CurrentToken;
+            var defaultValue = LjsAstEmptyNode.Instance;
+
+            if (argNameToken.TokenType != LjsTokenType.Identifier)
+                throw new LjsSyntaxError("expected identifier", argNameToken.Position);
+
+            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
+            {
+                _tokensReader.MoveForward();
+                
+                if (!LjsAstBuilderUtils.IsLiteral(_tokensReader.NextToken.TokenType))
+                {
+                    throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+                }
+                
+                _tokensReader.MoveForward();
+                    
+                defaultValue = LjsAstBuilderUtils.CreateLiteralNode(
+                    _tokensReader.CurrentToken, _sourceCodeString);
+            }
+            
+            _functionDeclarationParameters.Add(new LjsAstFunctionDeclarationParameter(
+                LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, argNameToken),
+                defaultValue
+                ));
+
+            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
+            {
+                _tokensReader.MoveForward();
+            }
+            else if (_tokensReader.NextToken.TokenType == LjsTokenType.OpParenthesesClose)
+            {
+                break; // arguments section finish
+            }
+            else
+            {
+                throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+            }
+        }
+        
+        CheckEarlyEof();
+        
+        _tokensReader.MoveForward(); // skip closing parentheses
+
+        var parameters = new LjsAstFunctionDeclarationParameter[_functionDeclarationParameters.Count];
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            _functionDeclarationParameters[i] = parameters[i];
+        }
+
+        var functionBody = ProcessBlockInBrackets();
+
+        return new LjsAstFunctionDeclaration(parameters, functionBody);
+
+    }
 
     private class TokensReader
     {
