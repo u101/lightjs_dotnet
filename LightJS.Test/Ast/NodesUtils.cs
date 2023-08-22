@@ -114,7 +114,10 @@ public static class NodesUtils
             funcBody);
     }
 
-    public static LjsAstReturn Return(ILjsAstNode returnValue) => new LjsAstReturn(returnValue);
-    public static LjsAstReturn Return() => new LjsAstReturn();
-    
+    public static LjsAstReturn Return(ILjsAstNode returnValue) => new(returnValue);
+    public static LjsAstReturn Return() => new();
+
+    public static LjsAstVariableDeclaration Var(string name) => new(name);
+    public static LjsAstVariableDeclaration Var(string name, ILjsAstNode value) => new(name, value);
+
 }
