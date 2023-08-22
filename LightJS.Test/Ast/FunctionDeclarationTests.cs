@@ -27,6 +27,23 @@ public class FunctionDeclarationTests
         
         Match(node, expected);
     }
+
+    [Test]
+    public void TernaryIfFunctionAssign()
+    {
+        
+        var node = TestUtils.BuildAstNode(
+            "x = true ? function(a) {return a+1} : function(b) {return b-1}");
+
+        var expected = "x".Assign(new LjsAstTernaryIfOperation(
+            new LjsAstLiteral<bool>(true),
+            Func("a", Return("a".Plus(1))),
+            Func("b", Return("b".Minus(1.ToLit())))
+        ));
+        
+        Match(node, expected);
+    }
+    
     
     [Test]
     public void ComplexNestedFunctionsReturnTest()
