@@ -29,6 +29,35 @@ public class FunctionDeclarationTests
     }
     
     [Test]
+    public void ComplexNestedFunctionsReturnTest()
+    {
+        var code = """
+        function foo() {
+            if (x) {
+                return function(a,b) {
+                    return a + b
+                }
+            }
+            
+            return function(a,b) {
+                return a - b
+            }
+            
+        }
+        """;
+        
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = NamedFunc("foo", Sequence(
+            
+            IfBlock("x".ToVar(), Return(Func("a", "b", Return("a".Plus("b"))))),
+            Return(Func("a", "b", Return("a".Minus("b"))))
+            ));
+        
+        Match(node, expected);
+    }
+    
+    [Test]
     public void NamedFunctionTest()
     {
         var code = """

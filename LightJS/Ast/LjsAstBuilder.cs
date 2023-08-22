@@ -423,25 +423,23 @@ public class LjsAstBuilder
             var prevToken = lastProcessedToken.TokenType != LjsTokenType.None ?
                 _tokensReader.PrevToken : lastProcessedToken;
             var nextToken = _tokensReader.NextToken;
-            
-            if (mode == ProcessExpressionMode.StopBeforeStopSymbol)
+
+            if (IsStopSymbol(token.TokenType, stopSymbolType))
             {
-                if (IsStopSymbol(_tokensReader.NextToken.TokenType, stopSymbolType))
+                if (mode == ProcessExpressionMode.StopBeforeStopSymbol)
                 {
-                    processFinished = true;
+                    _tokensReader.MoveBackward();
                 }
+                processFinished = true;
+                break;
             }
             
             if (!processFinished &&
                 (stopSymbolType & StopSymbolType.Auto) != 0 && 
-                ShouldAutoTerminateExpression(token, nextToken))
+                prevToken.TokenType != LjsTokenType.None &&
+                ShouldAutoTerminateExpression(prevToken, token))
             {
-                processFinished = true;
-            }
-
-            if (mode == ProcessExpressionMode.StopAtStopSymbol &&
-                IsStopSymbol(token.TokenType, stopSymbolType))
-            {
+                _tokensReader.MoveBackward();
                 processFinished = true;
                 break;
             }
@@ -847,7 +845,7 @@ public class LjsAstBuilder
 
         for (var i = 0; i < parameters.Length; i++)
         {
-            _functionDeclarationParameters[i] = parameters[i];
+            parameters[i] = _functionDeclarationParameters[i];
         }
 
         var functionBody = ProcessBlockInBrackets();
