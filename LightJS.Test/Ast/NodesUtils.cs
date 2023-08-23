@@ -143,4 +143,7 @@ public static class NodesUtils
     public static LjsAstLiteral<bool> False => new (false);
     public static ILjsAstNode Nothing => LjsAstEmptyNode.Instance;
 
+    public static ILjsAstNode Break => new LjsAstBreak();
+    public static ILjsAstNode Continue => new LjsAstContinue();
+
 }

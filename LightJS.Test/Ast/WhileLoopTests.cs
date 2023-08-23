@@ -34,6 +34,48 @@ public class WhileLoopTests
     }
     
     [Test]
+    public void BreakLoopTest()
+    {
+        var code = """
+        while(a) {
+            x++
+            if (x) break
+        }
+        """;
+
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = While(
+                "a".ToVar(), Sequence(
+                    "x".ToVar().WithPostfixIncrement(),
+                    IfBlock("x".ToVar(), Break)
+                    ));
+            
+        Match(node, expected);
+    }
+    
+    [Test]
+    public void ContinueLoopTest()
+    {
+        var code = """
+        while(a) {
+            x++
+            if (x) continue
+        }
+        """;
+
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = While(
+                "a".ToVar(), Sequence(
+                    "x".ToVar().WithPostfixIncrement(),
+                    IfBlock("x".ToVar(), Continue)
+                    ));
+            
+        Match(node, expected);
+    }
+    
+    [Test]
     public void SimpleBlockWithoutBracketsTest()
     {
 

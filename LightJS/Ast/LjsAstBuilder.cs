@@ -302,6 +302,22 @@ public class LjsAstBuilder
             case LjsTokenType.While:
                 return ProcessWhileBlock(stopSymbolType);
             
+            case LjsTokenType.Break:
+                CheckExpectedNextAndMoveForward(LjsTokenType.Break);
+                
+                var breakNode = new LjsAstBreak();
+                RegisterNodePosition(breakNode, _tokensReader.CurrentToken);
+
+                return breakNode;
+            
+            case LjsTokenType.Continue:
+                CheckExpectedNextAndMoveForward(LjsTokenType.Continue);
+                
+                var continueNode = new LjsAstContinue();
+                RegisterNodePosition(continueNode, _tokensReader.CurrentToken);
+
+                return continueNode;
+            
             case LjsTokenType.For:
                 // todo ast for loop (for(;;) && for(x in y))
                 throw new NotImplementedException();
