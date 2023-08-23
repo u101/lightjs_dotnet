@@ -10,6 +10,11 @@ public static class NodesUtils
         return new LjsAstSequence(nodes);
     }
 
+    public static LjsAstWhileLoop While(ILjsAstNode condition, ILjsAstNode expression)
+    {
+        return new LjsAstWhileLoop(condition, expression);
+    }
+    
     public static LjsAstIfBlock IfBlock(ILjsAstNode condition, ILjsAstNode expression)
     {
         var e = new LjsAstConditionalExpression(condition, expression);
@@ -136,5 +141,6 @@ public static class NodesUtils
 
     public static LjsAstLiteral<bool> True => new (true);
     public static LjsAstLiteral<bool> False => new (false);
+    public static ILjsAstNode Nothing => LjsAstEmptyNode.Instance;
 
 }
