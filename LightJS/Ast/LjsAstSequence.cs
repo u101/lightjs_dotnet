@@ -25,7 +25,7 @@ public abstract class LjsAstSequence<TNode> : ILjsAstNode where TNode : ILjsAstN
     }
 }
 
-public class LjsAstSequence : LjsAstSequence<ILjsAstNode>
+public sealed class LjsAstSequence : LjsAstSequence<ILjsAstNode>
 {
     public LjsAstSequence() {}
 

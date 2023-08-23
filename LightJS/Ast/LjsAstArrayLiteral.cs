@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstArrayLiteral : LjsAstSequence<ILjsAstNode>
+public sealed class LjsAstArrayLiteral : LjsAstSequence<ILjsAstNode>
 {
     // just a sequence
     public LjsAstArrayLiteral()

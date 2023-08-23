@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstObjectLiteral : LjsAstSequence<LjsAstObjectLiteralProperty>
+public sealed class LjsAstObjectLiteral : LjsAstSequence<LjsAstObjectLiteralProperty>
 {
     public LjsAstObjectLiteral()
     { }
@@ -12,7 +12,7 @@ public class LjsAstObjectLiteral : LjsAstSequence<LjsAstObjectLiteralProperty>
     { }
 }
 
-public class LjsAstObjectLiteralProperty : ILjsAstNode
+public sealed class LjsAstObjectLiteralProperty : ILjsAstNode
 {
     public string Name { get; }
     public ILjsAstNode Value { get; }
