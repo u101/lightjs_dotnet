@@ -272,8 +272,28 @@ public class LjsAstBuilder
         
         switch (nextToken.TokenType)
         {
+            case LjsTokenType.Const:
+                // todo ast const declaration
+                throw new NotImplementedException();
+            
+            case LjsTokenType.Var:
+                // todo ast var declaration
+                throw new NotImplementedException();
+            
             case LjsTokenType.If:
                 return ProcessIfBlock(stopSymbolType);
+            
+            case LjsTokenType.Switch:
+                // todo ast switch block
+                throw new NotImplementedException();
+            
+            case LjsTokenType.While:
+                // todo ast while loop
+                throw new NotImplementedException();
+            
+            case LjsTokenType.For:
+                // todo ast for loop (for(;;) && for(x in y))
+                throw new NotImplementedException();
             
             case LjsTokenType.Return:
                 

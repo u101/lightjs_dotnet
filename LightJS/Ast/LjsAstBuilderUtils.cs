@@ -85,10 +85,11 @@ public static class LjsAstBuilderUtils
         LjsTokenType.If,
         LjsTokenType.ElseIf,
         LjsTokenType.Else,
-    
+        LjsTokenType.Switch,
         LjsTokenType.While,
         LjsTokenType.Do,
         LjsTokenType.For,
+        LjsTokenType.In,
     };
 
     private static readonly HashSet<LjsTokenType> LiteralTypesSet = new()

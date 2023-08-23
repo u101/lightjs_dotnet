@@ -117,7 +117,10 @@ public static class NodesUtils
     public static LjsAstReturn Return(ILjsAstNode returnValue) => new(returnValue);
     public static LjsAstReturn Return() => new();
 
-    public static LjsAstVariableDeclaration Var(string name) => new(name);
-    public static LjsAstVariableDeclaration Var(string name, ILjsAstNode value) => new(name, value);
+    public static LjsAstVariableDeclaration Var(string name) => new(name, true);
+    public static LjsAstVariableDeclaration Var(string name, ILjsAstNode value) => new(name, value, true);
+    
+    public static LjsAstVariableDeclaration Const(string name) => new(name, false);
+    public static LjsAstVariableDeclaration Const(string name, ILjsAstNode value) => new(name, value, false);
 
 }

@@ -90,10 +90,10 @@ public enum LjsTokenType
     If,
     ElseIf,
     Else,
-    
+    Switch,
     While,
     Do,
     For,
-    
+    In,
     Identifier
 }

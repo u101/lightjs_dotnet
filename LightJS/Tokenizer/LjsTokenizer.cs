@@ -134,9 +134,11 @@ public class LjsTokenizer
         
         {"if", LjsTokenType.If},
         {"else", LjsTokenType.Else},
+        {"switch", LjsTokenType.Switch},
         {"while", LjsTokenType.While},
         {"do", LjsTokenType.Do},
         {"for", LjsTokenType.For},
+        {"in", LjsTokenType.In},
     };
 
     public LjsTokenizer(string sourceCodeString)
