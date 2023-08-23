@@ -126,7 +126,12 @@ public static class NodesUtils
     public static LjsAstArrayLiteral ArrayLit() => new();
     public static LjsAstArrayLiteral ArrayLit(params ILjsAstNode[] nodes) => new(nodes);
     
+    public static LjsAstArrayLiteral ArrayLit(params int[] nodes) => new(nodes.Select(i => i.ToLit()));
+    
     public static LjsAstObjectLiteral ObjectLit() => new();
     public static LjsAstObjectLiteral ObjectLit(params LjsAstObjectLiteralProperty[] props) => new(props);
+
+    public static LjsAstLiteral<bool> True => new (true);
+    public static LjsAstLiteral<bool> False => new (false);
 
 }

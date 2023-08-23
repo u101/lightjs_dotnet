@@ -475,7 +475,7 @@ public class LjsAstBuilder
 
         if (_tokensReader.NextToken.TokenType == LjsTokenType.Else)
         {
-            _tokensReader.MoveForward();
+            CheckExpectedNextAndMoveForward(LjsTokenType.Else);
             
             CheckEarlyEof();
 
@@ -492,6 +492,47 @@ public class LjsAstBuilder
         }
 
         return ifBlock;
+    }
+
+    private LjsAstArrayLiteral ProcessArrayLiteral()
+    {
+        // current token = [
+        if (_tokensReader.NextToken.TokenType == LjsTokenType.OpSquareBracketsClose)
+        {
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpSquareBracketsClose);
+            return new LjsAstArrayLiteral();
+        }
+
+        var arr = new LjsAstArrayLiteral();
+        
+        while (_tokensReader.NextToken.TokenType != LjsTokenType.OpSquareBracketsClose)
+        {
+            CheckEarlyEof();
+            
+            var element = 
+                ProcessExpression(StopSymbolType.Comma | StopSymbolType.SquareBracketsClose);
+            
+            arr.AddNode(element);
+            
+            CheckEarlyEof();
+
+            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
+            {
+                CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
+            }
+            else if (_tokensReader.NextToken.TokenType == LjsTokenType.OpSquareBracketsClose)
+            {
+                // we'll stop here
+            }
+            else
+            {
+                throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+            }
+        }
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpSquareBracketsClose);
+
+        return arr;
     }
     
     private enum ProcessExpressionMode
@@ -607,8 +648,7 @@ public class LjsAstBuilder
                 }
                 else
                 {
-                    throw new NotImplementedException();
-                    // todo check if array initialization
+                    _postfixExpression.Add(ProcessArrayLiteral());
                 }
             }
             

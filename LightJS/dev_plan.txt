@@ -6,3 +6,6 @@
 2) while loop
 3) for(;;) loop
 4) for(x in y) loop
+
+5) break statement
+6) continue statement

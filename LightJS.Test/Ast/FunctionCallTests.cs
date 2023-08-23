@@ -1,4 +1,4 @@
-using FluentAssertions;
+using static LightJS.Test.Ast.NodesUtils;
 
 namespace LightJS.Test.Ast;
 
@@ -12,7 +12,15 @@ public class FunctionCallTests
         var node = TestUtils.BuildAstNode("foo(x, y + 2, z + 1)");
         var expected = "foo".FuncCall("x".ToVar(), "y".Plus(2), "z".Plus(1));
         
-        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+        Match(node, expected);
+    }
+    
+    [Test]
+    public void FuncCallWithArrayArg()
+    {
+        var node = TestUtils.BuildAstNode("foo([1,2,3])");
+        var expected = "foo".FuncCall(ArrayLit(1,2,3));
+        Match(node, expected);
     }
     
     [Test]
@@ -26,7 +34,7 @@ public class FunctionCallTests
                         "a1".ToVar(), "a2".ToVar(), "a3".ToVar()
             ))));
         
-        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+        Match(node, expected);
     }
     
     [Test]
@@ -36,7 +44,7 @@ public class FunctionCallTests
         var expected = "x".Assign(
             "a".FuncCall().Plus("b".FuncCall().Plus("c".FuncCall())));
         
-        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+        Match(node, expected);
     }
     
     [Test]
@@ -47,6 +55,6 @@ public class FunctionCallTests
             "a".ToVar(),
             "c".Minus("a".Plus("b"))
         ));
-        node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
+        Match(node, expected);
     }
 }
