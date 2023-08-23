@@ -2,8 +2,6 @@ namespace LightJS.Ast;
 
 public enum LjsAstBinaryOperationType
 {
-    Greater,
-    Less,
     Plus,
     Minus,
     Multiply,
@@ -12,17 +10,20 @@ public enum LjsAstBinaryOperationType
     
     BitAnd,
     BitOr,
-    
     BitLeftShift,
     BitRightShift,
     BitUnsignedRightShift,
     
+    Greater,
+    GreaterOrEqual,
+    Less,
+    LessOrEqual,
+    
     Equals,
     EqualsStrict,
-    GreaterOrEqual,
-    LessOrEqual,
     NotEqual,
     NotEqualStrict,
+    
     LogicalAnd,
     LogicalOr,
 }
