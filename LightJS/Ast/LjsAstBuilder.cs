@@ -300,8 +300,7 @@ public class LjsAstBuilder
                 throw new NotImplementedException();
             
             case LjsTokenType.While:
-                // todo ast while loop
-                throw new NotImplementedException();
+                return ProcessWhileBlock(stopSymbolType);
             
             case LjsTokenType.For:
                 // todo ast for loop (for(;;) && for(x in y))
@@ -423,9 +422,34 @@ public class LjsAstBuilder
 
     }
 
+    private ILjsAstNode ProcessWhileBlock(StopSymbolType terminationType)
+    {
+        CheckExpectedNextAndMoveForward(LjsTokenType.While);
+
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
+        
+        var condition =
+            ProcessExpression(StopSymbolType.ParenthesesClose);
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
+        
+        var hasBrackets =
+            _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+        
+        var mainBody = hasBrackets ? 
+            ProcessBlockInBrackets() : 
+            ProcessCodeLine(terminationType | StopSymbolType.Semicolon | StopSymbolType.Auto);
+        
+        SkipRedundantSemicolons();
+        
+        var whileBlock = new LjsAstWhileLoop(condition, mainBody);
+
+        return whileBlock;
+    }
+
     private ILjsAstNode ProcessIfBlock(StopSymbolType terminationType)
     {
-        _tokensReader.MoveForward();
+        CheckExpectedNextAndMoveForward(LjsTokenType.If);
 
         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
 
