@@ -15,5 +15,34 @@ public class WhileLoopTests
         var expected = While(True, Nothing);
         Match(node, expected);
     }
+
+    [Test]
+    public void SimpleBlockWithBracketsTest()
+    {
+        var code = """
+        while(a) {
+            x++
+        }
+        """;
+
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = While(
+                "a".ToVar(), "x".ToVar().WithPostfixIncrement());
+            
+        Match(node, expected);
+    }
     
+    [Test]
+    public void SimpleBlockWithoutBracketsTest()
+    {
+
+        var node = TestUtils.BuildAstNode("while(a) x++");
+
+        var expected = While(
+                "a".ToVar(), "x".ToVar().WithPostfixIncrement());
+            
+        Match(node, expected);
+    }
+
 }
