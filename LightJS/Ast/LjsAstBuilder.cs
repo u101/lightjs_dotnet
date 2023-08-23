@@ -273,12 +273,10 @@ public class LjsAstBuilder
         switch (nextToken.TokenType)
         {
             case LjsTokenType.Const:
-                // todo ast const declaration
-                throw new NotImplementedException();
+                return ProcessVariableDeclaration(expressionStopSymbolType, false);
             
             case LjsTokenType.Var:
-                // todo ast var declaration
-                throw new NotImplementedException();
+                return ProcessVariableDeclaration(expressionStopSymbolType, true);
             
             case LjsTokenType.If:
                 return ProcessIfBlock(stopSymbolType);
@@ -347,6 +345,60 @@ public class LjsAstBuilder
         CheckExpectedNext(tokenType);
         
         _tokensReader.MoveForward();
+    }
+
+    private ILjsAstNode ProcessVariableDeclaration(StopSymbolType stopSymbol, bool isMutable)
+    {
+        _tokensReader.MoveForward(); // skip var/const keyword
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
+
+        var firstVarNameToken = _tokensReader.CurrentToken;
+        var firstVarValue = LjsAstEmptyNode.Instance;
+
+        if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
+        {
+            _tokensReader.MoveForward();
+            firstVarValue = ProcessExpression(stopSymbol | StopSymbolType.Comma);
+        }
+
+        var firstVar = new LjsAstVariableDeclaration(
+            LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, firstVarNameToken),
+            firstVarValue, isMutable);
+        
+        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpComma)
+        {
+            return firstVar;
+        }
+
+        var seq = new LjsAstSequence();
+        seq.AddNode(firstVar);
+        
+        while (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
+        {
+            _tokensReader.MoveForward(); // skip comma
+            
+            CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
+            
+            var nextVarToken = _tokensReader.CurrentToken;
+            var nextVarValue = LjsAstEmptyNode.Instance;
+            
+            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
+            {
+                _tokensReader.MoveForward();
+                nextVarValue = ProcessExpression(stopSymbol | StopSymbolType.Comma);
+            }
+            
+            var nextVar = new LjsAstVariableDeclaration(
+                LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, nextVarToken),
+                nextVarValue, isMutable);
+            
+            
+            seq.AddNode(nextVar);
+        }
+
+        return seq;
+
     }
 
     private ILjsAstNode ProcessIfBlock(StopSymbolType terminationType)
