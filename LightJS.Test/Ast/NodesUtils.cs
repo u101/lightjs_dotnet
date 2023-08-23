@@ -123,4 +123,10 @@ public static class NodesUtils
     public static LjsAstVariableDeclaration Const(string name) => new(name, false);
     public static LjsAstVariableDeclaration Const(string name, ILjsAstNode value) => new(name, value, false);
 
+    public static LjsAstArrayLiteral ArrayLit() => new();
+    public static LjsAstArrayLiteral ArrayLit(params ILjsAstNode[] nodes) => new(nodes);
+    
+    public static LjsAstObjectLiteral ObjectLit() => new();
+    public static LjsAstObjectLiteral ObjectLit(params LjsAstObjectLiteralProperty[] props) => new(props);
+
 }

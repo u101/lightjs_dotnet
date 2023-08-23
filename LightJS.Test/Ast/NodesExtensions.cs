@@ -189,5 +189,11 @@ public static class NodesExtensions
         ifBlock.ElseBlock = expression;
         return ifBlock;
     }
+
+    public static LjsAstObjectLiteral AddProp(this LjsAstObjectLiteral obj, string name, ILjsAstNode value)
+    {
+        obj.AddNode(new LjsAstObjectLiteralProperty(name, value));
+        return obj;
+    }
     
 }
