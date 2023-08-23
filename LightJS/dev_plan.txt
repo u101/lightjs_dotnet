@@ -7,6 +7,6 @@
 3) array initialization literal [a,b,c]
 4) object initialization literal {"a":1,"b":2}
 
-0) VAR declaration
+
 2) while block
 3) for(;;) loop block
