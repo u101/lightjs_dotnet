@@ -14,7 +14,7 @@ public class LjsAstBuilder
     /// <summary>
     /// save nodes positions in source code (line number, col number)
     /// </summary>
-    private readonly Dictionary<ILjsAstNode, LjsTokenPosition> _tokenPositionsMap = new();
+    private readonly Dictionary<ILjsAstNode, LjsToken> _tokensMap = new();
 
     public LjsAstBuilder(string sourceCodeString)
     {
@@ -56,21 +56,21 @@ public class LjsAstBuilder
 
         var node = ProcessMainBlock();
         
-        return new LjsAstModel(node, _tokenPositionsMap);
+        return new LjsAstModel(node, _tokensMap);
 
     }
 
     private void RegisterNodePosition(ILjsAstNode node, LjsToken token)
     {
-        _tokenPositionsMap[node] = token.Position;
+        _tokensMap[node] = token;
     }
 
     private void ReplaceNodePosition(ILjsAstNode prevNode, ILjsAstNode newNode)
     {
-        if (_tokenPositionsMap.TryGetValue(prevNode, out var tokenPos))
+        if (_tokensMap.TryGetValue(prevNode, out var token))
         {
-            _tokenPositionsMap.Remove(prevNode);
-            _tokenPositionsMap[newNode] = tokenPos;
+            _tokensMap.Remove(prevNode);
+            _tokensMap[newNode] = token;
         }
     }
     

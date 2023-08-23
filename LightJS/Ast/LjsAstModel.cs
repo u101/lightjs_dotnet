@@ -4,19 +4,19 @@ namespace LightJS.Ast;
 
 public class LjsAstModel
 {
-    private readonly Dictionary<ILjsAstNode, LjsTokenPosition> _tokenPositionsMap;
+    private readonly Dictionary<ILjsAstNode, LjsToken> _tokensMap;
     public ILjsAstNode RootNode { get; }
 
-    public LjsAstModel(ILjsAstNode rootNode, Dictionary<ILjsAstNode, LjsTokenPosition> tokenPositionsMap)
+    public LjsAstModel(ILjsAstNode rootNode, Dictionary<ILjsAstNode, LjsToken> tokensMap)
     {
-        _tokenPositionsMap = tokenPositionsMap;
+        _tokensMap = tokensMap;
         RootNode = rootNode;
     }
 
-    public LjsTokenPosition GetTokenPositionForNode(ILjsAstNode node) =>
-        _tokenPositionsMap.TryGetValue(node, out var p) ? p : default;
+    public LjsToken GetTokenForNode(ILjsAstNode node) =>
+        _tokensMap.TryGetValue(node, out var token) ? token : default;
 
-    public bool HasTokenPositionForNode(ILjsAstNode node) => 
-        _tokenPositionsMap.ContainsKey(node);
+    public bool HasTokenForNode(ILjsAstNode node) => 
+        _tokensMap.ContainsKey(node);
 
 }
