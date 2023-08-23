@@ -1,7 +1,4 @@
 ...
-0) array initialization literal [a,b,c]
-1) object initialization literal {"a":1,"b":2}
-
 
 2) while loop
 3) for(;;) loop
@@ -9,3 +6,5 @@
 
 5) break statement
 6) continue statement
+
+10) try .. catch block
