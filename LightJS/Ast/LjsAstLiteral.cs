@@ -1,8 +1,7 @@
 namespace LightJS.Ast;
 
-public abstract class LjsAstLiteral : ILjsAstNode {}
 
-public class LjsAstLiteral<TValue> : LjsAstLiteral
+public class LjsAstLiteral<TValue> : ILjsAstNode
 {
     public TValue Value { get; }
 
@@ -13,12 +12,3 @@ public class LjsAstLiteral<TValue> : LjsAstLiteral
     
 }
 
-public class LjsAstNull : LjsAstLiteral
-{
-    public LjsAstNull() {}
-}
-
-public class LjsAstUndefined : LjsAstLiteral
-{
-    public LjsAstUndefined() {}
-}
