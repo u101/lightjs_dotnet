@@ -59,6 +59,20 @@ public class LjsAstBuilder
         return new LjsAstModel(node, _tokenPositionsMap);
 
     }
+
+    private void RegisterNodePosition(ILjsAstNode node, LjsToken token)
+    {
+        _tokenPositionsMap[node] = token.Position;
+    }
+
+    private void ReplaceNodePosition(ILjsAstNode prevNode, ILjsAstNode newNode)
+    {
+        if (_tokenPositionsMap.TryGetValue(prevNode, out var tokenPos))
+        {
+            _tokenPositionsMap.Remove(prevNode);
+            _tokenPositionsMap[newNode] = tokenPos;
+        }
+    }
     
     [Flags]
     private enum OpType
@@ -294,8 +308,10 @@ public class LjsAstBuilder
                 throw new NotImplementedException();
             
             case LjsTokenType.Return:
+
+                CheckExpectedNextAndMoveForward(LjsTokenType.Return);
                 
-                _tokensReader.MoveForward();
+                var returnNodeToken = _tokensReader.CurrentToken;
 
                 var returnExpression = LjsAstEmptyNode.Instance;
                 
@@ -307,23 +323,27 @@ public class LjsAstBuilder
                         expressionStopSymbolType | StopSymbolType.BracketClose);
                 }
                 
-                return new LjsAstReturn(returnExpression);
+                var returnNode = new LjsAstReturn(returnExpression);
+                RegisterNodePosition(returnNode, returnNodeToken);
+
+                return returnNode;
             
             case LjsTokenType.Function:
                 
-                _tokensReader.MoveForward();
-
-                if (_tokensReader.NextToken.TokenType != LjsTokenType.Identifier)
-                {
-                    throw new LjsSyntaxError("expected identifier", _tokensReader.NextToken.Position);
-                }
+                CheckExpectedNextAndMoveForward(LjsTokenType.Function);
                 
-                _tokensReader.MoveForward();
+                var functionToken = _tokensReader.CurrentToken;
+                
+                CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
 
                 var funcName = LjsTokenizerUtils.GetTokenStringValue(
                     _sourceCodeString, _tokensReader.CurrentToken);
-
-                return ProcessFunctionDeclaration(funcName);
+                
+                var funcDeclaration = ProcessFunctionDeclaration(funcName);
+                
+                RegisterNodePosition(funcDeclaration, functionToken);
+                
+                return funcDeclaration;
             
             default:
                 return ProcessExpression(expressionStopSymbolType);
@@ -365,6 +385,7 @@ public class LjsAstBuilder
         var firstVar = new LjsAstVariableDeclaration(
             LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, firstVarNameToken),
             firstVarValue, isMutable);
+        RegisterNodePosition(firstVar, firstVarNameToken);
         
         if (_tokensReader.NextToken.TokenType != LjsTokenType.OpComma)
         {
@@ -392,6 +413,7 @@ public class LjsAstBuilder
             var nextVar = new LjsAstVariableDeclaration(
                 LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, nextVarToken),
                 nextVarValue, isMutable);
+            RegisterNodePosition(nextVar, nextVarToken);
             
             
             seq.AddNode(nextVar);
@@ -430,7 +452,7 @@ public class LjsAstBuilder
             _tokensReader.MoveForward();
             
             CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
-            
+
             var altCondition =
                 ProcessExpression(StopSymbolType.ParenthesesClose);
             
@@ -445,8 +467,10 @@ public class LjsAstBuilder
             
             SkipRedundantSemicolons();
 
+            var conditionalExpression = new LjsAstConditionalExpression(altCondition, altBody);
+            
             ifBlock.ConditionalAlternatives.Add(
-                new LjsAstConditionalExpression(altCondition, altBody));
+                conditionalExpression);
         }
 
         if (_tokensReader.NextToken.TokenType == LjsTokenType.Else)
@@ -522,16 +546,15 @@ public class LjsAstBuilder
             {
                 var getVar = new LjsAstGetVar(
                     LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, token));
-                
-                _tokenPositionsMap[getVar] = token.Position;
+
+                RegisterNodePosition(getVar, token);
                 
                 _postfixExpression.Add(getVar);
             }
             else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
                 var literalNode = LjsAstBuilderUtils.CreateLiteralNode(token, _sourceCodeString);
-
-                _tokenPositionsMap[literalNode] = token.Position;
+                RegisterNodePosition(literalNode, token);
                 
                 _postfixExpression.Add( literalNode);
             }
@@ -547,17 +570,20 @@ public class LjsAstBuilder
 
                 _postfixExpression.Add(trueExpressionNode);
                 _postfixExpression.Add(falseExpressionNode);
+
+                var ternaryIfOp = new Op(token, OpType.TernaryIf,
+                    LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, false));
                 
-                PushOperatorToStack(
-                    new Op(token, OpType.TernaryIf,
-                        LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, false)),
-                    operatorsStackStartingLn);
+                RegisterNodePosition(ternaryIfOp, token);
+                
+                PushOperatorToStack(ternaryIfOp, operatorsStackStartingLn);
                 
                 break;
             }
             else if (token.TokenType == LjsTokenType.Function)
             {
                 var functionDeclaration = ProcessFunctionDeclaration();
+                RegisterNodePosition(functionDeclaration, token);
                 
                 _postfixExpression.Add(functionDeclaration);
             }
@@ -571,10 +597,13 @@ public class LjsAstBuilder
                         ProcessExpressionMode.StopAtStopSymbol);
 
                     _postfixExpression.Add(propAccessNode);
-                    
-                    _operatorsStack.Push(new Op(
+
+                    var propAccessOp = new Op(
                         token, OpType.PropAccess | OpType.UnaryPostfix, 
-                        LjsAstBuilderUtils.FuncCallOperatorPriority, 1));
+                        LjsAstBuilderUtils.FuncCallOperatorPriority, 1);
+                    
+                    RegisterNodePosition(propAccessNode, token);
+                    _operatorsStack.Push(propAccessOp);
                 }
                 else
                 {
@@ -590,13 +619,14 @@ public class LjsAstBuilder
                     if (nextToken.TokenType == LjsTokenType.OpParenthesesClose)
                     {
                         // func call without arguments
-                        PushOperatorToStack(
-                            new Op(token, OpType.FuncCall | OpType.UnaryPostfix,
-                                LjsAstBuilderUtils.FuncCallOperatorPriority), 
-                            
-                            operatorsStackStartingLn);
+                        var funcCallOp = new Op(token, OpType.FuncCall | OpType.UnaryPostfix,
+                            LjsAstBuilderUtils.FuncCallOperatorPriority);
                         
-                        _tokensReader.MoveForward(); // skip closing parentheses
+                        RegisterNodePosition(funcCallOp, token);
+                        
+                        PushOperatorToStack(funcCallOp, operatorsStackStartingLn);
+                        
+                        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
                     }
                     else
                     {
@@ -614,11 +644,13 @@ public class LjsAstBuilder
                             _postfixExpression.Add(funcArg);
                             ++argumentsCount;
                         }
+
+                        var funcCallOp = new Op(token, OpType.FuncCall | OpType.UnaryPostfix, 
+                            LjsAstBuilderUtils.FuncCallOperatorPriority, argumentsCount);
                         
-                        PushOperatorToStack(
-                            new Op(token, OpType.FuncCall | OpType.UnaryPostfix, 
-                                LjsAstBuilderUtils.FuncCallOperatorPriority, argumentsCount),
-                            operatorsStackStartingLn);
+                        RegisterNodePosition(funcCallOp, token);
+                        
+                        PushOperatorToStack(funcCallOp, operatorsStackStartingLn);
                     }
                     
                 }
@@ -642,8 +674,12 @@ public class LjsAstBuilder
                 }
                 
                 _postfixExpression.Add(assignExpression);
-                _postfixExpression.Add(new Op(token, OpType.Assign, 0));
                 
+                var assignOp = new Op(token, OpType.Assign, 0);
+                
+                RegisterNodePosition(assignOp, token);
+                
+                _postfixExpression.Add(assignOp);
 
                 processFinished = true;
                 
@@ -677,9 +713,10 @@ public class LjsAstBuilder
 
                 var opPriority = LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, isUnary);
                 
-                PushOperatorToStack(
-                    new Op(token, opType, opPriority), 
-                    operatorsStackStartingLn);
+                var binaryOp = new Op(token, opType, opPriority);
+                
+                RegisterNodePosition(binaryOp, token);
+                PushOperatorToStack(binaryOp, operatorsStackStartingLn);
             }
             else
             {
@@ -723,8 +760,12 @@ public class LjsAstBuilder
                     if (argumentsCount == 0)
                     {
                         var operand = _locals.Pop();
-                    
-                        _locals.Push(new LjsAstFunctionCall(operand));
+
+                        var functionCall = new LjsAstFunctionCall(operand);
+                        
+                        ReplaceNodePosition(op, functionCall);
+                        
+                        _locals.Push(functionCall);
                     }
                     else
                     {
@@ -736,8 +777,12 @@ public class LjsAstBuilder
                         }
                         
                         var operand = _locals.Pop();
+
+                        var functionCall = new LjsAstFunctionCall(operand, args);
                         
-                        _locals.Push(new LjsAstFunctionCall(operand, args));
+                        ReplaceNodePosition(op, functionCall);
+                        
+                        _locals.Push(functionCall);
                     }
                 }
                 // property access
@@ -745,23 +790,33 @@ public class LjsAstBuilder
                 {
                     var propNameNode =  _locals.Pop();
                     var operand = _locals.Pop();
+
+                    var getProperty = new LjsAstGetProperty(propNameNode, operand);
                     
-                    _locals.Push(new LjsAstGetProperty(propNameNode, operand));
+                    ReplaceNodePosition(op, getProperty);
+                    
+                    _locals.Push(getProperty);
                 }
                 else if ((op.OpType & OpType.TernaryIf) != 0)
                 {
                     var falseExpression = _locals.Pop();
                     var trueExpression = _locals.Pop();
                     var condition = _locals.Pop();
-                    _locals.Push(new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression));
+                    var ternaryIfOperation = new LjsAstTernaryIfOperation(condition, trueExpression, falseExpression);
+                    ReplaceNodePosition(op, ternaryIfOperation);
+                    _locals.Push(ternaryIfOperation);
                 }
                 
                 // unary operation
                 else if (op.IsUnary)
                 {
                     var operand = _locals.Pop();
-                    _locals.Push(new LjsAstUnaryOperation(
-                        operand, LjsAstBuilderUtils.GetUnaryOperationType(op.TokenType, op.IsUnaryPrefix)));
+                    var unaryOperation = new LjsAstUnaryOperation(
+                        operand, LjsAstBuilderUtils.GetUnaryOperationType(op.TokenType, op.IsUnaryPrefix));
+                    
+                    ReplaceNodePosition(op, unaryOperation);
+                    
+                    _locals.Push(unaryOperation);
                 }
                 else
                 {
@@ -779,7 +834,9 @@ public class LjsAstBuilder
                         // convert get var node into get named property
                         if (right is LjsAstGetVar getVar)
                         {
-                            _locals.Push(new LjsAstGetNamedProperty(getVar.VarName, left));
+                            var getNamedProperty = new LjsAstGetNamedProperty(getVar.VarName, left);
+                            ReplaceNodePosition(op, getNamedProperty);
+                            _locals.Push(getNamedProperty);
                         }
                         else
                         {
@@ -793,17 +850,23 @@ public class LjsAstBuilder
                         switch (left)
                         {
                             case LjsAstGetVar getVar:
-                                _locals.Push(new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                                var setVar = new LjsAstSetVar(getVar.VarName, right, LjsAstBuilderUtils.GetAssignMode(op.TokenType));
+                                ReplaceNodePosition(getVar, setVar);
+                                _locals.Push(setVar);
                                 break;
                             case LjsAstGetNamedProperty getNamedProp:
-                                _locals.Push(new LjsAstSetNamedProperty(
+                                var setNamedProperty = new LjsAstSetNamedProperty(
                                     getNamedProp.PropertyName, getNamedProp.PropertySource, 
-                                    right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                                    right, LjsAstBuilderUtils.GetAssignMode(op.TokenType));
+                                ReplaceNodePosition(getNamedProp, setNamedProperty);
+                                _locals.Push(setNamedProperty);
                                 break;
                             case LjsAstGetProperty getProp:
-                                _locals.Push(new LjsAstSetProperty(
+                                var setProperty = new LjsAstSetProperty(
                                     getProp.PropertyName, getProp.PropertySource, 
-                                    right, LjsAstBuilderUtils.GetAssignMode(op.TokenType)));
+                                    right, LjsAstBuilderUtils.GetAssignMode(op.TokenType));
+                                ReplaceNodePosition(getProp, setProperty);
+                                _locals.Push(setProperty);
                                 break;
                             default:
                                 throw new LjsSyntaxError("invalid assign", op.Token.Position);
@@ -811,8 +874,12 @@ public class LjsAstBuilder
                     }
                     else
                     {
-                        _locals.Push(new LjsAstBinaryOperation(
-                            left, right, LjsAstBuilderUtils.GetBinaryOperationType(op.TokenType)));
+                        var binaryOperation = new LjsAstBinaryOperation(
+                            left, right, LjsAstBuilderUtils.GetBinaryOperationType(op.TokenType));
+                        
+                        ReplaceNodePosition(op, binaryOperation);
+                        
+                        _locals.Push(binaryOperation);
                     }
                     
                     
@@ -852,22 +919,16 @@ public class LjsAstBuilder
 
     private readonly List<LjsAstFunctionDeclarationParameter> _functionDeclarationParameters = new();
 
-    private ILjsAstNode ProcessFunctionDeclaration(string functionName = null)
+    private ILjsAstNode ProcessFunctionDeclaration(string functionName = "")
     {
         _functionDeclarationParameters.Clear();
         
-        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesOpen)
-        {
-            throw new LjsSyntaxError("expected '(' after function", _tokensReader.NextToken.Position);
-        }
-                
-        _tokensReader.MoveForward();
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
 
         while (_tokensReader.HasNextToken && 
                _tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
         {
-            
-            _tokensReader.MoveForward();
+            CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
 
             var argNameToken = _tokensReader.CurrentToken;
             var defaultValue = LjsAstEmptyNode.Instance;
@@ -877,7 +938,7 @@ public class LjsAstBuilder
 
             if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
             {
-                _tokensReader.MoveForward();
+                CheckExpectedNextAndMoveForward(LjsTokenType.OpAssign);
                 
                 if (!LjsAstBuilderUtils.IsLiteral(_tokensReader.NextToken.TokenType))
                 {
@@ -897,7 +958,7 @@ public class LjsAstBuilder
 
             if (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
             {
-                _tokensReader.MoveForward();
+                CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
             }
             else if (_tokensReader.NextToken.TokenType == LjsTokenType.OpParenthesesClose)
             {
@@ -911,7 +972,7 @@ public class LjsAstBuilder
         
         CheckEarlyEof();
         
-        _tokensReader.MoveForward(); // skip closing parentheses
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
 
         var parameters = new LjsAstFunctionDeclarationParameter[_functionDeclarationParameters.Count];
 
@@ -922,9 +983,11 @@ public class LjsAstBuilder
 
         var functionBody = ProcessBlockInBrackets();
 
-        return string.IsNullOrEmpty(functionName) ? 
+        var funcDeclaration = string.IsNullOrEmpty(functionName) ? 
             new LjsAstFunctionDeclaration(parameters, functionBody) : 
             new LjsAstNamedFunctionDeclaration(functionName, parameters, functionBody);
+
+        return funcDeclaration;
 
     }
 
