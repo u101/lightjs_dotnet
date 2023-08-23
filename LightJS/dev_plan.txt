@@ -1,5 +1,6 @@
 ...
 
+2) switch statement
 3) for(;;) loop
 4) for(x in y) loop
 

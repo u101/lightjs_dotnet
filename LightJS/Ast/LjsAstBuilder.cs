@@ -319,8 +319,7 @@ public class LjsAstBuilder
                 return continueNode;
             
             case LjsTokenType.For:
-                // todo ast for loop (for(;;) && for(x in y))
-                throw new NotImplementedException();
+                return ProcessForLoop(stopSymbolType);
             
             case LjsTokenType.Return:
 
@@ -436,6 +435,12 @@ public class LjsAstBuilder
 
         return seq;
 
+    }
+
+    private ILjsAstNode ProcessForLoop(StopSymbolType stopSymbol)
+    {
+        CheckExpectedNextAndMoveForward(LjsTokenType.For);
+        throw new NotImplementedException();
     }
 
     private ILjsAstNode ProcessWhileBlock(StopSymbolType terminationType)

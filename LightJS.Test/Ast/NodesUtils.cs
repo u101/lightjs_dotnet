@@ -14,6 +14,11 @@ public static class NodesUtils
     {
         return new LjsAstWhileLoop(condition, expression);
     }
+
+    public static LjsAstForLoop For(ILjsAstNode init, ILjsAstNode cond, ILjsAstNode iter, ILjsAstNode body)
+    {
+        return new LjsAstForLoop(init, cond, iter, body);
+    }
     
     public static LjsAstIfBlock IfBlock(ILjsAstNode condition, ILjsAstNode expression)
     {
