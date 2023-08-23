@@ -287,10 +287,10 @@ public class LjsAstBuilder
         switch (nextToken.TokenType)
         {
             case LjsTokenType.Const:
-                return ProcessVariableDeclaration(expressionStopSymbolType, false);
+                return ProcessVariableDeclaration(expressionStopSymbolType, nextToken.TokenType);
             
             case LjsTokenType.Var:
-                return ProcessVariableDeclaration(expressionStopSymbolType, true);
+                return ProcessVariableDeclaration(expressionStopSymbolType, nextToken.TokenType);
             
             case LjsTokenType.If:
                 return ProcessIfBlock(stopSymbolType);
@@ -381,9 +381,9 @@ public class LjsAstBuilder
         _tokensReader.MoveForward();
     }
 
-    private ILjsAstNode ProcessVariableDeclaration(StopSymbolType stopSymbol, bool isMutable)
+    private ILjsAstNode ProcessVariableDeclaration(StopSymbolType stopSymbol, LjsTokenType tokenType)
     {
-        _tokensReader.MoveForward(); // skip var/const keyword
+        CheckExpectedNextAndMoveForward(tokenType);
         
         CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
 
@@ -396,9 +396,12 @@ public class LjsAstBuilder
             firstVarValue = ProcessExpression(stopSymbol | StopSymbolType.Comma);
         }
 
+        var mutable = tokenType == LjsTokenType.Var;
+        
         var firstVar = new LjsAstVariableDeclaration(
             LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, firstVarNameToken),
-            firstVarValue, isMutable);
+            firstVarValue, mutable);
+        
         RegisterNodePosition(firstVar, firstVarNameToken);
         
         if (_tokensReader.NextToken.TokenType != LjsTokenType.OpComma)
@@ -426,7 +429,7 @@ public class LjsAstBuilder
             
             var nextVar = new LjsAstVariableDeclaration(
                 LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, nextVarToken),
-                nextVarValue, isMutable);
+                nextVarValue, mutable);
             RegisterNodePosition(nextVar, nextVarToken);
             
             
@@ -440,7 +443,48 @@ public class LjsAstBuilder
     private ILjsAstNode ProcessForLoop(StopSymbolType stopSymbol)
     {
         CheckExpectedNextAndMoveForward(LjsTokenType.For);
-        throw new NotImplementedException();
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
+
+        var initExpr = LjsAstEmptyNode.Instance;
+        var condExpr = LjsAstEmptyNode.Instance;
+        var iterExpr = LjsAstEmptyNode.Instance;
+
+        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpSemicolon)
+        {
+            initExpr = _tokensReader.NextToken.TokenType == LjsTokenType.Var
+                ? ProcessVariableDeclaration(StopSymbolType.Semicolon, _tokensReader.NextToken.TokenType)
+                : ProcessExpression(StopSymbolType.Semicolon);
+        }
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpSemicolon);
+        
+        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpSemicolon)
+        {
+            condExpr = ProcessExpression(StopSymbolType.Semicolon);
+        }
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpSemicolon);
+        
+        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
+        {
+            iterExpr = ProcessExpression(StopSymbolType.ParenthesesClose);
+        }
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
+        
+        var hasBrackets =
+            _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+        
+        var mainBody = hasBrackets ? 
+            ProcessBlockInBrackets() : 
+            ProcessCodeLine(stopSymbol | StopSymbolType.Semicolon | StopSymbolType.Auto);
+        
+        SkipRedundantSemicolons();
+        
+        var forLoop = new LjsAstForLoop(
+            initExpr, condExpr, iterExpr, mainBody);
+
+        return forLoop;
     }
 
     private ILjsAstNode ProcessWhileBlock(StopSymbolType terminationType)

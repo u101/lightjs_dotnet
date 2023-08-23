@@ -18,93 +18,70 @@ public static class NodesExtensions
         return new LjsAstGetVar(x);
     }
     
-    public static LjsAstUnaryOperation WithUnaryOp(this ILjsAstNode node, LjsAstUnaryOperationType unaryOperationType)
-    {
-        return new LjsAstUnaryOperation(node, unaryOperationType);
-    }
-    
-    public static LjsAstUnaryOperation WithUnaryMinus(this ILjsAstNode node)
-    {
-        return new LjsAstUnaryOperation(node, LjsAstUnaryOperationType.Minus);
-    }
+    public static LjsAstUnaryOperation WithUnaryMinus(this ILjsAstNode x)
+        => UnaryOp(x, LjsAstUnaryOperationType.Minus);
     
     public static LjsAstUnaryOperation WithUnaryMinus(this string x)
-    {
-        return new LjsAstUnaryOperation(new LjsAstGetVar(x), LjsAstUnaryOperationType.Minus);
-    }
+        => UnaryOp(x, LjsAstUnaryOperationType.Minus);
     
-    public static LjsAstUnaryOperation WithPrefixIncrement(this ILjsAstNode node)
-    {
-        return new LjsAstUnaryOperation(node, LjsAstUnaryOperationType.PrefixIncrement);
-    }
-    public static LjsAstUnaryOperation WithPostfixIncrement(this ILjsAstNode node)
-    {
-        return new LjsAstUnaryOperation(node, LjsAstUnaryOperationType.PostfixIncrement);
-    }
+    public static LjsAstUnaryOperation WithPrefixIncrement(this ILjsAstNode x)
+        => UnaryOp(x, LjsAstUnaryOperationType.PrefixIncrement);
     
-    public static LjsAstUnaryOperation WithPrefixDecrement(this ILjsAstNode node)
-    {
-        return new LjsAstUnaryOperation(node, LjsAstUnaryOperationType.PrefixDecrement);
-    }
+    public static LjsAstUnaryOperation WithPrefixIncrement(this string x)
+        => UnaryOp(x, LjsAstUnaryOperationType.PrefixIncrement);
     
-    public static LjsAstUnaryOperation WithPostfixDecrement(this ILjsAstNode node)
-    {
-        return new LjsAstUnaryOperation(node, LjsAstUnaryOperationType.PostfixDecrement);
-    }
+    public static LjsAstUnaryOperation WithPostfixIncrement(this ILjsAstNode x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.PostfixIncrement);
     
-    public static LjsAstUnaryOperation WithUnaryPlus(this ILjsAstNode node)
-    {
-        return new LjsAstUnaryOperation(node, LjsAstUnaryOperationType.Plus);
-    }
+    public static LjsAstUnaryOperation WithPostfixIncrement(this string x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.PostfixIncrement);
     
-    public static LjsAstUnaryOperation WithUnaryPlus(this string x)
-    {
-        return new LjsAstUnaryOperation(new LjsAstGetVar(x), LjsAstUnaryOperationType.Plus);
-    }
+    public static LjsAstUnaryOperation WithPrefixDecrement(this ILjsAstNode x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.PrefixDecrement);
+    
+    public static LjsAstUnaryOperation WithPrefixDecrement(this string x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.PrefixDecrement);
+    
+    public static LjsAstUnaryOperation WithPostfixDecrement(this ILjsAstNode x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.PostfixDecrement);
+    
+    public static LjsAstUnaryOperation WithPostfixDecrement(this string x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.PostfixDecrement);
 
-    public static LjsAstBinaryOperation Plus(this ILjsAstNode node, ILjsAstNode other)
-    {
-        return new LjsAstBinaryOperation(node, other, LjsAstBinaryOperationType.Plus);
-    }
+    public static LjsAstUnaryOperation WithUnaryPlus(this ILjsAstNode x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.Plus);
     
-    public static LjsAstBinaryOperation Plus(this string x, ILjsAstNode other)
-    {
-        return new LjsAstBinaryOperation(new LjsAstGetVar(x), other, LjsAstBinaryOperationType.Plus);
-    }
+    public static LjsAstUnaryOperation WithUnaryPlus(this string x) =>
+        UnaryOp(x, LjsAstUnaryOperationType.Plus);
+
+    public static LjsAstBinaryOperation Plus(this ILjsAstNode x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Plus);
     
-    public static LjsAstBinaryOperation Plus(this ILjsAstNode x, string y)
-    {
-        return new LjsAstBinaryOperation(x, new LjsAstGetVar(y), LjsAstBinaryOperationType.Plus);
-    }
+    public static LjsAstBinaryOperation Plus(this string x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Plus);
     
-    public static LjsAstBinaryOperation Plus(this string x, string y)
-    {
-        return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstGetVar(y), LjsAstBinaryOperationType.Plus);
-    }
-    public static LjsAstBinaryOperation Plus(this string x, int y)
-    {
-        return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstLiteral<int>(y), LjsAstBinaryOperationType.Plus);
-    }
+    public static LjsAstBinaryOperation Plus(this ILjsAstNode x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Plus);
     
-    public static LjsAstBinaryOperation Minus(this ILjsAstNode x, ILjsAstNode y)
-    {
-        return new LjsAstBinaryOperation(x, y, LjsAstBinaryOperationType.Minus);
-    }
+    public static LjsAstBinaryOperation Plus(this string x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Plus);
+    public static LjsAstBinaryOperation Plus(this string x, int y) => BinOp(x,y,LjsAstBinaryOperationType.Plus);
     
-    public static LjsAstBinaryOperation Minus(this string x, ILjsAstNode y)
-    {
-        return new LjsAstBinaryOperation(new LjsAstGetVar(x), y, LjsAstBinaryOperationType.Minus);
-    }
+    public static LjsAstBinaryOperation Minus(this ILjsAstNode x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Minus);
     
-    public static LjsAstBinaryOperation Minus(this ILjsAstNode x, string y)
-    {
-        return new LjsAstBinaryOperation(x, new LjsAstGetVar(y), LjsAstBinaryOperationType.Minus);
-    }
+    public static LjsAstBinaryOperation Minus(this string x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Minus);
     
-    public static LjsAstBinaryOperation Minus(this string x, string y)
-    {
-        return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstGetVar(y), LjsAstBinaryOperationType.Minus);
-    }
+    public static LjsAstBinaryOperation Minus(this ILjsAstNode x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Minus);
+    
+    public static LjsAstBinaryOperation Minus(this string x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Minus);
+    public static LjsAstBinaryOperation Minus(this string x, int y) => BinOp(x,y,LjsAstBinaryOperationType.Minus);
+    
+    public static LjsAstBinaryOperation LessThen(this ILjsAstNode x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Less);
+    
+    public static LjsAstBinaryOperation LessThen(this string x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Less);
+    
+    public static LjsAstBinaryOperation LessThen(this ILjsAstNode x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Less);
+    
+    public static LjsAstBinaryOperation LessThen(this string x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Less);
+    public static LjsAstBinaryOperation LessThen(this string x, int y) => BinOp(x,y,LjsAstBinaryOperationType.Less);
+    
+    
     
     public static LjsAstBinaryOperation MultiplyBy(this ILjsAstNode x, ILjsAstNode y)
     {
@@ -206,6 +183,40 @@ public static class NodesExtensions
     {
         obj.AddNode(new LjsAstObjectLiteralProperty(name, value.ToLit()));
         return obj;
+    }
+    
+    private static LjsAstBinaryOperation BinOp(ILjsAstNode x, ILjsAstNode y, LjsAstBinaryOperationType operationType)
+    {
+        return new LjsAstBinaryOperation(x, y, operationType);
+    }
+    
+    private static LjsAstBinaryOperation BinOp(string x, ILjsAstNode y, LjsAstBinaryOperationType operationType)
+    {
+        return new LjsAstBinaryOperation(new LjsAstGetVar(x), y, operationType);
+    }
+    
+    private static LjsAstBinaryOperation BinOp(ILjsAstNode x, string y, LjsAstBinaryOperationType operationType)
+    {
+        return new LjsAstBinaryOperation(x, new LjsAstGetVar(y), operationType);
+    }
+    
+    private static LjsAstBinaryOperation BinOp(string x, string y, LjsAstBinaryOperationType operationType)
+    {
+        return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstGetVar(y), operationType);
+    }
+    private static LjsAstBinaryOperation BinOp(string x, int y, LjsAstBinaryOperationType operationType)
+    {
+        return new LjsAstBinaryOperation(new LjsAstGetVar(x), new LjsAstLiteral<int>(y), operationType);
+    }
+
+    private static LjsAstUnaryOperation UnaryOp(ILjsAstNode x, LjsAstUnaryOperationType operationType)
+    {
+        return new LjsAstUnaryOperation(x, operationType);
+    }
+    
+    private static LjsAstUnaryOperation UnaryOp(string x, LjsAstUnaryOperationType operationType)
+    {
+        return new LjsAstUnaryOperation(new LjsAstGetVar(x), operationType);
     }
     
 }
