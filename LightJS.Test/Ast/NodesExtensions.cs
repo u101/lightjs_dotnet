@@ -196,4 +196,10 @@ public static class NodesExtensions
         return obj;
     }
     
+    public static LjsAstObjectLiteral AddProp(this LjsAstObjectLiteral obj, string name, int value)
+    {
+        obj.AddNode(new LjsAstObjectLiteralProperty(name, value.ToLit()));
+        return obj;
+    }
+    
 }

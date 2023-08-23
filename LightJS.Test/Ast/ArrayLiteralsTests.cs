@@ -7,6 +7,15 @@ public class ArrayLiteralsTests
 {
 
     [Test]
+    public void BinaryOperationTest()
+    {
+        var node = TestUtils.BuildAstNode("x = [1,2,3] + [4,5,6]");
+
+        var expected = "x".Assign(ArrayLit(1,2,3).Plus(ArrayLit(4,5,6)));
+        Match(node, expected);
+    }
+    
+    [Test]
     public void EmptyArrayLiteralTest()
     {
         var node = TestUtils.BuildAstNode("x = []");

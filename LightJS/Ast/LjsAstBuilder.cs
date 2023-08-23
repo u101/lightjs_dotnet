@@ -494,6 +494,74 @@ public class LjsAstBuilder
         return ifBlock;
     }
 
+    private LjsAstObjectLiteral ProcessObjectLiteral()
+    {
+        // current token = {
+        if (_tokensReader.NextToken.TokenType == LjsTokenType.OpBracketClose)
+        {
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
+            return new LjsAstObjectLiteral();
+        }
+        
+        var obj = new LjsAstObjectLiteral();
+
+        while (_tokensReader.NextToken.TokenType != LjsTokenType.OpBracketClose)
+        {
+            CheckEarlyEof();
+
+            var nextTokenType = _tokensReader.NextToken.TokenType;
+
+            var propName = string.Empty;
+            
+            if (nextTokenType == LjsTokenType.Identifier)
+            {
+                CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
+                propName = LjsTokenizerUtils.GetTokenStringValue(
+                    _sourceCodeString, _tokensReader.CurrentToken);
+            }
+            else if (nextTokenType == LjsTokenType.StringLiteral)
+            {
+                CheckExpectedNextAndMoveForward(LjsTokenType.StringLiteral);
+                propName = LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, _tokensReader.CurrentToken);
+            }
+            else if (nextTokenType == LjsTokenType.IntDecimal)
+            {
+                CheckExpectedNextAndMoveForward(LjsTokenType.IntDecimal);
+                propName = LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, _tokensReader.CurrentToken);
+                
+            }
+            else
+            {
+                throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+            }
+            
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpColon);
+            
+            var propertyValue = 
+                ProcessExpression(StopSymbolType.Comma | StopSymbolType.BracketClose);
+            
+            obj.AddNode(new LjsAstObjectLiteralProperty(propName, propertyValue));
+            
+            CheckEarlyEof();
+
+            switch (_tokensReader.NextToken.TokenType)
+            {
+                case LjsTokenType.OpComma:
+                    CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
+                    break;
+                case LjsTokenType.OpBracketClose:
+                    // we'll stop here
+                    break;
+                default:
+                    throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+            }
+        }
+
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
+
+        return obj;
+    }
+    
     private LjsAstArrayLiteral ProcessArrayLiteral()
     {
         // current token = [
@@ -516,17 +584,16 @@ public class LjsAstBuilder
             
             CheckEarlyEof();
 
-            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
+            switch (_tokensReader.NextToken.TokenType)
             {
-                CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
-            }
-            else if (_tokensReader.NextToken.TokenType == LjsTokenType.OpSquareBracketsClose)
-            {
-                // we'll stop here
-            }
-            else
-            {
-                throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+                case LjsTokenType.OpComma:
+                    CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
+                    break;
+                case LjsTokenType.OpSquareBracketsClose:
+                    // we'll stop here
+                    break;
+                default:
+                    throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
             }
         }
         
@@ -545,6 +612,8 @@ public class LjsAstBuilder
         StopSymbolType stopSymbolType, 
         ProcessExpressionMode mode = ProcessExpressionMode.StopBeforeStopSymbol)
     {
+        CheckEarlyEof();
+        
         var operatorsStackStartingLn = _operatorsStack.Count;
         var postfixExpressionStartingLn = _postfixExpression.Count;
         
@@ -650,6 +719,12 @@ public class LjsAstBuilder
                 {
                     _postfixExpression.Add(ProcessArrayLiteral());
                 }
+            }
+            
+            else if (token.TokenType == LjsTokenType.OpBracketOpen)
+            {
+                // object literal
+                _postfixExpression.Add(ProcessObjectLiteral());
             }
             
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
