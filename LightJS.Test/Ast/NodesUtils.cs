@@ -130,6 +130,9 @@ public static class NodesUtils
     
     public static LjsAstObjectLiteral ObjectLit() => new();
     public static LjsAstObjectLiteral ObjectLit(params LjsAstObjectLiteralProperty[] props) => new(props);
+    
+    public static LjsAstObjectLiteral ObjectLit(string firstPropName, ILjsAstNode val) => 
+        new(new []{new LjsAstObjectLiteralProperty(firstPropName, val)});
 
     public static LjsAstLiteral<bool> True => new (true);
     public static LjsAstLiteral<bool> False => new (false);

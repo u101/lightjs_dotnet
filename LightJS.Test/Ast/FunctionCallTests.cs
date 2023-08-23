@@ -24,6 +24,14 @@ public class FunctionCallTests
     }
     
     [Test]
+    public void FuncCallWithObjectArg()
+    {
+        var node = TestUtils.BuildAstNode("foo({a:1,b:2})");
+        var expected = "foo".FuncCall(ObjectLit().AddProp("a", 1).AddProp("b", 2));
+        Match(node, expected);
+    }
+    
+    [Test]
     public void NestedFuncCallsTest()
     {
         var node = TestUtils.BuildAstNode("x = foo(a, bar(x, buzz(a1,a2,a3)))");
