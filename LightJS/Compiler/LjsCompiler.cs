@@ -49,7 +49,7 @@ public class LjsCompiler
         throw new NotImplementedException();
     }
 
-    private void ProcessNode(ILjsAstNode node)
+    private void ProcessNode(ILjsAstNode node, List<byte> instructions)
     {
         switch (node)
         {
@@ -59,12 +59,27 @@ public class LjsCompiler
             case LjsAstLiteral<double> lit:
                 
                 break;
-            case LjsAstLiteral<bool> lit:
-                
-                break;
             case LjsAstLiteral<string> lit:
                 
                 break;
+            
+            case LjsAstNull _:
+                instructions.Add(LjsInstructionCodes.ConstNull);
+                break;
+            case LjsAstUndefined _:
+                instructions.Add(LjsInstructionCodes.ConstUndef);
+                break;
+            
+            case LjsAstLiteral<bool> lit:
+                instructions.Add(lit.Value ? LjsInstructionCodes.ConstTrue : LjsInstructionCodes.ConstFalse);
+                break;
+            
+            
+            case LjsAstGetVar getVar:
+                //
+                break;
+            
+            
             default:
                 throw new LjsCompilerError();
         }
