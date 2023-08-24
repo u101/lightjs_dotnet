@@ -12,7 +12,7 @@ public class LjsAstFunctionDeclaration : ILjsAstNode
     }
 }
 
-public class LjsAstNamedFunctionDeclaration : LjsAstFunctionDeclaration
+public sealed class LjsAstNamedFunctionDeclaration : LjsAstFunctionDeclaration
 {
     public string Name { get; }
 

@@ -2,7 +2,7 @@ using LightJS.Tokenizer;
 
 namespace LightJS.Ast;
 
-public class LjsAstModel
+public sealed class LjsAstModel
 {
     private readonly Dictionary<ILjsAstNode, LjsToken> _tokensMap;
     public ILjsAstNode RootNode { get; }

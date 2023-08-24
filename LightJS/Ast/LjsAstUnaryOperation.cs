@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstUnaryOperation : ILjsAstNode
+public sealed class LjsAstUnaryOperation : ILjsAstNode
 {
     public ILjsAstNode Operand { get; }
     public LjsAstUnaryOperationType OperatorType { get; }

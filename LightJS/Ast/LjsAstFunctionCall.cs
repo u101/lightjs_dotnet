@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstFunctionCall : ILjsAstNode
+public sealed class LjsAstFunctionCall : ILjsAstNode
 {
     public ILjsAstNode FunctionGetter { get; }
 

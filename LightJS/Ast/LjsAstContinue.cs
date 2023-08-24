@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstContinue : ILjsAstNode
+public sealed class LjsAstContinue : ILjsAstNode
 {
     public LjsAstContinue() {}
 }

@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstTernaryIfOperation : ILjsAstNode
+public sealed class LjsAstTernaryIfOperation : ILjsAstNode
 {
     public ILjsAstNode Condition { get; }
     public ILjsAstNode TrueExpression { get; }

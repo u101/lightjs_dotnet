@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstBinaryOperation : ILjsAstNode
+public sealed class LjsAstBinaryOperation : ILjsAstNode
 {
     public ILjsAstNode LeftOperand { get; }
     public ILjsAstNode RightOperand { get; }

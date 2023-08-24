@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstReturn : ILjsAstNode
+public sealed class LjsAstReturn : ILjsAstNode
 {
     public ILjsAstNode ReturnValue { get; }
 

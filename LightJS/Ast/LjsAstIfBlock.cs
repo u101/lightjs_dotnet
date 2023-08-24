@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstIfBlock : ILjsAstNode
+public sealed class LjsAstIfBlock : ILjsAstNode
 {
     public LjsAstConditionalExpression MainBlock { get; }
 

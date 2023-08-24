@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstVariableDeclaration : ILjsAstNode
+public sealed class LjsAstVariableDeclaration : ILjsAstNode
 {
     public string Name { get; }
     public bool Mutable { get; }

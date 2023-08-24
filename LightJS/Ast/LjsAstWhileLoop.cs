@@ -1,6 +1,6 @@
 namespace LightJS.Ast;
 
-public class LjsAstWhileLoop : ILjsAstNode
+public sealed class LjsAstWhileLoop : ILjsAstNode
 {
     public ILjsAstNode Condition { get; }
     public ILjsAstNode Body { get; }
