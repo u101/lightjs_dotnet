@@ -10,11 +10,11 @@ public static class LjsInstructionCodes
     // load local var, followed by var index byte
     public const byte VarStore = (byte) 0x03; 
     // load int const, followed by const index byte
-    public const byte ConstLoadInt = (byte) 0x04;
+    public const byte ConstInt = (byte) 0x04;
     // load double const, followed by const index byte
-    public const byte ConstDoubleLoad = (byte) 0x05;
+    public const byte ConstDouble = (byte) 0x05;
     // load double const, followed by const index byte
-    public const byte ConstStringLoad = (byte) 0x06;
+    public const byte ConstString = (byte) 0x06;
     // push const to stack
     public const byte ConstTrue = (byte) 0x07; 
     // push const to stack

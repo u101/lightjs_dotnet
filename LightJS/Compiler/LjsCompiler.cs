@@ -8,6 +8,7 @@ namespace LightJS.Compiler;
 public class LjsCompiler
 {
     private readonly LjsAstModel _astModel;
+    private readonly LjsProgram _program;
 
     public LjsCompiler(string sourceCodeString)
     {
@@ -19,6 +20,7 @@ public class LjsCompiler
         var astModelBuilder = new LjsAstBuilder(sourceCodeString);
         
         _astModel = astModelBuilder.Build();
+        _program = new LjsProgram();
     }
 
     public LjsCompiler(string sourceCodeString, List<LjsToken> tokens)
@@ -37,11 +39,13 @@ public class LjsCompiler
         var astModelBuilder = new LjsAstBuilder(sourceCodeString, tokens);
         
         _astModel = astModelBuilder.Build();
+        _program = new LjsProgram();
     }
     
     public LjsCompiler(LjsAstModel astModel)
     {
         _astModel = astModel;
+        _program = new LjsProgram();
     }
 
     public LjsProgram Compile()
@@ -54,13 +58,21 @@ public class LjsCompiler
         switch (node)
         {
             case LjsAstLiteral<int> lit:
-                
+                _program.AddInstruction(
+                    LjsInstructionCodes.ConstInt, 
+                    _program.AddIntegerConstant(lit.Value));
                 break;
+            
             case LjsAstLiteral<double> lit:
-                
+                _program.AddInstruction(
+                    LjsInstructionCodes.ConstDouble, 
+                    _program.AddDoubleConstant(lit.Value));
                 break;
+            
             case LjsAstLiteral<string> lit:
-                
+                _program.AddInstruction(
+                    LjsInstructionCodes.ConstString, 
+                    _program.AddStringConstant(lit.Value));
                 break;
             
             case LjsAstNull _:
