@@ -146,6 +146,9 @@ public static class NodesUtils
 
     public static LjsAstLiteral<bool> True => new (true);
     public static LjsAstLiteral<bool> False => new (false);
+
+    public static LjsAstGetThis This => new();
+    
     public static ILjsAstNode Nothing => LjsAstEmptyNode.Instance;
 
     public static ILjsAstNode Break => new LjsAstBreak();

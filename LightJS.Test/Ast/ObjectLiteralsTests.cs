@@ -71,5 +71,28 @@ public class ObjectLiteralsTests
         
         Match(node, expected);
     }
-    
+
+    [Test]
+    public void NestedObjectWithFunctionProp()
+    {
+        var code = """
+        x = {
+            age:123,
+            getAge:function() {
+                return this.age
+            }
+        }
+        """;
+        
+        var node = TestUtils.BuildAstNode(code);
+
+        var expected = "x".Assign(
+            ObjectLit()
+                .AddProp("age", 123)
+                .AddProp("getAge", Func(Return(This.GetProp("age"))))
+            );
+        
+        Match(node, expected);
+    }
+
 }

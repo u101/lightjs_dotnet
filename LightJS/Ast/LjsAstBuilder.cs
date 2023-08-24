@@ -229,7 +229,7 @@ public class LjsAstBuilder
 
         if (allowEmptyBlock && _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketClose)
         {
-            _tokensReader.MoveForward();
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
             return LjsAstEmptyNode.Instance;
         }
         
@@ -240,7 +240,7 @@ public class LjsAstBuilder
 
         if (_tokensReader.NextToken.TokenType == LjsTokenType.OpBracketClose)
         {
-            _tokensReader.MoveForward();
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
             return firstExpression;
         }
         
@@ -272,7 +272,7 @@ public class LjsAstBuilder
         while (_tokensReader.HasNextToken &&
                _tokensReader.NextToken.TokenType == LjsTokenType.OpSemicolon)
         {
-            _tokensReader.MoveForward();
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpSemicolon);
         }
     }
 
@@ -393,7 +393,7 @@ public class LjsAstBuilder
 
         if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
         {
-            _tokensReader.MoveForward();
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpAssign);
             firstVarValue = ProcessExpression(stopSymbol | StopSymbolType.Comma);
         }
 
@@ -415,7 +415,7 @@ public class LjsAstBuilder
         
         while (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
         {
-            _tokensReader.MoveForward(); // skip comma
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
             
             CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
             
@@ -424,13 +424,15 @@ public class LjsAstBuilder
             
             if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
             {
-                _tokensReader.MoveForward();
+                CheckExpectedNextAndMoveForward(LjsTokenType.OpAssign);
+                
                 nextVarValue = ProcessExpression(stopSymbol | StopSymbolType.Comma);
             }
             
             var nextVar = new LjsAstVariableDeclaration(
                 LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, nextVarToken),
                 nextVarValue, mutable);
+            
             RegisterNodePosition(nextVar, nextVarToken);
             
             
@@ -539,7 +541,7 @@ public class LjsAstBuilder
 
         while (_tokensReader.NextToken.TokenType == LjsTokenType.ElseIf)
         {
-            _tokensReader.MoveForward();
+            CheckExpectedNextAndMoveForward(LjsTokenType.ElseIf);
             
             CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
 
@@ -751,6 +753,15 @@ public class LjsAstBuilder
                 
                 _postfixExpression.Add(getVar);
             }
+            else if (token.TokenType == LjsTokenType.This)
+            {
+                var getThis = new LjsAstGetThis();
+                
+                RegisterNodePosition(getThis, token);
+                
+                _postfixExpression.Add(getThis);
+            }
+            
             else if (LjsAstBuilderUtils.IsLiteral(token.TokenType))
             {
                 var literalNode = LjsAstBuilderUtils.CreateLiteralNode(token, _sourceCodeString);
