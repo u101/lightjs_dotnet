@@ -1,6 +1,6 @@
 using LightJS.Tokenizer;
 
-namespace LightJS;
+namespace LightJS.Errors;
 
 public class LjsSyntaxError : Exception
 {

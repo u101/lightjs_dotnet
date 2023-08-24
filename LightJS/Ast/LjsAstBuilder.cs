@@ -1,3 +1,4 @@
+using LightJS.Errors;
 using LightJS.Tokenizer;
 
 namespace LightJS.Ast;

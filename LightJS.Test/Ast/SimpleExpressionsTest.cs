@@ -1,5 +1,6 @@
 using LightJS.Ast;
 using FluentAssertions;
+using LightJS.Errors;
 
 namespace LightJS.Test.Ast;
 

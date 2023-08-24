@@ -1,3 +1,5 @@
+using LightJS.Errors;
+
 namespace LightJS.Tokenizer;
 
 public class LjsTokenizer
