@@ -41,6 +41,15 @@ public static class LjsRuntimeUtils
                 throw new LjsInternalError($"unsupported bitwise op code {opCode}");
         }
     }
+    
+    public static bool ToBool(LjsObject obj) => obj switch
+    {
+        LjsValue<int> i => i.Value == 0,
+        LjsValue<double> i => i.Value == 0,
+        LjsValue<bool> i => i.Value,
+        LjsValue<string> i => !string.IsNullOrEmpty(i.Value),
+        _ => obj != LjsObject.Null && obj != LjsObject.Undefined
+    };
 
     public static int GetIntValue(LjsObject obj) => obj switch
     {
@@ -126,6 +135,19 @@ public static class LjsRuntimeUtils
                 
             default:
                 throw new LjsInternalError($"unsupported comparison op code {opCode}");
+        }
+    }
+
+    public static LjsObject ExecuteLogicalOperation(LjsObject left, LjsObject right, byte opCode)
+    {
+        switch (opCode)
+        {
+            case LjsInstructionCodes.And:
+                return ToBool(left) && ToBool(right) ? LjsValue.True : LjsValue.False;
+            case LjsInstructionCodes.Or:
+                return ToBool(left) || ToBool(right) ? LjsValue.True : LjsValue.False;
+            default:
+                throw new LjsInternalError($"unsupported logical op code {opCode}");
         }
     }
 

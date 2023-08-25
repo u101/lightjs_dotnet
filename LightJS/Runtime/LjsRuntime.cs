@@ -84,7 +84,14 @@ public sealed class LjsRuntime
                     _executionStack.Push(
                         LjsRuntimeUtils.ExecuteComparisonOperation(compareLeft, compareRight, instructionCode));
                     break;
-                
+                // compare ops
+                case LjsInstructionCodes.And:
+                case LjsInstructionCodes.Or:
+                    var flagRight = _executionStack.Pop();
+                    var flagLeft = _executionStack.Pop();
+                    _executionStack.Push(
+                        LjsRuntimeUtils.ExecuteLogicalOperation(flagLeft, flagRight, instructionCode));
+                    break;
                 default:
                     throw new LjsInternalError($"unsupported op code {instructionCode}");
                     
@@ -93,19 +100,5 @@ public sealed class LjsRuntime
         }
 
         return (_executionStack.Count > 0) ? _executionStack.Pop() : LjsObject.Undefined;
-    }
-
-    private static LjsObject ExecuteBinaryOperation(LjsObject left, LjsObject right, byte instructionCode)
-    {
-        switch (instructionCode)
-        {
-            case LjsInstructionCodes.Add:
-                
-                break;
-        }
-        
-        
-        
-        return LjsObject.Undefined;
     }
 }
