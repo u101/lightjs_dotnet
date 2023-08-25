@@ -10,6 +10,9 @@ public sealed class LjsProgram
     private readonly List<string> _stringConstants = new();
     private readonly List<LjsInstruction> _instructions = new();
 
+    public IReadOnlyList<LjsInstruction> Instructions => _instructions;
+    
+
     /// <summary>
     /// returns constant index
     /// </summary>
@@ -25,7 +28,20 @@ public sealed class LjsProgram
     /// </summary>
     public short AddStringConstant(string value) => AddConstant(value, _stringConstants);
 
-    private short AddConstant<TConstType>(TConstType value, List<TConstType> constantsList)
+    public int GetIntegerConstant(short index) => GetConstant(index, _integerConstants);
+    public double GetDoubleConstant(short index) => GetConstant(index, _doubleConstants);
+    public string GetStringConstant(short index) => GetConstant(index, _stringConstants);
+
+    private static TConstType GetConstant<TConstType>(short index, List<TConstType> constantsList)
+    {
+        if (index < 0 || index >= constantsList.Count)
+            throw new LjsInternalError(
+                $"internal error: failed to get constant at index {index} of type {typeof(TConstType).Name}");
+
+        return constantsList[index];
+    }
+
+    private static short AddConstant<TConstType>(TConstType value, List<TConstType> constantsList)
     {
         if (constantsList.Count == 0)
         {
