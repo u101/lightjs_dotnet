@@ -99,6 +99,30 @@ public class LjsCompiler
                 
                 break;
             
+            case LjsAstUnaryOperation unaryOperation:
+
+                switch (unaryOperation.OperatorType)
+                {
+                    case LjsAstUnaryOperationType.Minus:
+                        ProcessNode(unaryOperation.Operand);
+                        _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.Minus));
+                        break;
+                    case LjsAstUnaryOperationType.LogicalNot:
+                        ProcessNode(unaryOperation.Operand);
+                        _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.Not));
+                        break;
+                    
+                    case LjsAstUnaryOperationType.BitNot:
+                        ProcessNode(unaryOperation.Operand);
+                        _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.BitNot));
+                        break;
+                    
+                    default:
+                        throw new NotImplementedException();
+                }
+                
+                break;
+            
             
             // case LjsAstGetVar getVar:
             //     break;

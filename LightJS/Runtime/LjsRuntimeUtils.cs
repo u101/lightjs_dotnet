@@ -151,6 +151,29 @@ public static class LjsRuntimeUtils
         }
     }
 
+    public static LjsObject ExecuteUnaryOperation(LjsObject operand, byte opCode)
+    {
+        switch (opCode)
+        {
+            case LjsInstructionCodes.Minus:
+                if (operand is LjsValue<double> d)
+                {
+                    return new LjsValue<double>(-d.Value);
+                }
+
+                return new LjsValue<int>(-GetIntValue(operand));
+                
+            case LjsInstructionCodes.BitNot:
+                return new LjsValue<int>(~GetIntValue(operand));
+                
+            case LjsInstructionCodes.Not:
+                return ToBool(operand) ? LjsValue.False : LjsValue.True;
+                
+            default:
+                throw new LjsInternalError($"unsupported unary op code {opCode}");
+        }
+    }
+
 
 
 }

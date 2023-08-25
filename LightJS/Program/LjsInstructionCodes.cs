@@ -77,6 +77,6 @@ public static class LjsInstructionCodes
     // load from stack value a, push a + 1
     public const byte Decr = (byte) 0x28;
     // load from stack value a, push -a
-    public const byte Negate = (byte) 0x29;
+    public const byte Minus = (byte) 0x29;
 
 }

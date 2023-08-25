@@ -7,6 +7,46 @@ public class ArithmeticTests
 {
 
     [Test]
+    public void UnaryMinusIntegerTest()
+    {
+        const int expected = -(1+2+3+4+5);
+        var runtime = RuntimeTestUtils.CreateRuntime("-(1+2+3+4+5)");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
+    }
+    
+    [Test]
+    public void UnaryDoubleIntegerTest()
+    {
+        const double expected = -(1.1+2+3+4+5);
+        var runtime = RuntimeTestUtils.CreateRuntime("-(1.1+2+3+4+5)");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<double>(expected)));
+    }
+    
+    [Test]
+    public void LogicalNotTest()
+    {
+        const bool expected = !(true || false);
+        var runtime = RuntimeTestUtils.CreateRuntime("!(true || false)");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+    }
+    
+    [Test]
+    public void BitNotTest()
+    {
+        const int expected = ~0b01010101;
+        var runtime = RuntimeTestUtils.CreateRuntime("~0b01010101");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
+    }
+    
+    [Test]
     public void SimpleDivIntegers()
     {
         var runtime = RuntimeTestUtils.CreateRuntime("4/2");

@@ -5,6 +5,8 @@ namespace LightJS.Compiler;
 
 public static class LjsCompileUtils
 {
+    
+    
     public static byte GetBinaryOpCode(LjsAstBinaryOperationType binaryOperationType)
     {
         switch (binaryOperationType)

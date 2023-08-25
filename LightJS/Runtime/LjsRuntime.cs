@@ -92,6 +92,14 @@ public sealed class LjsRuntime
                     _executionStack.Push(
                         LjsRuntimeUtils.ExecuteLogicalOperation(flagLeft, flagRight, instructionCode));
                     break;
+                // unary ops
+                case LjsInstructionCodes.Minus:
+                case LjsInstructionCodes.BitNot:
+                case LjsInstructionCodes.Not:
+                    var unaryOperand = _executionStack.Pop();
+                    _executionStack.Push(LjsRuntimeUtils.ExecuteUnaryOperation(unaryOperand, instructionCode));
+                    break;
+                
                 default:
                     throw new LjsInternalError($"unsupported op code {instructionCode}");
                     
