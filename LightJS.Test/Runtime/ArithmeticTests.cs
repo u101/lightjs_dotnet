@@ -172,6 +172,28 @@ public class ArithmeticTests
     [Test]
     public void LogicalAndTest()
     {
+        const bool expected = true && false;
+        var runtime = RuntimeTestUtils.CreateRuntime("true && false");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void LogicalOrTest()
+    {
+        const bool expected = true || false;
+        var runtime = RuntimeTestUtils.CreateRuntime("true || false");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void LogicalExpressionAndTest()
+    {
         const bool expected = (1 > 2) && (2 > 1);
         var runtime = RuntimeTestUtils.CreateRuntime("(1 > 2) && (2 > 1)");
         var result = runtime.Execute();
@@ -181,7 +203,7 @@ public class ArithmeticTests
     }
     
     [Test]
-    public void LogicalOrTest()
+    public void LogicalExpressionOrTest()
     {
         const bool expected = (1 > 2) || (2 > 1);
         var runtime = RuntimeTestUtils.CreateRuntime("(1 > 2) || (2 > 1)");
