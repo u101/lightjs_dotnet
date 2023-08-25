@@ -159,17 +159,24 @@ public class LjsCompiler
             
             case LjsAstSetVar setVar:
 
-                switch (setVar.AssignMode)
+                if (setVar.AssignMode == LjsAstAssignMode.Normal)
                 {
-                    case LjsAstAssignMode.Normal:
-                        ProcessNode(setVar.Expression);
-                        _program.AddInstruction(new LjsInstruction(
-                            LjsInstructionCodes.VarStore, _program.AddStringConstant(setVar.VarName)));
-                        break;
-                    default:
-                        // todo implement all var assignment modes
-                        throw new NotImplementedException();
+                    ProcessNode(setVar.Expression);
                 }
+                else
+                {
+                    _program.AddInstruction(new LjsInstruction(
+                        LjsInstructionCodes.VarLoad, _program.AddStringConstant(setVar.VarName)));
+                    
+                    ProcessNode(setVar.Expression);
+                    
+                    _program.AddInstruction(new LjsInstruction(
+                        LjsCompileUtils.GetComplexAssignmentOpCode(setVar.AssignMode)));
+                }
+                
+                _program.AddInstruction(new LjsInstruction(
+                    LjsInstructionCodes.VarStore, _program.AddStringConstant(setVar.VarName)));
+                
                 break;
             
             case LjsAstIfBlock ifBlock:

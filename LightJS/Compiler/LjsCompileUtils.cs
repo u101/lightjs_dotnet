@@ -1,4 +1,5 @@
 using LightJS.Ast;
+using LightJS.Errors;
 using LightJS.Program;
 
 namespace LightJS.Compiler;
@@ -78,14 +79,31 @@ public static class LjsCompileUtils
         
     }
 
-    private static readonly List<List<int>> _intListsPool = new();
+    public static byte GetComplexAssignmentOpCode(LjsAstAssignMode assignMode)
+    {
+        switch (assignMode)
+        {
+            case LjsAstAssignMode.PlusAssign: return LjsInstructionCodes.Add;
+            case LjsAstAssignMode.MinusAssign: return LjsInstructionCodes.Sub;
+            case LjsAstAssignMode.MulAssign: return LjsInstructionCodes.Mul;
+            case LjsAstAssignMode.DivAssign: return LjsInstructionCodes.Div;
+            case LjsAstAssignMode.BitOrAssign: return LjsInstructionCodes.BitOr;
+            case LjsAstAssignMode.BitAndAssign: return LjsInstructionCodes.BitAnd;
+            case LjsAstAssignMode.LogicalOrAssign: return LjsInstructionCodes.Or;
+            case LjsAstAssignMode.LogicalAndAssign: return LjsInstructionCodes.And;
+            default:
+                throw new LjsInternalError($"invalid complex assign mode {assignMode}");
+        }
+    }
+
+    private static readonly List<List<int>> IntListsPool = new();
 
     public static List<int> GetTemporaryIntList()
     {
-        if (_intListsPool.Count > 0)
+        if (IntListsPool.Count > 0)
         {
-            var list = _intListsPool[^1];
-            _intListsPool.RemoveAt(_intListsPool.Count - 1);
+            var list = IntListsPool[^1];
+            IntListsPool.RemoveAt(IntListsPool.Count - 1);
             list.Clear();
             return list;
         }
@@ -96,6 +114,6 @@ public static class LjsCompileUtils
     public static void ReleaseTemporaryIntList(List<int> list)
     {
         list.Clear();
-        _intListsPool.Add(list);
+        IntListsPool.Add(list);
     }
 }
