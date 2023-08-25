@@ -58,6 +58,10 @@ public class LjsCompiler
     {
         switch (node)
         {
+            case LjsAstEmptyNode emptyNode:
+                // do nothing
+                break;
+            
             case LjsAstLiteral<int> lit:
                 _program.AddInstruction(new LjsInstruction(
                     LjsInstructionCodes.ConstInt, 
@@ -130,9 +134,30 @@ public class LjsCompiler
                 
                 break;
             
+            case LjsAstVariableDeclaration variableDeclaration:
+
+                var varNameIndex = _program.AddStringConstant(variableDeclaration.Name);
+
+                _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.VarDef, varNameIndex));
+
+                if (variableDeclaration.Value != LjsAstEmptyNode.Instance)
+                {
+                    ProcessNode(variableDeclaration.Value);
+                    
+                    _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.VarInit, varNameIndex));
+                }
+                
+                break;
             
-            // case LjsAstGetVar getVar:
-            //     break;
+            case LjsAstGetVar getVar:
+                _program.AddInstruction(new LjsInstruction(
+                    LjsInstructionCodes.VarLoad, _program.AddStringConstant(getVar.VarName)));
+                break;
+            
+            case LjsAstSetVar setVar:
+                _program.AddInstruction(new LjsInstruction(
+                    LjsInstructionCodes.VarStore, _program.AddStringConstant(setVar.VarName)));
+                break;
             
             case LjsAstSequence sequence:
 

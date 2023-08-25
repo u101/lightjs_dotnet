@@ -5,24 +5,25 @@ public static class LjsInstructionCodes
 
     // define local var
     public const byte VarDef = (byte) 0x01; 
+    public const byte VarInit = (byte) 0x02; 
     // load local var, followed by var index byte
-    public const byte VarLoad = (byte) 0x02; 
-    // load local var, followed by var index byte
-    public const byte VarStore = (byte) 0x03; 
+    public const byte VarLoad = (byte) 0x03; 
+    // store last value from stack in var, followed by var index byte
+    public const byte VarStore = (byte) 0x04; 
     // load int const, followed by const index byte
-    public const byte ConstInt = (byte) 0x04;
+    public const byte ConstInt = (byte) 0x05;
     // load double const, followed by const index byte
-    public const byte ConstDouble = (byte) 0x05;
+    public const byte ConstDouble = (byte) 0x06;
     // load double const, followed by const index byte
-    public const byte ConstString = (byte) 0x06;
+    public const byte ConstString = (byte) 0x07;
     // push const to stack
-    public const byte ConstTrue = (byte) 0x07; 
+    public const byte ConstTrue = (byte) 0x08; 
     // push const to stack
-    public const byte ConstFalse = (byte) 0x08; 
+    public const byte ConstFalse = (byte) 0x09; 
     // push null to stack
-    public const byte ConstNull = (byte) 0x09;
+    public const byte ConstNull = (byte) 0x0a;
     // push undef to stack
-    public const byte ConstUndef = (byte) 0x0a; 
+    public const byte ConstUndef = (byte) 0x0b; 
     
     // load from stack value b, value a, push a + b
     public const byte Add = (byte) 0x10;

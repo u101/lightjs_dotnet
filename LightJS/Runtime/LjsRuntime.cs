@@ -7,6 +7,7 @@ public sealed class LjsRuntime
 {
     private readonly LjsProgram _program;
     private readonly Stack<LjsObject> _executionStack = new();
+    private readonly Dictionary<string, LjsObject> _vars = new();
 
     public LjsRuntime(LjsProgram program)
     {
@@ -18,6 +19,9 @@ public sealed class LjsRuntime
         var prg = _program;
         var instructions = prg.Instructions;
         var ln = instructions.Count;
+
+        var varName = string.Empty;
+        var v = LjsObject.Undefined;
 
         for (var i = 0; i < ln; i++)
         {
@@ -100,6 +104,45 @@ public sealed class LjsRuntime
                     _executionStack.Push(LjsRuntimeUtils.ExecuteUnaryOperation(unaryOperand, instructionCode));
                     break;
                 
+                // vars 
+                case LjsInstructionCodes.VarDef:
+                    varName = prg.GetStringConstant(instruction.Index);
+                    if (_vars.ContainsKey(varName))
+                    {
+                        throw new LjsRuntimeError($"variable already declared {varName}");
+                    }
+                    _vars[varName] = LjsObject.Undefined;
+                    break;
+                
+                case LjsInstructionCodes.VarInit:
+                    
+                    varName = prg.GetStringConstant(instruction.Index);
+                    v = _executionStack.Pop();
+                    
+                    _vars[varName] = v;
+                    break;
+                
+                case LjsInstructionCodes.VarStore:
+                    varName = prg.GetStringConstant(instruction.Index);
+                    
+                    v = _executionStack.Peek();
+                    
+                    _vars[varName] = v;
+                    break;
+                
+                case LjsInstructionCodes.VarLoad:
+                    
+                    varName = prg.GetStringConstant(instruction.Index);
+                    
+                    if (!_vars.ContainsKey(varName))
+                    {
+                        throw new LjsRuntimeError($"variable not declared {varName}");
+                    }
+                    
+                    _executionStack.Push(_vars[varName]);
+                    
+                    break;
+                    
                 default:
                     throw new LjsInternalError($"unsupported op code {instructionCode}");
                     
