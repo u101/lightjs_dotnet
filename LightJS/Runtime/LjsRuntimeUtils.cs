@@ -38,7 +38,7 @@ public static class LjsRuntimeUtils
             case LjsInstructionCodes.BitUShiftRight:
                 return new LjsValue<int>(a >>> b);
             default:
-                throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
+                throw new LjsInternalError($"unsupported bitwise op code {opCode}");
         }
     }
 
@@ -47,6 +47,7 @@ public static class LjsRuntimeUtils
         LjsValue<int> i => i.Value,
         LjsValue<double> i => (int)i.Value,
         LjsValue<bool> i => i.Value ? 1 : 0,
+        LjsValue<string> i => i.Value.Length,
         _ => obj == LjsObject.Null || obj == LjsObject.Undefined ? 0 : 1
     };
     
@@ -55,6 +56,7 @@ public static class LjsRuntimeUtils
         LjsValue<int> i => i.Value,
         LjsValue<double> i => i.Value,
         LjsValue<bool> i => i.Value ? 1 : 0,
+        LjsValue<string> i => i.Value.Length,
         _ => obj == LjsObject.Null || obj == LjsObject.Undefined ? 0 : 1
     };
 
@@ -97,6 +99,35 @@ public static class LjsRuntimeUtils
     }
 
     public static bool IsNumber(LjsObject o) => o is LjsValue<int> or LjsValue<double>;
+
+    public static LjsObject ExecuteComparisonOperation(LjsObject left, LjsObject right, byte opCode)
+    {
+        switch (opCode)
+        {
+            case LjsInstructionCodes.Gt:
+                return GetDoubleValue(left) > GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
+                
+            case LjsInstructionCodes.Gte:
+                return GetDoubleValue(left) >= GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
+                
+            case LjsInstructionCodes.Lt:
+                return GetDoubleValue(left) < GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
+                
+            case LjsInstructionCodes.Lte:
+                return GetDoubleValue(left) <= GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
+                
+            case LjsInstructionCodes.Eq:
+            case LjsInstructionCodes.Eqs:
+                return left.Equals(right) ? LjsValue.True : LjsValue.False;
+                
+            case LjsInstructionCodes.Neq:
+            case LjsInstructionCodes.Neqs:
+                return left.Equals(right) ? LjsValue.False : LjsValue.True;
+                
+            default:
+                throw new LjsInternalError($"unsupported comparison op code {opCode}");
+        }
+    }
 
 
 

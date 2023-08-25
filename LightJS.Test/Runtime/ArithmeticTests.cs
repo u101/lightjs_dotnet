@@ -80,5 +80,95 @@ public class ArithmeticTests
         Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
         
     }
+    
+    [Test]
+    public void GreaterThenTest()
+    {
+        const bool expected = 123 > 100;
+        var runtime = RuntimeTestUtils.CreateRuntime("123 > 100");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void GreaterThenOrEqualTest()
+    {
+        const bool expected = 123 >= 100;
+        var runtime = RuntimeTestUtils.CreateRuntime("123 >= 100");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void LessThenTest()
+    {
+        const bool expected = 123 < 456;
+        var runtime = RuntimeTestUtils.CreateRuntime("123 < 456");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void LessThenOrEqualTest()
+    {
+        const bool expected = 123 <= 456;
+        var runtime = RuntimeTestUtils.CreateRuntime("123 <= 456");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void IntegersEqualTest()
+    {
+        const bool expected = 123 == 456;
+        var runtime = RuntimeTestUtils.CreateRuntime("123 == 456");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void IntegersNotEqualTest()
+    {
+        const bool expected = 123 != 456;
+        var runtime = RuntimeTestUtils.CreateRuntime("123 != 456");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void StringsEqualTest()
+    {
+        const bool expected = "hello" == "hello";
+        var runtime = RuntimeTestUtils.CreateRuntime("'hello' == 'hello'");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    [Test]
+    public void StringsNotEqualTest()
+    {
+        const bool expected = "hello" != "world";
+        var runtime = RuntimeTestUtils.CreateRuntime("'hello' != 'world'");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expected)));
+        
+    }
+    
+    
 
 }

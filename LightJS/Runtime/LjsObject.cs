@@ -3,7 +3,7 @@ namespace LightJS.Runtime;
 /// <summary>
 /// base class for any runtime type
 /// </summary>
-public class LjsObject
+public class LjsObject : IEquatable<LjsObject>
 {
 
     public static readonly LjsObject Null = new LjsNull();
@@ -13,7 +13,12 @@ public class LjsObject
     {
         return "{LjsObject}";
     }
-    
+
+    public virtual bool Equals(LjsObject? other)
+    {
+        return other != null && other == this;
+    }
+
     private sealed class LjsNull : LjsObject
     {
         public LjsNull() {}

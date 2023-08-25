@@ -79,6 +79,11 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.Eqs:
                 case LjsInstructionCodes.Neq:
                 case LjsInstructionCodes.Neqs:
+                    var compareRight = _executionStack.Pop();
+                    var compareLeft = _executionStack.Pop();
+                    _executionStack.Push(
+                        LjsRuntimeUtils.ExecuteComparisonOperation(compareLeft, compareRight, instructionCode));
+                    break;
                 
                 default:
                     throw new LjsInternalError($"unsupported op code {instructionCode}");

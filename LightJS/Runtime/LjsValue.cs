@@ -7,6 +7,7 @@ namespace LightJS.Runtime;
 /// </summary>
 public class LjsValue<TValueType> : LjsObject
 {
+    [NotNull]
     public TValueType Value { get; }
 
     public LjsValue(
@@ -17,10 +18,15 @@ public class LjsValue<TValueType> : LjsObject
 
     public override string ToString()
     {
-        return Value?.ToString() ?? "null";
+        return Value.ToString() ?? "null";
     }
 
-    protected bool Equals(LjsValue<TValueType> other)
+    public override bool Equals(LjsObject? other)
+    {
+        return other is LjsValue<TValueType> b && Value.Equals(b.Value);
+    }
+
+    private bool Equals(LjsValue<TValueType> other)
     {
         return EqualityComparer<TValueType>.Default.Equals(Value, other.Value);
     }
