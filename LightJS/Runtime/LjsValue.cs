@@ -17,7 +17,7 @@ public class LjsValue<TValueType> : LjsObject
 
     public override string ToString()
     {
-        return Value.ToString();
+        return Value?.ToString() ?? "null";
     }
 
     protected bool Equals(LjsValue<TValueType> other)
@@ -35,7 +35,7 @@ public class LjsValue<TValueType> : LjsObject
 
     public override int GetHashCode()
     {
-        return EqualityComparer<TValueType>.Default.GetHashCode(Value);
+        return EqualityComparer<TValueType>.Default.GetHashCode(Value!);
     }
 }
 

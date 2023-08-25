@@ -48,6 +48,8 @@ public static class LjsRuntimeUtils
                 return new LjsValue<int>(left * right);
             case LjsInstructionCodes.Div:
                 return new LjsValue<int>(left / right);
+            case LjsInstructionCodes.Mod:
+                return new LjsValue<int>(left % right);
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
         }
@@ -65,6 +67,8 @@ public static class LjsRuntimeUtils
                 return new LjsValue<double>(left * right);
             case LjsInstructionCodes.Div:
                 return new LjsValue<double>(left / right);
+            case LjsInstructionCodes.Mod:
+                return new LjsValue<double>(left % right);
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
         }

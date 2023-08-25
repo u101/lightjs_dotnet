@@ -54,6 +54,7 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.Sub:
                 case LjsInstructionCodes.Mul:
                 case LjsInstructionCodes.Div:
+                case LjsInstructionCodes.Mod:
                     var right = _executionStack.Pop();
                     var left = _executionStack.Pop();
                     _executionStack.Push(LjsRuntimeUtils.ExecuteArithmeticOperation(left, right, instructionCode));
