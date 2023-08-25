@@ -103,6 +103,11 @@ public class LjsCompiler
 
                 switch (unaryOperation.OperatorType)
                 {
+                    case LjsAstUnaryOperationType.Plus:
+                        // just skip, because unary plus does nothing
+                        ProcessNode(unaryOperation.Operand);
+                        break;
+                    
                     case LjsAstUnaryOperationType.Minus:
                         ProcessNode(unaryOperation.Operand);
                         _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.Minus));
@@ -116,6 +121,8 @@ public class LjsCompiler
                         ProcessNode(unaryOperation.Operand);
                         _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.BitNot));
                         break;
+                    
+                    // TODO increment, decrement
                     
                     default:
                         throw new NotImplementedException();

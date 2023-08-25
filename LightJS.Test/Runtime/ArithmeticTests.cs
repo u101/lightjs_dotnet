@@ -7,6 +7,15 @@ public class ArithmeticTests
 {
 
     [Test]
+    public void UnaryPlusIntegerTest()
+    {
+        var runtime = RuntimeTestUtils.CreateRuntime("+123456");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(123456)));
+    }
+    
+    [Test]
     public void UnaryMinusIntegerTest()
     {
         const int expected = -(1+2+3+4+5);
@@ -17,7 +26,7 @@ public class ArithmeticTests
     }
     
     [Test]
-    public void UnaryDoubleIntegerTest()
+    public void UnaryMinusDoubleTest()
     {
         const double expected = -(1.1+2+3+4+5);
         var runtime = RuntimeTestUtils.CreateRuntime("-(1.1+2+3+4+5)");
