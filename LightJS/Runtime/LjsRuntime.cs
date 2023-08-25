@@ -49,7 +49,7 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.ConstUndef:
                     _executionStack.Push(LjsObject.Undefined);
                     break;
-                
+                // simple arithmetic
                 case LjsInstructionCodes.Add:
                 case LjsInstructionCodes.Sub:
                 case LjsInstructionCodes.Mul:
@@ -59,6 +59,26 @@ public sealed class LjsRuntime
                     var left = _executionStack.Pop();
                     _executionStack.Push(LjsRuntimeUtils.ExecuteArithmeticOperation(left, right, instructionCode));
                     break;
+                // bitwise ops
+                case LjsInstructionCodes.BitAnd:
+                case LjsInstructionCodes.BitOr:
+                case LjsInstructionCodes.BitShiftLeft:
+                case LjsInstructionCodes.BitSShiftRight:
+                case LjsInstructionCodes.BitUShiftRight:
+                    var bitsOperandRight = _executionStack.Pop();
+                    var bitsOperandLeft = _executionStack.Pop();
+                    _executionStack.Push(
+                        LjsRuntimeUtils.ExecuteBitwiseOperation(bitsOperandLeft, bitsOperandRight, instructionCode));
+                    break;
+                // compare ops
+                case LjsInstructionCodes.Gt:
+                case LjsInstructionCodes.Gte:
+                case LjsInstructionCodes.Lt:
+                case LjsInstructionCodes.Lte:
+                case LjsInstructionCodes.Eq:
+                case LjsInstructionCodes.Eqs:
+                case LjsInstructionCodes.Neq:
+                case LjsInstructionCodes.Neqs:
                 
                 default:
                     throw new LjsInternalError($"unsupported op code {instructionCode}");

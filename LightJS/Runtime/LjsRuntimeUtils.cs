@@ -20,6 +20,28 @@ public static class LjsRuntimeUtils
             ExecuteArithmeticOperation(GetIntValue(left), GetIntValue(right), opCode);
     }
 
+    public static LjsObject ExecuteBitwiseOperation(LjsObject left, LjsObject right, byte opCode)
+    {
+        var a = GetIntValue(left);
+        var b = GetIntValue(right);
+        
+        switch (opCode)
+        {
+            case LjsInstructionCodes.BitAnd:
+                return new LjsValue<int>(a & b);
+            case LjsInstructionCodes.BitOr:
+                return new LjsValue<int>(a | b);
+            case LjsInstructionCodes.BitShiftLeft:
+                return new LjsValue<int>(a << b);
+            case LjsInstructionCodes.BitSShiftRight:
+                return new LjsValue<int>(a >> b);
+            case LjsInstructionCodes.BitUShiftRight:
+                return new LjsValue<int>(a >>> b);
+            default:
+                throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
+        }
+    }
+
     public static int GetIntValue(LjsObject obj) => obj switch
     {
         LjsValue<int> i => i.Value,

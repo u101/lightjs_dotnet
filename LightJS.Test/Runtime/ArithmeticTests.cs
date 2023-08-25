@@ -24,5 +24,61 @@ public class ArithmeticTests
         
         Assert.That(result, Is.EqualTo(new LjsValue<double>(expected)));
     }
+
+    [Test]
+    public void BitOrTest()
+    {
+        const int expected = 0b01010101 | 0b10011001;
+        var runtime = RuntimeTestUtils.CreateRuntime("0b01010101 | 0b10011001");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
+        
+    }
     
+    [Test]
+    public void BitAndTest()
+    {
+        const int expected = 0b01010101 & 0b10011001;
+        var runtime = RuntimeTestUtils.CreateRuntime("0b01010101 & 0b10011001");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
+        
+    }
+    
+    
+    [Test]
+    public void BitShiftLeftTest()
+    {
+        const int expected = 0b01010101 << 3;
+        var runtime = RuntimeTestUtils.CreateRuntime("0b01010101 << 3");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
+        
+    }
+    
+    [Test]
+    public void BitShiftRightTest()
+    {
+        const int expected = 0b01010101 >> 3;
+        var runtime = RuntimeTestUtils.CreateRuntime("0b01010101 >> 3");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
+        
+    }
+    
+    [Test]
+    public void BitUnsignedShiftRightTest()
+    {
+        const int expected = 0b01010101 >>> 3;
+        var runtime = RuntimeTestUtils.CreateRuntime("0b01010101 >>> 3");
+        var result = runtime.Execute();
+        
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expected)));
+        
+    }
+
 }
