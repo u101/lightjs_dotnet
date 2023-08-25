@@ -74,5 +74,28 @@ public static class LjsCompileUtils
             default:
                 throw new ArgumentOutOfRangeException(binaryOperationType.ToString());
         }
+        
+        
+    }
+
+    private static readonly List<List<int>> _intListsPool = new();
+
+    public static List<int> GetTemporaryIntList()
+    {
+        if (_intListsPool.Count > 0)
+        {
+            var list = _intListsPool[^1];
+            _intListsPool.RemoveAt(_intListsPool.Count - 1);
+            list.Clear();
+            return list;
+        }
+
+        return new List<int>(8);
+    }
+
+    public static void ReleaseTemporaryIntList(List<int> list)
+    {
+        list.Clear();
+        _intListsPool.Add(list);
     }
 }

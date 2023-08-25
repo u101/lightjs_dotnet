@@ -64,9 +64,16 @@ public sealed class LjsProgram
         return (short) i;
     }
 
+    public int InstructionsCount => _instructions.Count;
+
     public void AddInstruction(LjsInstruction instruction)
     {
         _instructions.Add(instruction);
+    }
+
+    public void SetInstructionAt(LjsInstruction instruction, int index)
+    {
+        _instructions[index] = instruction;
     }
 
     public string GetProgramString()

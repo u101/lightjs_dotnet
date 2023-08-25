@@ -51,6 +51,9 @@ public class LjsCompiler
     public LjsProgram Compile()
     {
         ProcessNode(_astModel.RootNode);
+        
+        _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.Halt));
+        
         return _program;
     }
 
@@ -155,8 +158,85 @@ public class LjsCompiler
                 break;
             
             case LjsAstSetVar setVar:
-                _program.AddInstruction(new LjsInstruction(
-                    LjsInstructionCodes.VarStore, _program.AddStringConstant(setVar.VarName)));
+
+                switch (setVar.AssignMode)
+                {
+                    case LjsAstAssignMode.Normal:
+                        ProcessNode(setVar.Expression);
+                        _program.AddInstruction(new LjsInstruction(
+                            LjsInstructionCodes.VarStore, _program.AddStringConstant(setVar.VarName)));
+                        break;
+                    default:
+                        // todo implement all var assignment modes
+                        throw new NotImplementedException();
+                }
+                break;
+            
+            case LjsAstIfBlock ifBlock:
+                
+                ProcessNode(ifBlock.MainBlock.Condition);
+                
+                var gotoEndIndices = LjsCompileUtils.GetTemporaryIntList();
+
+                var conditionalJumpIndex = _program.InstructionsCount;
+                
+                // if false jump to next condition or to the else block or to the end
+                _program.AddInstruction(default);
+                
+                ProcessNode(ifBlock.MainBlock.Expression);
+                
+                gotoEndIndices.Add(_program.InstructionsCount);
+                _program.AddInstruction(default);
+
+                if (ifBlock.ConditionalAlternatives.Count != 0)
+                {
+                    foreach (var alternative in ifBlock.ConditionalAlternatives)
+                    {
+                        // set previous jump instruction
+                        // TODO _program.InstructionsCount can be more then short.MaxValue
+                        _program.SetInstructionAt(new LjsInstruction(
+                            LjsInstructionCodes.JumpIfFalse, (short) _program.InstructionsCount), conditionalJumpIndex);
+                        
+                        ProcessNode(alternative.Condition);
+                        
+                        conditionalJumpIndex = _program.InstructionsCount;
+                        _program.AddInstruction(default);
+                        
+                        ProcessNode(alternative.Expression);
+                        
+                        gotoEndIndices.Add(_program.InstructionsCount);
+                        _program.AddInstruction(default);
+                    }
+                }
+
+                if (ifBlock.ElseBlock != null)
+                {
+                    // TODO _program.InstructionsCount can be more then short.MaxValue
+                    _program.SetInstructionAt(new LjsInstruction(
+                        LjsInstructionCodes.JumpIfFalse, (short) _program.InstructionsCount), conditionalJumpIndex);
+
+                    conditionalJumpIndex = -1;
+                    
+                    ProcessNode(ifBlock.ElseBlock);
+                }
+
+                // TODO _program.InstructionsCount can be more then short.MaxValue
+                var ifBlockEndIndex = (short) _program.InstructionsCount;
+
+                if (conditionalJumpIndex != -1)
+                {
+                    _program.SetInstructionAt(new LjsInstruction(
+                        LjsInstructionCodes.JumpIfFalse, ifBlockEndIndex), conditionalJumpIndex);
+                }
+
+                foreach (var i in gotoEndIndices)
+                {
+                    _program.SetInstructionAt(new LjsInstruction(
+                        LjsInstructionCodes.Jump, ifBlockEndIndex), i);
+                }
+                
+                LjsCompileUtils.ReleaseTemporaryIntList(gotoEndIndices);
+                
                 break;
             
             case LjsAstSequence sequence:

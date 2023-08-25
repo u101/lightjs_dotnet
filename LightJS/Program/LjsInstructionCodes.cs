@@ -3,6 +3,8 @@ namespace LightJS.Program;
 public static class LjsInstructionCodes
 {
 
+    public const byte Halt = 0x00;
+    
     // define local var
     public const byte VarDef = (byte) 0x01; 
     public const byte VarInit = (byte) 0x02; 
@@ -23,8 +25,11 @@ public static class LjsInstructionCodes
     // push null to stack
     public const byte ConstNull = (byte) 0x0a;
     // push undef to stack
-    public const byte ConstUndef = (byte) 0x0b; 
-    
+    public const byte ConstUndef = (byte) 0x0b;
+
+    public const byte JumpIfFalse = (byte)0x0e;
+    public const byte Jump = (byte)0x0f;
+
     // load from stack value b, value a, push a + b
     public const byte Add = (byte) 0x10;
     // load from stack value b, value a, push a - b

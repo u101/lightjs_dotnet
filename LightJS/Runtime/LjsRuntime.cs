@@ -23,13 +23,36 @@ public sealed class LjsRuntime
         var varName = string.Empty;
         var v = LjsObject.Undefined;
 
-        for (var i = 0; i < ln; i++)
-        {
-            var instruction = instructions[i];
+        var i = 0;
+        var execute = true;
 
+        while (execute && i < ln)
+        {
+            var jump = false;
+            var instruction = instructions[i];
             var instructionCode = instruction.Code;
+
             switch (instructionCode)
             {
+                case LjsInstructionCodes.Jump:
+                    i = instruction.Index;
+                    jump = true;
+                    break;
+                
+                case LjsInstructionCodes.JumpIfFalse:
+                    var jumpConditionObj = _executionStack.Pop();
+                    var jumpCondition = LjsRuntimeUtils.ToBool(jumpConditionObj);
+                    if (!jumpCondition)
+                    {
+                        i = instruction.Index;
+                        jump = true;
+                    }
+                    break;
+                
+                case LjsInstructionCodes.Halt:
+                    execute = false;
+                    break;
+                
                 case LjsInstructionCodes.ConstInt:
                     _executionStack.Push(new LjsValue<int>(prg.GetIntegerConstant(instruction.Index)));
                     break;
@@ -148,6 +171,7 @@ public sealed class LjsRuntime
                     
             }
             
+            if (!jump) ++i;
         }
 
         return (_executionStack.Count > 0) ? _executionStack.Pop() : LjsObject.Undefined;
