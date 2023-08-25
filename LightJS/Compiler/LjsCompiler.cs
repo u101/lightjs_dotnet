@@ -50,40 +50,44 @@ public class LjsCompiler
 
     public LjsProgram Compile()
     {
-        throw new NotImplementedException();
+        ProcessNode(_astModel.RootNode);
+        return _program;
     }
 
-    private void ProcessNode(ILjsAstNode node, List<byte> instructions)
+    private void ProcessNode(ILjsAstNode node)
     {
         switch (node)
         {
             case LjsAstLiteral<int> lit:
-                _program.AddInstruction(
+                _program.AddInstruction(new LjsInstruction(
                     LjsInstructionCodes.ConstInt, 
-                    _program.AddIntegerConstant(lit.Value));
+                    _program.AddIntegerConstant(lit.Value)));
                 break;
             
             case LjsAstLiteral<double> lit:
-                _program.AddInstruction(
+                _program.AddInstruction(new LjsInstruction(
                     LjsInstructionCodes.ConstDouble, 
-                    _program.AddDoubleConstant(lit.Value));
+                    _program.AddDoubleConstant(lit.Value)));
                 break;
             
             case LjsAstLiteral<string> lit:
-                _program.AddInstruction(
+                _program.AddInstruction(new LjsInstruction(
                     LjsInstructionCodes.ConstString, 
-                    _program.AddStringConstant(lit.Value));
+                    _program.AddStringConstant(lit.Value)));
                 break;
             
             case LjsAstNull _:
-                instructions.Add(LjsInstructionCodes.ConstNull);
+                _program.AddInstruction(
+                    new LjsInstruction(LjsInstructionCodes.ConstNull));
                 break;
             case LjsAstUndefined _:
-                instructions.Add(LjsInstructionCodes.ConstUndef);
+                _program.AddInstruction(
+                    new LjsInstruction(LjsInstructionCodes.ConstUndef));
                 break;
             
             case LjsAstLiteral<bool> lit:
-                instructions.Add(lit.Value ? LjsInstructionCodes.ConstTrue : LjsInstructionCodes.ConstFalse);
+                _program.AddInstruction(new LjsInstruction(
+                    lit.Value ? LjsInstructionCodes.ConstTrue : LjsInstructionCodes.ConstFalse));
                 break;
             
             
@@ -95,8 +99,6 @@ public class LjsCompiler
             default:
                 throw new LjsCompilerError();
         }
-        
-        throw new NotImplementedException();
     }
     
 }
