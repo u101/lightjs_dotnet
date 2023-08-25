@@ -90,15 +90,35 @@ public class LjsCompiler
                     lit.Value ? LjsInstructionCodes.ConstTrue : LjsInstructionCodes.ConstFalse));
                 break;
             
+            case LjsAstBinaryOperation binaryOperation:
+                
+                ProcessNode(binaryOperation.LeftOperand);
+                ProcessNode(binaryOperation.RightOperand);
+
+                _program.AddInstruction(new LjsInstruction(LjsCompileUtils.GetBinaryOpCode(binaryOperation.OperatorType)));
+                
+                break;
             
-            case LjsAstGetVar getVar:
-                //
+            
+            // case LjsAstGetVar getVar:
+            //     break;
+            
+            case LjsAstSequence sequence:
+
+                foreach (var n in sequence.ChildNodes)
+                {
+                    ProcessNode(n);
+                }
+                
                 break;
             
             
             default:
                 throw new LjsCompilerError();
         }
+        
+        
+        
     }
     
 }
