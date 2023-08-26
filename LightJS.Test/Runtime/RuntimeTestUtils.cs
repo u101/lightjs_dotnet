@@ -11,4 +11,25 @@ public static class RuntimeTestUtils
         var program = compiler.Compile();
         return new LjsRuntime(program);
     }
+
+    public static void CheckResult(LjsObject result, int expectedValue)
+    {
+        Assert.That(result, Is.EqualTo(new LjsValue<int>(expectedValue)));
+    }
+    
+    public static void CheckResult(LjsObject result, double expectedValue)
+    {
+        Assert.That(result, Is.EqualTo(new LjsValue<double>(expectedValue)));
+    }
+    
+    public static void CheckResult(LjsObject result, bool expectedValue)
+    {
+        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expectedValue)));
+    }
+    
+    public static void CheckResult(LjsObject result, string expectedValue)
+    {
+        Assert.That(result, Is.EqualTo(new LjsValue<string>(expectedValue)));
+    }
+
 }

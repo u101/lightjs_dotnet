@@ -201,6 +201,38 @@ public class LjsCompiler
                 
                 break;
             
+            case LjsAstIncrementVar incrementVar:
+
+                if (incrementVar.Order == LjsAstIncrementOrder.Postfix)
+                {
+                    // we leave old var value on stack
+                    _program.AddInstruction(new LjsInstruction(
+                        LjsInstructionCodes.VarLoad, _program.AddStringConstant(incrementVar.VarName)));
+                }
+                
+                _program.AddInstruction(new LjsInstruction(
+                    LjsInstructionCodes.VarLoad, _program.AddStringConstant(incrementVar.VarName)));
+                _program.AddInstruction(new LjsInstruction(
+                    LjsInstructionCodes.ConstInt, _program.AddIntegerConstant(1)));
+                _program.AddInstruction(new LjsInstruction(LjsCompileUtils.GetIncrementOpCode(incrementVar.Sign)));
+                
+                switch (incrementVar.Order)
+                {
+                    case LjsAstIncrementOrder.Prefix:
+                        _program.AddInstruction(new LjsInstruction(
+                            LjsInstructionCodes.VarStore, _program.AddStringConstant(incrementVar.VarName)));
+                        break;
+                    
+                    case LjsAstIncrementOrder.Postfix:
+                        _program.AddInstruction(new LjsInstruction(
+                            LjsInstructionCodes.VarInit, _program.AddStringConstant(incrementVar.VarName)));
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                
+                break;
+            
             case LjsAstIfBlock ifBlock:
                 
                 ProcessNode(ifBlock.MainBlock.Condition);

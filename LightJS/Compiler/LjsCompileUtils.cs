@@ -96,6 +96,13 @@ public static class LjsCompileUtils
         }
     }
 
+    public static byte GetIncrementOpCode(LjsAstIncrementSign incrementSign) => incrementSign switch
+    {
+        LjsAstIncrementSign.Plus => LjsInstructionCodes.Add,
+        LjsAstIncrementSign.Minus => LjsInstructionCodes.Sub,
+        _ => throw new LjsInternalError($"invalid increment sign {incrementSign}")
+    };
+
     private static readonly List<List<int>> IntListsPool = new();
 
     public static List<int> GetTemporaryIntList()
