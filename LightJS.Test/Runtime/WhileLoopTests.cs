@@ -1,4 +1,4 @@
-using LightJS.Runtime;
+using static LightJS.Test.Runtime.RuntimeTestUtils;
 
 namespace LightJS.Test.Runtime;
 
@@ -16,10 +16,10 @@ public class WhileLoopTests
         a
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<int>(4)));
+        CheckResult(result, 4);
     }
     
     [Test]
@@ -34,9 +34,27 @@ public class WhileLoopTests
         a
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<int>(70)));
+        CheckResult(result, 70);
+    }
+    
+    [Test]
+    public void WhileLoopWithStringConcatTest()
+    {
+        const string code = """
+        var a = '', i = 10;
+        while(i >= 0) {
+            a += i
+            --i
+        }
+        a
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, "109876543210");
     }
 }
