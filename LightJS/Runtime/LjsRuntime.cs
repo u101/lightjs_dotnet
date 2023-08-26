@@ -6,7 +6,9 @@ namespace LightJS.Runtime;
 public sealed class LjsRuntime
 {
     private readonly LjsProgram _program;
-    private readonly Stack<LjsObject> _executionStack = new();
+    private readonly Stack<LjsObject> _stack = new();
+    private readonly Stack<LjsInstructionsList> _instructionsStack = new();
+    private readonly Stack<int> _instructionsIndexStack = new();
     private readonly Dictionary<string, LjsObject> _vars = new();
 
     public LjsRuntime(LjsProgram program)
@@ -17,8 +19,15 @@ public sealed class LjsRuntime
     public LjsObject Execute()
     {
         var prg = _program;
-        var instructions = prg.Instructions;
-        var ln = instructions.Count;
+
+        foreach (var (funcName, func) in prg.Functions)
+        {
+            _vars[funcName] = func;
+        }
+        
+        var instructions = 
+            prg.InstructionsList;
+        
 
         var varName = string.Empty;
         var v = LjsObject.Undefined;
@@ -26,10 +35,10 @@ public sealed class LjsRuntime
         var i = 0;
         var execute = true;
 
-        while (execute && i < ln)
+        while (execute && i < instructions.InstructionsCount)
         {
             var jump = false;
-            var instruction = instructions[i];
+            var instruction = instructions.Instructions[i];
             var instructionCode = instruction.Code;
 
             switch (instructionCode)
@@ -40,7 +49,7 @@ public sealed class LjsRuntime
                     break;
                 
                 case LjsInstructionCodes.JumpIfFalse:
-                    var jumpConditionObj = _executionStack.Pop();
+                    var jumpConditionObj = _stack.Pop();
                     var jumpCondition = LjsRuntimeUtils.ToBool(jumpConditionObj);
                     if (!jumpCondition)
                     {
@@ -49,32 +58,47 @@ public sealed class LjsRuntime
                     }
                     break;
                 
+                case LjsInstructionCodes.FuncCall:
+
+                    var funcRef = _stack.Pop();
+
+                    if (funcRef is not LjsFunction f)
+                    {
+                        throw new LjsRuntimeError("not a function");
+                    }
+
+                    _instructionsIndexStack.Push(i);
+                    _instructionsStack.Push(instructions);
+                    throw new NotImplementedException();
+                    break;
+                    
+                
                 case LjsInstructionCodes.Halt:
                     execute = false;
                     break;
                 
                 case LjsInstructionCodes.ConstInt:
-                    _executionStack.Push(new LjsValue<int>(prg.GetIntegerConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<int>(prg.GetIntegerConstant(instruction.Index)));
                     break;
                 case LjsInstructionCodes.ConstDouble:
-                    _executionStack.Push(new LjsValue<double>(prg.GetDoubleConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<double>(prg.GetDoubleConstant(instruction.Index)));
                     break;
                 case LjsInstructionCodes.ConstString:
-                    _executionStack.Push(new LjsValue<string>(prg.GetStringConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<string>(prg.GetStringConstant(instruction.Index)));
                     break;
                 case LjsInstructionCodes.ConstTrue:
-                    _executionStack.Push(LjsValue.True);
+                    _stack.Push(LjsValue.True);
                     break;
                 case LjsInstructionCodes.ConstFalse:
-                    _executionStack.Push(LjsValue.False);
+                    _stack.Push(LjsValue.False);
                     break;
                 
                 case LjsInstructionCodes.ConstNull:
-                    _executionStack.Push(LjsObject.Null);
+                    _stack.Push(LjsObject.Null);
                     break;
                 
                 case LjsInstructionCodes.ConstUndef:
-                    _executionStack.Push(LjsObject.Undefined);
+                    _stack.Push(LjsObject.Undefined);
                     break;
                 // simple arithmetic
                 case LjsInstructionCodes.Add:
@@ -82,9 +106,9 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.Mul:
                 case LjsInstructionCodes.Div:
                 case LjsInstructionCodes.Mod:
-                    var right = _executionStack.Pop();
-                    var left = _executionStack.Pop();
-                    _executionStack.Push(LjsRuntimeUtils.ExecuteArithmeticOperation(left, right, instructionCode));
+                    var right = _stack.Pop();
+                    var left = _stack.Pop();
+                    _stack.Push(LjsRuntimeUtils.ExecuteArithmeticOperation(left, right, instructionCode));
                     break;
                 // bitwise ops
                 case LjsInstructionCodes.BitAnd:
@@ -92,9 +116,9 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.BitShiftLeft:
                 case LjsInstructionCodes.BitSShiftRight:
                 case LjsInstructionCodes.BitUShiftRight:
-                    var bitsOperandRight = _executionStack.Pop();
-                    var bitsOperandLeft = _executionStack.Pop();
-                    _executionStack.Push(
+                    var bitsOperandRight = _stack.Pop();
+                    var bitsOperandLeft = _stack.Pop();
+                    _stack.Push(
                         LjsRuntimeUtils.ExecuteBitwiseOperation(bitsOperandLeft, bitsOperandRight, instructionCode));
                     break;
                 // compare ops
@@ -106,25 +130,25 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.Eqs:
                 case LjsInstructionCodes.Neq:
                 case LjsInstructionCodes.Neqs:
-                    var compareRight = _executionStack.Pop();
-                    var compareLeft = _executionStack.Pop();
-                    _executionStack.Push(
+                    var compareRight = _stack.Pop();
+                    var compareLeft = _stack.Pop();
+                    _stack.Push(
                         LjsRuntimeUtils.ExecuteComparisonOperation(compareLeft, compareRight, instructionCode));
                     break;
                 // compare ops
                 case LjsInstructionCodes.And:
                 case LjsInstructionCodes.Or:
-                    var flagRight = _executionStack.Pop();
-                    var flagLeft = _executionStack.Pop();
-                    _executionStack.Push(
+                    var flagRight = _stack.Pop();
+                    var flagLeft = _stack.Pop();
+                    _stack.Push(
                         LjsRuntimeUtils.ExecuteLogicalOperation(flagLeft, flagRight, instructionCode));
                     break;
                 // unary ops
                 case LjsInstructionCodes.Minus:
                 case LjsInstructionCodes.BitNot:
                 case LjsInstructionCodes.Not:
-                    var unaryOperand = _executionStack.Pop();
-                    _executionStack.Push(LjsRuntimeUtils.ExecuteUnaryOperation(unaryOperand, instructionCode));
+                    var unaryOperand = _stack.Pop();
+                    _stack.Push(LjsRuntimeUtils.ExecuteUnaryOperation(unaryOperand, instructionCode));
                     break;
                 
                 // vars 
@@ -140,7 +164,7 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.VarInit:
                     
                     varName = prg.GetStringConstant(instruction.Index);
-                    v = _executionStack.Pop();
+                    v = _stack.Pop();
                     
                     _vars[varName] = v;
                     break;
@@ -148,7 +172,7 @@ public sealed class LjsRuntime
                 case LjsInstructionCodes.VarStore:
                     varName = prg.GetStringConstant(instruction.Index);
                     
-                    v = _executionStack.Peek();
+                    v = _stack.Peek();
                     
                     _vars[varName] = v;
                     break;
@@ -162,7 +186,7 @@ public sealed class LjsRuntime
                         throw new LjsRuntimeError($"variable not declared {varName}");
                     }
                     
-                    _executionStack.Push(_vars[varName]);
+                    _stack.Push(_vars[varName]);
                     
                     break;
                     
@@ -174,6 +198,6 @@ public sealed class LjsRuntime
             if (!jump) ++i;
         }
 
-        return (_executionStack.Count > 0) ? _executionStack.Pop() : LjsObject.Undefined;
+        return (_stack.Count > 0) ? _stack.Pop() : LjsObject.Undefined;
     }
 }

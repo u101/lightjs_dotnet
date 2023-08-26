@@ -26,7 +26,7 @@ public static class LjsInstructionCodes
     public const byte ConstNull = (byte) 0x0a;
     // push undef to stack
     public const byte ConstUndef = (byte) 0x0b;
-
+    
     public const byte JumpIfFalse = (byte)0x0e;
     public const byte Jump = (byte)0x0f;
 
@@ -84,5 +84,8 @@ public static class LjsInstructionCodes
     public const byte Decr = (byte) 0x28;
     // load from stack value a, push -a
     public const byte Minus = (byte) 0x29;
+
+    public const byte Return = (byte)0x40;
+    public const byte FuncCall = (byte)0x41;
 
 }

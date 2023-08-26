@@ -1,4 +1,3 @@
-using System.Text;
 using LightJS.Errors;
 
 namespace LightJS.Program;
@@ -8,9 +7,18 @@ public sealed class LjsProgram
     private readonly List<int> _integerConstants = new();
     private readonly List<double> _doubleConstants = new();
     private readonly List<string> _stringConstants = new();
-    private readonly List<LjsInstruction> _instructions = new();
 
-    public IReadOnlyList<LjsInstruction> Instructions => _instructions;
+    private readonly Dictionary<string, LjsFunction> _functions = new(); 
+
+    public LjsInstructionsList InstructionsList { get; } = new();
+
+    public void AddFunction(string name, LjsFunction func)
+    {
+        _functions[name] = func;
+    }
+
+    public (string name, LjsFunction func)[] Functions => 
+        _functions.Select(p => (p.Key, p.Value)).ToArray();
     
 
     /// <summary>
@@ -63,54 +71,4 @@ public sealed class LjsProgram
         
         return (short) i;
     }
-
-    public int InstructionsCount => _instructions.Count;
-
-    public void AddInstruction(LjsInstruction instruction)
-    {
-        _instructions.Add(instruction);
-    }
-
-    public void SetInstructionAt(LjsInstruction instruction, int index)
-    {
-        _instructions[index] = instruction;
-    }
-
-    public string GetProgramString()
-    {
-        var sb = new StringBuilder();
-
-        sb.Append("int constants:\n");
-        
-        foreach (var i in _integerConstants)
-        {
-            sb.Append($"{i}\n");
-        }
-        
-        sb.Append("double constants:\n");
-        
-        foreach (var i in _doubleConstants)
-        {
-            sb.Append($"{i}\n");
-        }
-        
-        sb.Append("string constants:\n");
-        
-        foreach (var i in _stringConstants)
-        {
-            sb.Append($"{i}\n");
-        }
-
-        sb.Append("instructions:\n");
-
-        foreach (var i in _instructions)
-        {
-            sb.Append($"{i.Code} {i.Index}");
-        }
-
-        return sb.ToString();
-    }
-
-
-    // to be done
 }
