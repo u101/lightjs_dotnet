@@ -28,7 +28,7 @@ public class WhileLoopTests
         var node = TestUtils.BuildAstNode(code);
 
         var expected = While(
-                "a".ToVar(), "x".ToVar().WithPostfixIncrement());
+                "a".ToVar(), "x".WithPostfixIncrement());
             
         Match(node, expected);
     }
@@ -47,7 +47,7 @@ public class WhileLoopTests
 
         var expected = While(
                 "a".ToVar(), Sequence(
-                    "x".ToVar().WithPostfixIncrement(),
+                    "x".WithPostfixIncrement(),
                     IfBlock("x".ToVar(), Break)
                     ));
             
@@ -68,7 +68,7 @@ public class WhileLoopTests
 
         var expected = While(
                 "a".ToVar(), Sequence(
-                    "x".ToVar().WithPostfixIncrement(),
+                    "x".WithPostfixIncrement(),
                     IfBlock("x".ToVar(), Continue)
                     ));
             
@@ -82,7 +82,7 @@ public class WhileLoopTests
         var node = TestUtils.BuildAstNode("while(a) x++");
 
         var expected = While(
-                "a".ToVar(), "x".ToVar().WithPostfixIncrement());
+                "a".ToVar(), "x".WithPostfixIncrement());
             
         Match(node, expected);
     }

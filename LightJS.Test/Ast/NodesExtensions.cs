@@ -24,29 +24,18 @@ public static class NodesExtensions
     public static LjsAstUnaryOperation WithUnaryMinus(this string x)
         => UnaryOp(x, LjsAstUnaryOperationType.Minus);
     
-    public static LjsAstUnaryOperation WithPrefixIncrement(this ILjsAstNode x)
-        => UnaryOp(x, LjsAstUnaryOperationType.PrefixIncrement);
+    public static LjsAstIncrementVar WithPrefixIncrement(this string x)
+        => new(x, LjsAstIncrementSign.Plus, LjsAstIncrementOrder.Prefix);
     
-    public static LjsAstUnaryOperation WithPrefixIncrement(this string x)
-        => UnaryOp(x, LjsAstUnaryOperationType.PrefixIncrement);
+
+    public static LjsAstIncrementVar WithPostfixIncrement(this string x)
+        => new(x, LjsAstIncrementSign.Plus, LjsAstIncrementOrder.Postfix);
     
-    public static LjsAstUnaryOperation WithPostfixIncrement(this ILjsAstNode x) =>
-        UnaryOp(x, LjsAstUnaryOperationType.PostfixIncrement);
+    public static LjsAstIncrementVar WithPrefixDecrement(this string x) =>
+        new(x, LjsAstIncrementSign.Minus, LjsAstIncrementOrder.Prefix);
     
-    public static LjsAstUnaryOperation WithPostfixIncrement(this string x) =>
-        UnaryOp(x, LjsAstUnaryOperationType.PostfixIncrement);
-    
-    public static LjsAstUnaryOperation WithPrefixDecrement(this ILjsAstNode x) =>
-        UnaryOp(x, LjsAstUnaryOperationType.PrefixDecrement);
-    
-    public static LjsAstUnaryOperation WithPrefixDecrement(this string x) =>
-        UnaryOp(x, LjsAstUnaryOperationType.PrefixDecrement);
-    
-    public static LjsAstUnaryOperation WithPostfixDecrement(this ILjsAstNode x) =>
-        UnaryOp(x, LjsAstUnaryOperationType.PostfixDecrement);
-    
-    public static LjsAstUnaryOperation WithPostfixDecrement(this string x) =>
-        UnaryOp(x, LjsAstUnaryOperationType.PostfixDecrement);
+    public static LjsAstIncrementVar WithPostfixDecrement(this string x) =>
+        new(x, LjsAstIncrementSign.Minus, LjsAstIncrementOrder.Postfix);
 
     public static LjsAstUnaryOperation WithUnaryPlus(this ILjsAstNode x) =>
         UnaryOp(x, LjsAstUnaryOperationType.Plus);
@@ -218,5 +207,5 @@ public static class NodesExtensions
     {
         return new LjsAstUnaryOperation(new LjsAstGetVar(x), operationType);
     }
-    
+
 }

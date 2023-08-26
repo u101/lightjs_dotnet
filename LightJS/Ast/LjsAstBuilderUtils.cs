@@ -156,12 +156,12 @@ public static class LjsAstBuilderUtils
         {LjsTokenType.OpMinus, LjsAstUnaryOperationType.Minus},
             
         {LjsTokenType.OpLogicalNot, LjsAstUnaryOperationType.LogicalNot},
-        {LjsTokenType.OpBitNot, LjsAstUnaryOperationType.BitNot},
-        {LjsTokenType.OpIncrement, LjsAstUnaryOperationType.PrefixIncrement},
-        {LjsTokenType.OpDecrement, LjsAstUnaryOperationType.PrefixDecrement},
+        {LjsTokenType.OpBitNot, LjsAstUnaryOperationType.BitNot}
     };
 
-    public static bool CanBeUnaryPrefixOp(LjsTokenType tokenType) => 
+    public static bool CanBeUnaryPrefixOp(LjsTokenType tokenType) =>
+        tokenType == LjsTokenType.OpIncrement || 
+        tokenType == LjsTokenType.OpDecrement ||
         PrefixUnaryOperationsMap.ContainsKey(tokenType);
     
     public static bool CanBeUnaryPostfixOp(LjsTokenType tokenType)
@@ -194,8 +194,6 @@ public static class LjsAstBuilderUtils
             ? op
             : throw new ArgumentException($"unsupported binary operator token {tokenType}");
 
-    public static bool CanBePrefixUnaryOperator(LjsTokenType tokenType) =>
-        PrefixUnaryOperationsMap.ContainsKey(tokenType);
 
     public static bool IsDefinitelyPrefixUnaryOperator(LjsTokenType tokenType) => tokenType is
         LjsTokenType.OpLogicalNot or
@@ -207,20 +205,10 @@ public static class LjsAstBuilderUtils
         IsDefinitelyPrefixUnaryOperator(tokenType) || 
         tokenType == LjsTokenType.OpPlus ||
         tokenType == LjsTokenType.OpMinus;
-    
-    public static LjsAstUnaryOperationType GetUnaryPrefixOperationType(LjsTokenType tokenType) =>
+
+    public static LjsAstUnaryOperationType GetUnaryOperationType(LjsTokenType tokenType) =>
         PrefixUnaryOperationsMap.TryGetValue(tokenType, out var op) ? op
             : throw new ArgumentException($"unsupported unary operation token type {tokenType}");
-    
-    public static LjsAstUnaryOperationType GetUnaryPostfixOperationType(LjsTokenType tokenType) => tokenType switch
-    {
-        LjsTokenType.OpIncrement => LjsAstUnaryOperationType.PostfixIncrement,
-        LjsTokenType.OpDecrement => LjsAstUnaryOperationType.PostfixDecrement,
-        _ => throw new Exception($"unsupported unary operation token type {tokenType}")
-    };
-
-    public static LjsAstUnaryOperationType GetUnaryOperationType(LjsTokenType tokenType, bool isPrefix) =>
-        isPrefix ? GetUnaryPrefixOperationType(tokenType) : GetUnaryPostfixOperationType(tokenType);
 
     public static ILjsAstNode CreateLiteralNode(LjsToken token, string sourceCodeString)
     {

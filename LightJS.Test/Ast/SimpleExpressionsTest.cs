@@ -1,3 +1,4 @@
+using static LightJS.Test.Ast.NodesUtils;
 using LightJS.Ast;
 using FluentAssertions;
 using LightJS.Errors;
@@ -12,11 +13,9 @@ public class SimpleExpressionsTest
     {
         var rootNode = TestUtils.BuildAstNode("a++ + b--");
 
-        rootNode.Should().BeEquivalentTo(
-            new LjsAstBinaryOperation(
-                new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PostfixIncrement), 
-                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PostfixIncrement), 
-                LjsAstBinaryOperationType.Plus));
+        var expected = "a".WithPostfixIncrement().Plus("b".WithPostfixDecrement());
+        
+        Match(rootNode, expected);
     }
     
     [Test]
@@ -24,11 +23,9 @@ public class SimpleExpressionsTest
     {
         var rootNode = TestUtils.BuildAstNode("++a + --b");
 
-        rootNode.Should().BeEquivalentTo(
-            new LjsAstBinaryOperation(
-                new LjsAstUnaryOperation(new LjsAstGetVar("a"), LjsAstUnaryOperationType.PrefixIncrement), 
-                new LjsAstUnaryOperation(new LjsAstGetVar("b"), LjsAstUnaryOperationType.PrefixDecrement), 
-                LjsAstBinaryOperationType.Plus));
+        var expected = "a".WithPrefixIncrement().Plus("b".WithPrefixDecrement());
+        
+        Match(rootNode, expected);
     }
     
     [Test]
@@ -209,10 +206,10 @@ public class SimpleExpressionsTest
     public void IncrementSimpleTest()
     {
         var a = TestUtils.BuildAstNode("++a");
-        a.Should().BeEquivalentTo("a".ToVar().WithPrefixIncrement());
+        Match(a, "a".WithPrefixIncrement());
         
         a = TestUtils.BuildAstNode("a++");
-        a.Should().BeEquivalentTo("a".ToVar().WithPostfixIncrement());
+        Match(a,"a".WithPostfixIncrement());
     }
 
     [Test]

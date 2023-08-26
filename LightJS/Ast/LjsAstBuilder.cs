@@ -1027,12 +1027,60 @@ public class LjsAstBuilder
                 else if (op.IsUnary)
                 {
                     var operand = _locals.Pop();
-                    var unaryOperation = new LjsAstUnaryOperation(
-                        operand, LjsAstBuilderUtils.GetUnaryOperationType(op.TokenType, op.IsUnaryPrefix));
+
+                    if (op.TokenType is LjsTokenType.OpIncrement or LjsTokenType.OpDecrement)
+                    {
+                        var incrementSign = op.TokenType switch
+                        {
+                            LjsTokenType.OpIncrement => LjsAstIncrementSign.Plus,
+                            LjsTokenType.OpDecrement => LjsAstIncrementSign.Minus,
+                            _ => throw new LjsInternalError($"invalid increment token type {op.TokenType}")
+                        };
+                        
+                        var incrementOrder = 
+                            op.IsUnaryPrefix ? LjsAstIncrementOrder.Prefix : LjsAstIncrementOrder.Postfix;
+                        
+                        // replace getter nodes by setter nodes
+                        switch (operand)
+                        {
+                            case LjsAstGetVar getVar:
+                                var setVar = new LjsAstIncrementVar(getVar.VarName, incrementSign, incrementOrder);
+                                ReplaceNodePosition(getVar, setVar);
+                                _locals.Push(setVar);
+                                break;
+                            
+                            case LjsAstGetNamedProperty getNamedProp:
+                                
+                                var setNamedProperty = new LjsAstIncrementNamedProperty(
+                                    getNamedProp.PropertyName, getNamedProp.PropertySource, 
+                                    incrementSign, incrementOrder);
+                                
+                                ReplaceNodePosition(getNamedProp, setNamedProperty);
+                                _locals.Push(setNamedProperty);
+                                break;
+                            
+                            case LjsAstGetProperty getProp:
+                                var setProperty = new LjsAstIncrementProperty(
+                                    getProp.PropertyName, getProp.PropertySource, 
+                                    incrementSign, incrementOrder);
+                                ReplaceNodePosition(getProp, setProperty);
+                                _locals.Push(setProperty);
+                                break;
+                            default:
+                                throw new LjsSyntaxError("invalid increment", op.Token.Position);
+                        }
+                    }
+                    else
+                    {
+                        var unaryOperation = new LjsAstUnaryOperation(
+                            operand, LjsAstBuilderUtils.GetUnaryOperationType(op.TokenType));
                     
-                    ReplaceNodePosition(op, unaryOperation);
+                        ReplaceNodePosition(op, unaryOperation);
                     
-                    _locals.Push(unaryOperation);
+                        _locals.Push(unaryOperation);
+                    }
+                    
+                    
                 }
                 else
                 {

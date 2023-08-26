@@ -47,7 +47,7 @@ public class CodeBlocksTests
             var node = TestUtils.BuildAstNode(expression);
             var expected = Sequence(
                 "a".Assign("b".ToVar()),
-                "y".Assign("x".ToVar().WithPrefixIncrement())
+                "y".Assign("x".WithPrefixIncrement())
             );
             Match(node, expected);
         }
@@ -68,7 +68,7 @@ public class CodeBlocksTests
             var node = TestUtils.BuildAstNode(expression);
             var expected = Sequence(
                 "a".Plus("b"),
-                "x".ToVar().WithPrefixIncrement().MultiplyBy("y"));
+                "x".WithPrefixIncrement().MultiplyBy("y"));
             Match(node, expected);
         }
     }

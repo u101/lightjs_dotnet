@@ -148,7 +148,10 @@ public class LjsCompiler
                         _program.AddInstruction(new LjsInstruction(LjsInstructionCodes.BitNot));
                         break;
                     
-                    // TODO increment, decrement
+                    // case LjsAstUnaryOperationType.PrefixIncrement:
+                        
+                    
+                    // TODO increment, decrement !!!!
                     
                     default:
                         throw new NotImplementedException();
@@ -270,8 +273,6 @@ public class LjsCompiler
                 break;
             
             case LjsAstWhileLoop whileLoop:
-
-                // TODO break and continue statements
                 
                 var whileStartIndex = _program.InstructionsCount;
                 
