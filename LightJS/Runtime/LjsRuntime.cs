@@ -84,11 +84,13 @@ public sealed class LjsRuntime
     {
         var prg = _program;
 
-        var ctx = new Context(prg.InstructionsList);
+        var mainFunc = prg.MainFunction;
+        
+        var ctx = new Context(mainFunc.InstructionsList);
 
-        foreach (var (funcName, func) in prg.Functions)
+        foreach (var funcName in prg.FunctionsNames.ToArray())
         {
-            _varSpace.Store(funcName, func);
+            _varSpace.Store(funcName, prg.GetFunction(funcName));
         }
         
         _contextsStack.Add(ctx);
@@ -113,7 +115,7 @@ public sealed class LjsRuntime
             switch (instructionCode)
             {
                 case LjsInstructionCode.Jump:
-                    ctx.InstructionIndex = instruction.Index;
+                    ctx.InstructionIndex = instruction.Argument;
                     jump = true;
                     break;
                 
@@ -122,11 +124,16 @@ public sealed class LjsRuntime
                     var jumpCondition = LjsRuntimeUtils.ToBool(jumpConditionObj);
                     if (!jumpCondition)
                     {
-                        ctx.InstructionIndex = instruction.Index;
+                        ctx.InstructionIndex = instruction.Argument;
                         jump = true;
                     }
                     break;
                 
+                case LjsInstructionCode.FuncRef:
+                    var ljsFunction = _program.GetFunction(instruction.Argument);
+                    _stack.Push(ljsFunction);
+                    break;
+
                 case LjsInstructionCode.FuncCall:
 
                     var funcRef = _stack.Pop();
@@ -136,7 +143,7 @@ public sealed class LjsRuntime
                         throw new LjsRuntimeError("not a function");
                     }
 
-                    var argsCount = instruction.Index;
+                    var argsCount = instruction.Argument;
                     
                     varSpace = varSpace.CreateChild();
 
@@ -164,13 +171,13 @@ public sealed class LjsRuntime
                     break;
                 
                 case LjsInstructionCode.ConstInt:
-                    _stack.Push(new LjsValue<int>(_constants.GetIntegerConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<int>(instruction.Argument));
                     break;
                 case LjsInstructionCode.ConstDouble:
-                    _stack.Push(new LjsValue<double>(_constants.GetDoubleConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<double>(_constants.GetDoubleConstant(instruction.Argument)));
                     break;
                 case LjsInstructionCode.ConstString:
-                    _stack.Push(new LjsValue<string>(_constants.GetStringConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<string>(_constants.GetStringConstant(instruction.Argument)));
                     break;
                 case LjsInstructionCode.ConstTrue:
                     _stack.Push(LjsValue.True);
@@ -239,7 +246,7 @@ public sealed class LjsRuntime
                 
                 // vars 
                 case LjsInstructionCode.VarDef:
-                    varName = _constants.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Argument);
                     
                     varSpace.Declare(varName);
                     
@@ -247,14 +254,14 @@ public sealed class LjsRuntime
                 
                 case LjsInstructionCode.VarInit:
                     
-                    varName = _constants.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Argument);
                     v = _stack.Pop();
                     
                     varSpace.Store(varName, v);
                     break;
                 
                 case LjsInstructionCode.VarStore:
-                    varName = _constants.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Argument);
                     
                     v = _stack.Peek();
                     
@@ -263,7 +270,7 @@ public sealed class LjsRuntime
                 
                 case LjsInstructionCode.VarLoad:
                     
-                    varName = _constants.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Argument);
 
                     v = varSpace.Get(varName);
                     

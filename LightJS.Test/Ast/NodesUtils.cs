@@ -33,13 +33,13 @@ public static class NodesUtils
 
     public static LjsAstFunctionDeclaration Func(ILjsAstNode funcBody)
     {
-        return new LjsAstFunctionDeclaration(
+        return new LjsAstAnonymousFunctionDeclaration(
             Array.Empty<LjsAstFunctionDeclarationParameter>(),funcBody);
     }
     
     public static LjsAstFunctionDeclaration Func(string argName0, ILjsAstNode funcBody)
     {
-        return new LjsAstFunctionDeclaration(
+        return new LjsAstAnonymousFunctionDeclaration(
             new []
             {
                 new LjsAstFunctionDeclarationParameter(argName0)
@@ -47,7 +47,7 @@ public static class NodesUtils
     }
     public static LjsAstFunctionDeclaration Func(string argName0, string argName1, ILjsAstNode funcBody)
     {
-        return new LjsAstFunctionDeclaration(
+        return new LjsAstAnonymousFunctionDeclaration(
             new []
             {
                 new LjsAstFunctionDeclarationParameter(argName0),
@@ -59,7 +59,7 @@ public static class NodesUtils
         string argName0, string argName1, string argName2,
         ILjsAstNode funcBody)
     {
-        return new LjsAstFunctionDeclaration(
+        return new LjsAstAnonymousFunctionDeclaration(
             new []
             {
                 new LjsAstFunctionDeclarationParameter(argName0),
@@ -70,7 +70,7 @@ public static class NodesUtils
     
     public static LjsAstFunctionDeclaration Func(string[] args, ILjsAstNode funcBody)
     {
-        return new LjsAstFunctionDeclaration(
+        return new LjsAstAnonymousFunctionDeclaration(
             args.Select(s => new LjsAstFunctionDeclarationParameter(s)).ToArray(),
             funcBody);
     }

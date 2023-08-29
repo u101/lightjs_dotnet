@@ -3,18 +3,18 @@ namespace LightJS.Program;
 public readonly struct LjsInstruction
 {
     public LjsInstructionCode Code { get; }
-    public short Index { get; }
+    public int Argument { get; }
 
     public LjsInstruction(LjsInstructionCode code)
     {
         Code = code;
-        Index = 0;
+        Argument = 0;
     }
     
-    public LjsInstruction(LjsInstructionCode code, short index)
+    public LjsInstruction(LjsInstructionCode code, int argument)
     {
         Code = code;
-        Index = index;
+        Argument = argument;
     }
     
 }

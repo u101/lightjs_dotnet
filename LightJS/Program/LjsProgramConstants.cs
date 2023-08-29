@@ -4,15 +4,9 @@ namespace LightJS.Program;
 
 public class LjsProgramConstants
 {
-    private readonly List<int> _integerConstants = new();
     private readonly List<double> _doubleConstants = new();
     private readonly List<string> _stringConstants = new();
-    
-    /// <summary>
-    /// returns constant index
-    /// </summary>
-    public short AddIntegerConstant(int value) => AddConstant(value, _integerConstants);
-    
+
     /// <summary>
     /// returns constant index
     /// </summary>
@@ -22,12 +16,10 @@ public class LjsProgramConstants
     /// returns constant index
     /// </summary>
     public short AddStringConstant(string value) => AddConstant(value, _stringConstants);
+    public double GetDoubleConstant(int index) => GetConstant(index, _doubleConstants);
+    public string GetStringConstant(int index) => GetConstant(index, _stringConstants);
 
-    public int GetIntegerConstant(short index) => GetConstant(index, _integerConstants);
-    public double GetDoubleConstant(short index) => GetConstant(index, _doubleConstants);
-    public string GetStringConstant(short index) => GetConstant(index, _stringConstants);
-
-    private static TConstType GetConstant<TConstType>(short index, List<TConstType> constantsList)
+    private static TConstType GetConstant<TConstType>(int index, List<TConstType> constantsList)
     {
         if (index < 0 || index >= constantsList.Count)
             throw new LjsInternalError(

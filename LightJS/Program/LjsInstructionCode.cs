@@ -87,5 +87,7 @@ public enum LjsInstructionCode
 
     Return = 0x40,
     FuncCall = 0x41,
+    // load function reference to stack, argument = function index
+    FuncRef = 0x42,
 
 }

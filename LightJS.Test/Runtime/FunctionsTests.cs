@@ -23,4 +23,22 @@ public class FunctionsTests
         
         CheckResult(result, 40320);
     }
+    
+    [Test]
+    public void FactorialTest2()
+    {
+        var code = """
+        var fact = function(n) {
+            if (n <= 0) return 0;
+            if (n == 1) return 1;
+            return n * fact(n - 1); 
+        }
+        fact(8)
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, 40320);
+    }
 }

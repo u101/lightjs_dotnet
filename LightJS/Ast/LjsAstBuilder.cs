@@ -184,6 +184,7 @@ public class LjsAstBuilder
         return (currentType == LjsTokenType.Identifier ||
                 currentType == LjsTokenType.OpParenthesesClose ||
                 currentType == LjsTokenType.OpSquareBracketsClose ||
+                currentType == LjsTokenType.OpBracketClose ||
                 LjsAstBuilderUtils.IsLiteral(currentType)) &&
                (nextType == LjsTokenType.Identifier ||
                 LjsAstBuilderUtils.IsLiteral(nextType) ||
@@ -1247,8 +1248,8 @@ public class LjsAstBuilder
 
         var functionBody = ProcessBlockInBrackets();
 
-        var funcDeclaration = string.IsNullOrEmpty(functionName) ? 
-            new LjsAstFunctionDeclaration(parameters, functionBody) : 
+        ILjsAstNode funcDeclaration = string.IsNullOrEmpty(functionName) ? 
+            new LjsAstAnonymousFunctionDeclaration(parameters, functionBody) : 
             new LjsAstNamedFunctionDeclaration(functionName, parameters, functionBody);
 
         return funcDeclaration;

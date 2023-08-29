@@ -3,18 +3,49 @@ namespace LightJS.Program;
 public sealed class LjsProgram
 {
 
-    private readonly Dictionary<string, LjsFunction> _functions = new(); 
+    public LjsProgramConstants Constants { get; }
+    
+    private readonly Dictionary<string, int> _namedFunctionsMap;
+    private readonly List<LjsFunction> _functionsList;
 
-    public LjsInstructionsList InstructionsList { get; } = new();
-
-    public void AddFunction(string name, LjsFunction func)
+    public LjsProgram(
+        LjsProgramConstants constants,
+        List<LjsFunction> functionsList,
+        Dictionary<string, int> namedFunctionsMap)
     {
-        _functions[name] = func;
+        if (functionsList == null)
+            throw new ArgumentNullException(nameof(functionsList));
+        if (functionsList.Count == 0)
+            throw new ArgumentException(
+                "functionsList must contain at leas one function", nameof(functionsList));
+        
+        Constants = constants;
+        _namedFunctionsMap = namedFunctionsMap;
+        _functionsList = functionsList;
     }
 
-    public (string name, LjsFunction func)[] Functions => 
-        _functions.Select(p => (p.Key, p.Value)).ToArray();
+    public LjsFunction MainFunction => _functionsList[0];
 
-    public LjsProgramConstants Constants { get; } = new();
+    public IEnumerable<string> FunctionsNames => _namedFunctionsMap.Keys;
+
+    public bool ContainsFunction(string name) => _namedFunctionsMap.ContainsKey(name);
+    
+    public LjsFunction GetFunction(string name)
+    {
+        if (_namedFunctionsMap.TryGetValue(name, out var index))
+        {
+            return _functionsList[index];
+        }
+
+        throw new Exception($"function '{name}' not found");
+    }
+
+    public LjsFunction GetFunction(int index)
+    {
+        if (index < 0 || index >= _functionsList.Count)
+            throw new IndexOutOfRangeException($"index {index} out of range [0..{_functionsList.Count}]");
+        return _functionsList[index];
+    }
+    
 
 }

@@ -1,15 +1,22 @@
 namespace LightJS.Ast;
 
-public class LjsAstFunctionDeclaration : ILjsAstNode
+public abstract class LjsAstFunctionDeclaration : ILjsAstNode
 {
     public LjsAstFunctionDeclarationParameter[] Parameters { get; }
     public ILjsAstNode FunctionBody { get; }
 
-    public LjsAstFunctionDeclaration(LjsAstFunctionDeclarationParameter[] parameters, ILjsAstNode functionBody)
+    protected LjsAstFunctionDeclaration(LjsAstFunctionDeclarationParameter[] parameters, ILjsAstNode functionBody)
     {
         Parameters = parameters;
         FunctionBody = functionBody;
     }
+}
+
+public sealed class LjsAstAnonymousFunctionDeclaration : LjsAstFunctionDeclaration
+{
+    public LjsAstAnonymousFunctionDeclaration(
+        LjsAstFunctionDeclarationParameter[] parameters, ILjsAstNode functionBody) : base(parameters, functionBody)
+    { }
 }
 
 public sealed class LjsAstNamedFunctionDeclaration : LjsAstFunctionDeclaration

@@ -10,7 +10,8 @@ public class LjsCompiler
 {
     private readonly LjsAstModel _astModel;
     private readonly LjsProgramConstants _constants = new();
-    private readonly LjsProgram _program = new();
+    private readonly Dictionary<string, int> _namedFunctionsMap = new();
+    private readonly List<LjsFunction> _functionsList = new();
 
     public LjsCompiler(string sourceCodeString)
     {
@@ -49,17 +50,21 @@ public class LjsCompiler
 
     public LjsProgram Compile()
     {
-        ProcessNode(_astModel.RootNode, _program.InstructionsList);
+        var mainFunc = new LjsFunction();
         
-        _program.InstructionsList.Add(
+        _functionsList.Add(mainFunc);
+        
+        ProcessNode(_astModel.RootNode, mainFunc.InstructionsList);
+        
+        mainFunc.InstructionsList.Add(
             new LjsInstruction(LjsInstructionCode.Halt));
         
-        return _program;
+        return new LjsProgram(
+            _constants, _functionsList, _namedFunctionsMap);
     }
 
-    private LjsFunction CreateFunction(LjsAstFunctionDeclaration functionDeclaration)
+    private void ProcessFunction(LjsFunction f, LjsAstFunctionDeclaration functionDeclaration)
     {
-        var f = new LjsFunction();
         
         foreach (var p in functionDeclaration.Parameters)
         {
@@ -75,8 +80,6 @@ public class LjsCompiler
             f.InstructionsList.Add(new LjsInstruction(LjsInstructionCode.ConstUndef));
             f.InstructionsList.Add(new LjsInstruction(LjsInstructionCode.Return));
         }
-
-        return f;
     }
 
     private static LjsObject GetFunctionParameterDefaultValue(ILjsAstNode node) => node switch
@@ -99,9 +102,27 @@ public class LjsCompiler
         
         switch (node)
         {
+            case LjsAstAnonymousFunctionDeclaration funcDeclaration:
+                
+                var anonFunc = new LjsFunction();
+                var anonFunctionIndex = _functionsList.Count;
+                
+                _functionsList.Add(anonFunc);
+                
+                ProcessFunction(anonFunc, funcDeclaration);
+                
+                instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, anonFunctionIndex));
+                
+                break;
+            
             case LjsAstNamedFunctionDeclaration namedFunctionDeclaration:
-                var f = CreateFunction(namedFunctionDeclaration);
-                _program.AddFunction(namedFunctionDeclaration.Name, f);
+                var namedFunc = new LjsFunction();
+                var namedFunctionIndex = _functionsList.Count;
+                
+                _functionsList.Add(namedFunc);
+                _namedFunctionsMap[namedFunctionDeclaration.Name] = namedFunctionIndex;
+                
+                ProcessFunction(namedFunc, namedFunctionDeclaration);
                 break;
             
             case LjsAstFunctionCall functionCall:
@@ -116,7 +137,7 @@ public class LjsCompiler
                 ProcessNode(functionCall.FunctionGetter, instructions);
                 
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.FuncCall, (short) specifiedArgumentsCount));
+                    LjsInstructionCode.FuncCall, specifiedArgumentsCount));
                 
                 break;
             
@@ -151,13 +172,12 @@ public class LjsCompiler
             case LjsAstContinue _:
                 if (startIndex == -1)
                     throw new LjsCompilerError("unexpected continue statement");
-                instructions.Add(new LjsInstruction(LjsInstructionCode.Jump, (short) startIndex));
+                instructions.Add(new LjsInstruction(LjsInstructionCode.Jump, startIndex));
                 break;
             
             case LjsAstLiteral<int> lit:
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.ConstInt, 
-                    _constants.AddIntegerConstant(lit.Value)));
+                    LjsInstructionCode.ConstInt, lit.Value));
                 break;
             
             case LjsAstLiteral<double> lit:
@@ -279,7 +299,7 @@ public class LjsCompiler
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.VarLoad, _constants.AddStringConstant(incrementVar.VarName)));
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.ConstInt, _constants.AddIntegerConstant(1)));
+                    LjsInstructionCode.ConstInt, 1));
                 instructions.Add(new LjsInstruction(LjsCompileUtils.GetIncrementOpCode(incrementVar.Sign)));
                 
                 switch (incrementVar.Order)
@@ -321,9 +341,8 @@ public class LjsCompiler
                     foreach (var alternative in ifBlock.ConditionalAlternatives)
                     {
                         // set previous jump instruction
-                        // TODO instructions.InstructionsCount can be more then short.MaxValue
                         instructions.SetAt(new LjsInstruction(
-                            LjsInstructionCode.JumpIfFalse, (short) instructions.Count), 
+                            LjsInstructionCode.JumpIfFalse, instructions.Count), 
                             ifConditionalJumpIndex);
                         
                         ProcessNode(alternative.Condition, instructions);
@@ -340,18 +359,16 @@ public class LjsCompiler
 
                 if (ifBlock.ElseBlock != null)
                 {
-                    // TODO instructions.InstructionsCount can be more then short.MaxValue
                     instructions.SetAt(new LjsInstruction(
-                        LjsInstructionCode.JumpIfFalse, (short) instructions.Count), 
+                        LjsInstructionCode.JumpIfFalse, instructions.Count), 
                         ifConditionalJumpIndex);
 
                     ifConditionalJumpIndex = -1;
                     
                     ProcessNode(ifBlock.ElseBlock, instructions, startIndex, jumpToTheEndPlaceholdersIndices);
                 }
-
-                // TODO instructions.InstructionsCount can be more then short.MaxValue
-                var ifBlockEndIndex = (short) instructions.Count;
+                
+                var ifBlockEndIndex = instructions.Count;
 
                 if (ifConditionalJumpIndex != -1)
                 {
@@ -385,18 +402,18 @@ public class LjsCompiler
                 ProcessNode(whileLoop.Body, instructions, whileStartIndex, whileEndIndices);
                 
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.Jump, (short) whileStartIndex));
+                    LjsInstructionCode.Jump, whileStartIndex));
 
                 var whileEndIndex = instructions.Count;
 
                 instructions.SetAt(new LjsInstruction(
-                    LjsInstructionCode.JumpIfFalse, (short) whileEndIndex), 
+                    LjsInstructionCode.JumpIfFalse, whileEndIndex), 
                     whileConditionalJumpIndex);
                 
                 foreach (var i in whileEndIndices)
                 {
                     instructions.SetAt(new LjsInstruction(
-                        LjsInstructionCode.Jump, (short) whileEndIndex), i);
+                        LjsInstructionCode.Jump, whileEndIndex), i);
                 }
                 
                 LjsCompileUtils.ReleaseTemporaryIntList(whileEndIndices);
