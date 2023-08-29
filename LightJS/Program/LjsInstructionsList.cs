@@ -6,14 +6,14 @@ public sealed class LjsInstructionsList
     
     public IReadOnlyList<LjsInstruction> Instructions => _instructions;
     
-    public int InstructionsCount => _instructions.Count;
+    public int Count => _instructions.Count;
 
-    public void AddInstruction(LjsInstruction instruction)
+    public void Add(LjsInstruction instruction)
     {
         _instructions.Add(instruction);
     }
 
-    public void SetInstructionAt(LjsInstruction instruction, int index)
+    public void SetAt(LjsInstruction instruction, int index)
     {
         _instructions[index] = instruction;
     }

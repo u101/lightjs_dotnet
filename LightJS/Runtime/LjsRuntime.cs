@@ -8,15 +8,67 @@ public sealed class LjsRuntime
     private readonly LjsProgram _program;
     private readonly Stack<LjsObject> _stack = new();
     private readonly List<Context> _contextsStack = new();
+    private readonly VarSpace _varSpace;
 
     public LjsRuntime(LjsProgram program)
     {
         _program = program;
+        _varSpace = new VarSpace();
+    }
+    
+    private sealed class VarSpace
+    {
+        private readonly Dictionary<string, LjsObject> _vars = new();
+        
+        private readonly VarSpace? _parent;
+        
+        public VarSpace() {}
+
+        private VarSpace(VarSpace parentSpace)
+        {
+            _parent = parentSpace;
+        }
+        
+        public LjsObject Get(string varName)
+        {
+            if (_vars.ContainsKey(varName))
+            {
+                return _vars[varName];
+            }
+
+            if (_parent != null) return _parent.Get(varName);
+        
+            throw new LjsRuntimeError($"{varName} is not defined");
+        
+        }
+
+        public void Declare(string varName)
+        {
+            if (_vars.ContainsKey(varName))
+            {
+                throw new LjsRuntimeError($"variable already declared {varName}");
+            }
+            _vars[varName] = LjsObject.Undefined;
+        }
+
+        public void Store(string varName, LjsObject value)
+        {
+            _vars[varName] = value;
+        }
+
+        public VarSpace CreateChild()
+        {
+            return new VarSpace(this);
+        }
+
+        public VarSpace GetParent()
+        {
+            return _parent ?? this;
+        }
     }
     
     private sealed class Context
     {
-        public readonly Dictionary<string, LjsObject> Vars = new();
         public int InstructionIndex = 0;
         public readonly LjsInstructionsList InstructionsList;
 
@@ -24,21 +76,6 @@ public sealed class LjsRuntime
         {
             InstructionsList = instructionsList;
         }
-    }
-
-    private LjsObject GetVarValue(string varName)
-    {
-        for (var i = _contextsStack.Count - 1; i >= 0; i++)
-        {
-            var ctx = _contextsStack[i];
-            if (ctx.Vars.ContainsKey(varName))
-            {
-                return ctx.Vars[varName];
-            }
-        }
-        
-        throw new LjsRuntimeError($"variable not declared {varName}");
-        
     }
     
     public LjsObject Execute()
@@ -49,7 +86,7 @@ public sealed class LjsRuntime
 
         foreach (var (funcName, func) in prg.Functions)
         {
-            ctx.Vars[funcName] = func;
+            _varSpace.Store(funcName, func);
         }
         
         _contextsStack.Add(ctx);
@@ -59,12 +96,11 @@ public sealed class LjsRuntime
         var v = LjsObject.Undefined;
 
         var execute = true;
+        var varSpace = _varSpace;
 
         while (execute)
         {
             ctx = _contextsStack[^1];
-
-            var vars = ctx.Vars;
             
             var i = ctx.InstructionIndex;
             
@@ -97,8 +133,27 @@ public sealed class LjsRuntime
                     {
                         throw new LjsRuntimeError("not a function");
                     }
+
+                    var argsCount = instruction.Index;
                     
-                    throw new NotImplementedException();
+                    varSpace = varSpace.CreateChild();
+
+                    for (var j = f.Args.Count - 1; j >= 0; --j)
+                    {
+                        var arg = f.Args[j];
+                        
+                        varSpace.Store(arg.Name, j < argsCount ? _stack.Pop() : arg.DefaultValue);
+                    }
+                    
+                    _contextsStack.Add(new Context(f.InstructionsList));
+
+                    jump = true;
+                    break;
+                
+                case LjsInstructionCode.Return:
+                    varSpace = varSpace.GetParent();
+                    _contextsStack.RemoveAt(_contextsStack.Count - 1);
+                    ctx = _contextsStack[^1];
                     break;
                     
                 
@@ -183,11 +238,9 @@ public sealed class LjsRuntime
                 // vars 
                 case LjsInstructionCode.VarDef:
                     varName = prg.GetStringConstant(instruction.Index);
-                    if (vars.ContainsKey(varName))
-                    {
-                        throw new LjsRuntimeError($"variable already declared {varName}");
-                    }
-                    vars[varName] = LjsObject.Undefined;
+                    
+                    varSpace.Declare(varName);
+                    
                     break;
                 
                 case LjsInstructionCode.VarInit:
@@ -195,7 +248,7 @@ public sealed class LjsRuntime
                     varName = prg.GetStringConstant(instruction.Index);
                     v = _stack.Pop();
                     
-                    vars[varName] = v;
+                    varSpace.Store(varName, v);
                     break;
                 
                 case LjsInstructionCode.VarStore:
@@ -203,19 +256,16 @@ public sealed class LjsRuntime
                     
                     v = _stack.Peek();
                     
-                    vars[varName] = v;
+                    varSpace.Store(varName, v);
                     break;
                 
                 case LjsInstructionCode.VarLoad:
                     
                     varName = prg.GetStringConstant(instruction.Index);
+
+                    v = varSpace.Get(varName);
                     
-                    if (!vars.ContainsKey(varName))
-                    {
-                        throw new LjsRuntimeError($"variable not declared {varName}");
-                    }
-                    
-                    _stack.Push(vars[varName]);
+                    _stack.Push(v);
                     
                     break;
                     

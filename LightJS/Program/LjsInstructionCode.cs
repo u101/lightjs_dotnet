@@ -4,12 +4,13 @@ public enum LjsInstructionCode
 {
     Halt = 0x00,
     
-    // define local var
+    // define local var, argument = string const index
     VarDef = 0x01, 
+    // similar to VarStore except value is not pushed to the stack
     VarInit = 0x02, 
-    // load local var, followed by var index byte
+    // load local var and push to the stack, argument = string const index
     VarLoad = 0x03, 
-    // store last value from stack in var, followed by var index byte
+    // store last value from the stack in var, argument = string const index
     VarStore = 0x04, 
     // load int const, followed by const index byte
     ConstInt = 0x05,
