@@ -11,7 +11,7 @@ public class LjsCompiler
     private readonly LjsAstModel _astModel;
     private readonly LjsProgramConstants _constants = new();
     private readonly Dictionary<string, int> _namedFunctionsMap = new();
-    private readonly List<LjsFunction> _functionsList = new();
+    private readonly List<LjsFunctionData> _functionsList = new();
 
     public LjsCompiler(string sourceCodeString)
     {
@@ -50,7 +50,7 @@ public class LjsCompiler
 
     public LjsProgram Compile()
     {
-        var mainFunc = new LjsFunction();
+        var mainFunc = new LjsFunctionData();
         
         _functionsList.Add(mainFunc);
         
@@ -63,7 +63,7 @@ public class LjsCompiler
             _constants, _functionsList, _namedFunctionsMap);
     }
 
-    private void ProcessFunction(LjsFunction f, LjsAstFunctionDeclaration functionDeclaration)
+    private void ProcessFunction(LjsFunctionData f, LjsAstFunctionDeclaration functionDeclaration)
     {
         
         foreach (var p in functionDeclaration.Parameters)
@@ -93,9 +93,9 @@ public class LjsCompiler
         _ => LjsObject.Undefined
     };
 
-    private LjsFunction CreateNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
+    private LjsFunctionData CreateNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
     {
-        var namedFunc = new LjsFunction();
+        var namedFunc = new LjsFunctionData();
         var namedFunctionIndex = _functionsList.Count;
                 
         _functionsList.Add(namedFunc);
@@ -103,7 +103,7 @@ public class LjsCompiler
         return namedFunc;
     }
 
-    private LjsFunction GetNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration) =>
+    private LjsFunctionData GetNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration) =>
         _functionsList[_namedFunctionsMap[namedFunctionDeclaration.Name]];
     
 
@@ -118,7 +118,7 @@ public class LjsCompiler
         {
             case LjsAstAnonymousFunctionDeclaration funcDeclaration:
                 
-                var anonFunc = new LjsFunction();
+                var anonFunc = new LjsFunctionData();
                 var anonFunctionIndex = _functionsList.Count;
                 
                 _functionsList.Add(anonFunc);
