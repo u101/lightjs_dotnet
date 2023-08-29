@@ -8,7 +8,9 @@ public sealed class LjsRuntime
     private readonly LjsProgram _program;
     private readonly LjsProgramConstants _constants;
     private readonly Stack<LjsObject> _stack = new();
-    private readonly List<Context> _contextsStack = new();
+    
+    private readonly List<FunctionContext> _functionCallStack = new();
+    
     private readonly VarSpace _varSpace;
 
     public LjsRuntime(LjsProgram program)
@@ -69,27 +71,22 @@ public sealed class LjsRuntime
         }
     }
     
-    private sealed class Context
+    private readonly struct FunctionContext
     {
-        public int InstructionIndex = 0;
-        public readonly LjsInstructionsList InstructionsList;
+        public int FunctionIndex { get; }
+        public int InstructionIndex { get; }
 
-        public Context(LjsInstructionsList instructionsList)
+        public FunctionContext(int functionIndex, int instructionIndex)
         {
-            InstructionsList = instructionsList;
+            FunctionIndex = functionIndex;
+            InstructionIndex = instructionIndex;
         }
     }
     
     public LjsObject Execute()
     {
-        var prg = _program;
-
-        var mainFunc = prg.MainFunction;
-        
-        var ctx = new Context(mainFunc.InstructionsList);
-        
-        _contextsStack.Add(ctx);
-        
+        // start main function at instruction 0
+        _functionCallStack.Add(new FunctionContext(0,0));
 
         var varName = string.Empty;
         var v = LjsObject.Undefined;
@@ -99,18 +96,18 @@ public sealed class LjsRuntime
 
         while (execute)
         {
-            ctx = _contextsStack[^1];
-            
-            var i = ctx.InstructionIndex;
+            var fCtx = _functionCallStack[^1];
+            var ff = _program.GetFunction(fCtx.FunctionIndex);
             
             var jump = false;
-            var instruction = ctx.InstructionsList.Instructions[i];
+            var instruction = ff.InstructionsList.Instructions[fCtx.InstructionIndex];
             var instructionCode = instruction.Code;
 
             switch (instructionCode)
             {
                 case LjsInstructionCode.Jump:
-                    ctx.InstructionIndex = instruction.Argument;
+                    _functionCallStack[^1] = 
+                        new FunctionContext(fCtx.FunctionIndex, instruction.Argument);
                     jump = true;
                     break;
                 
@@ -119,45 +116,51 @@ public sealed class LjsRuntime
                     var jumpCondition = LjsRuntimeUtils.ToBool(jumpConditionObj);
                     if (!jumpCondition)
                     {
-                        ctx.InstructionIndex = instruction.Argument;
+                        _functionCallStack[^1] = 
+                            new FunctionContext(fCtx.FunctionIndex, instruction.Argument);
                         jump = true;
                     }
                     break;
                 
                 case LjsInstructionCode.FuncRef:
-                    var ljsFunction = _program.GetFunction(instruction.Argument);
-                    _stack.Push(ljsFunction);
+                    _stack.Push(new LjsFunctionPointer(instruction.Argument));
                     break;
 
                 case LjsInstructionCode.FuncCall:
 
                     var funcRef = _stack.Pop();
 
-                    if (funcRef is not LjsFunction f)
+                    if (funcRef is LjsFunctionPointer functionPointer)
+                    {
+                        var argsCount = instruction.Argument;
+                        var f = _program.GetFunction(functionPointer.FunctionIndex);
+                    
+                        varSpace = varSpace.CreateChild();
+
+                        for (var j = f.Args.Count - 1; j >= 0; --j)
+                        {
+                            var arg = f.Args[j];
+                        
+                            varSpace.Store(arg.Name, j < argsCount ? _stack.Pop() : arg.DefaultValue);
+                        }
+
+                        _functionCallStack[^1] = new FunctionContext(fCtx.FunctionIndex, fCtx.InstructionIndex + 1);
+                        _functionCallStack.Add(new FunctionContext(functionPointer.FunctionIndex, 0));
+
+                        jump = true;
+                        
+                    }
+                    else
                     {
                         throw new LjsRuntimeError("not a function");
                     }
-
-                    var argsCount = instruction.Argument;
                     
-                    varSpace = varSpace.CreateChild();
-
-                    for (var j = f.Args.Count - 1; j >= 0; --j)
-                    {
-                        var arg = f.Args[j];
-                        
-                        varSpace.Store(arg.Name, j < argsCount ? _stack.Pop() : arg.DefaultValue);
-                    }
-                    
-                    _contextsStack.Add(new Context(f.InstructionsList));
-
-                    jump = true;
                     break;
                 
                 case LjsInstructionCode.Return:
                     varSpace = varSpace.GetParent();
-                    _contextsStack.RemoveAt(_contextsStack.Count - 1);
-                    ctx = _contextsStack[^1];
+                    _functionCallStack.RemoveAt(_functionCallStack.Count - 1);
+                    jump = true;
                     break;
                     
                 
@@ -277,8 +280,12 @@ public sealed class LjsRuntime
                     throw new LjsInternalError($"unsupported op code {instructionCode}");
                     
             }
-            
-            if (!jump) ++ctx.InstructionIndex;
+
+            if (!jump)
+            {
+                _functionCallStack[^1] = 
+                    new FunctionContext(fCtx.FunctionIndex, fCtx.InstructionIndex + 1);
+            }
         }
 
         return (_stack.Count > 0) ? _stack.Pop() : LjsObject.Undefined;
