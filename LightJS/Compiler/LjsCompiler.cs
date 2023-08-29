@@ -155,114 +155,7 @@ public class LjsCompiler
     private LjsFunctionData GetNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration) =>
         _functionsList[_namedFunctionsMap[namedFunctionDeclaration.Name]];
 
-    private void AddVarLoadInstruction(FunctionContext context, LjsAstGetVar getVar)
-    {
-        var instructions = context.Instructions;
-
-        if (context.HasLocal(getVar.VarName))
-        {
-            instructions.Add(new LjsInstruction(
-                LjsInstructionCode.VarLoad, context.GetLocal(getVar.VarName)));
-        }
-        else if (_namedFunctionsMap.ContainsKey(getVar.VarName))
-        {
-            instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, _namedFunctionsMap[getVar.VarName]));
-        }
-        else
-        {
-            instructions.Add(new LjsInstruction(
-                LjsInstructionCode.ExtLoad, _constants.AddStringConstant(getVar.VarName)));
-        }
-    }
-
-    private LjsInstruction CreateVarLoadInstruction(string varName, FunctionContext context)
-    {
-        var localVarIndex = context.GetLocal(varName);
-        var isLocal = localVarIndex != -1;
-        return isLocal
-            ? new LjsInstruction(LjsInstructionCode.VarLoad, localVarIndex)
-            : new LjsInstruction(
-                LjsInstructionCode.ExtLoad, _constants.AddStringConstant(varName));
-    }
     
-    private LjsInstruction CreateVarStoreInstruction(string varName, FunctionContext context)
-    {
-        var localVarIndex = context.GetLocal(varName);
-        var isLocal = localVarIndex != -1;
-        return isLocal
-            ? new LjsInstruction(LjsInstructionCode.VarStore, localVarIndex)
-            : new LjsInstruction(
-                LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
-    }
-    
-    private LjsInstruction CreateVarInitInstruction(string varName, FunctionContext context)
-    {
-        var localVarIndex = context.GetLocal(varName);
-        var isLocal = localVarIndex != -1;
-        return isLocal
-            ? new LjsInstruction(LjsInstructionCode.VarInit, localVarIndex)
-            : new LjsInstruction(
-                LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
-    }
-    
-    private void AddVarIncrementInstruction(FunctionContext context, LjsAstIncrementVar incrementVar)
-    {
-        var instructions = context.Instructions;
-
-        var varLoadInstruction = CreateVarLoadInstruction(incrementVar.VarName, context);
-                
-        if (incrementVar.Order == LjsAstIncrementOrder.Postfix)
-        {
-            // we leave old var value on stack
-            instructions.Add(varLoadInstruction);
-        }
-        
-        instructions.Add(varLoadInstruction);
-        instructions.Add(new LjsInstruction(LjsInstructionCode.ConstInt, 1));
-        instructions.Add(new LjsInstruction(LjsCompileUtils.GetIncrementOpCode(incrementVar.Sign)));
-                
-        switch (incrementVar.Order)
-        {
-            case LjsAstIncrementOrder.Prefix:
-                instructions.Add(CreateVarStoreInstruction(incrementVar.VarName, context));
-                break;
-                    
-            case LjsAstIncrementOrder.Postfix:
-                instructions.Add(CreateVarInitInstruction(incrementVar.VarName, context));
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    private void AddVarStoreInstructions(FunctionContext context, LjsAstSetVar setVar)
-    {
-        var instructions = context.Instructions;
-        
-        var localVarIndex = context.GetLocal(setVar.VarName);
-        var isLocal = localVarIndex != -1;
-                
-        if (!isLocal && _namedFunctionsMap.ContainsKey(setVar.VarName))
-        {
-            throw new LjsCompilerError($"named function assign {setVar.VarName}");
-        }
-                
-        if (setVar.AssignMode == LjsAstAssignMode.Normal)
-        {
-            ProcessNode(setVar.Expression, context);
-        }
-        else
-        {
-            instructions.Add(CreateVarLoadInstruction(setVar.VarName, context));
-                    
-            ProcessNode(setVar.Expression, context);
-                    
-            instructions.Add(new LjsInstruction(
-                LjsCompileUtils.GetComplexAssignmentOpCode(setVar.AssignMode)));
-        }
-        
-        instructions.Add(CreateVarStoreInstruction(setVar.VarName, context));
-    }
 
     private void ProcessNode(
         ILjsAstNode node, 
@@ -564,5 +457,117 @@ public class LjsCompiler
                 throw new LjsCompilerError("unsupported ast node");
         }
     }
+    
+    /////////// vars init/load/store
+    
+    private void AddVarLoadInstruction(FunctionContext context, LjsAstGetVar getVar)
+    {
+        var instructions = context.Instructions;
+
+        if (context.HasLocal(getVar.VarName))
+        {
+            instructions.Add(new LjsInstruction(
+                LjsInstructionCode.VarLoad, context.GetLocal(getVar.VarName)));
+        }
+        else if (_namedFunctionsMap.ContainsKey(getVar.VarName))
+        {
+            instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, _namedFunctionsMap[getVar.VarName]));
+        }
+        else
+        {
+            instructions.Add(new LjsInstruction(
+                LjsInstructionCode.ExtLoad, _constants.AddStringConstant(getVar.VarName)));
+        }
+    }
+
+    private LjsInstruction CreateVarLoadInstruction(string varName, FunctionContext context)
+    {
+        var localVarIndex = context.GetLocal(varName);
+        var isLocal = localVarIndex != -1;
+        return isLocal
+            ? new LjsInstruction(LjsInstructionCode.VarLoad, localVarIndex)
+            : new LjsInstruction(
+                LjsInstructionCode.ExtLoad, _constants.AddStringConstant(varName));
+    }
+    
+    private LjsInstruction CreateVarStoreInstruction(string varName, FunctionContext context)
+    {
+        var localVarIndex = context.GetLocal(varName);
+        var isLocal = localVarIndex != -1;
+        return isLocal
+            ? new LjsInstruction(LjsInstructionCode.VarStore, localVarIndex)
+            : new LjsInstruction(
+                LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
+    }
+    
+    private LjsInstruction CreateVarInitInstruction(string varName, FunctionContext context)
+    {
+        var localVarIndex = context.GetLocal(varName);
+        var isLocal = localVarIndex != -1;
+        return isLocal
+            ? new LjsInstruction(LjsInstructionCode.VarInit, localVarIndex)
+            : new LjsInstruction(
+                LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
+    }
+    
+    private void AddVarIncrementInstruction(FunctionContext context, LjsAstIncrementVar incrementVar)
+    {
+        var instructions = context.Instructions;
+
+        var varLoadInstruction = CreateVarLoadInstruction(incrementVar.VarName, context);
+                
+        if (incrementVar.Order == LjsAstIncrementOrder.Postfix)
+        {
+            // we leave old var value on stack
+            instructions.Add(varLoadInstruction);
+        }
+        
+        instructions.Add(varLoadInstruction);
+        instructions.Add(new LjsInstruction(LjsInstructionCode.ConstInt, 1));
+        instructions.Add(new LjsInstruction(LjsCompileUtils.GetIncrementOpCode(incrementVar.Sign)));
+                
+        switch (incrementVar.Order)
+        {
+            case LjsAstIncrementOrder.Prefix:
+                instructions.Add(CreateVarStoreInstruction(incrementVar.VarName, context));
+                break;
+                    
+            case LjsAstIncrementOrder.Postfix:
+                instructions.Add(CreateVarInitInstruction(incrementVar.VarName, context));
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private void AddVarStoreInstructions(FunctionContext context, LjsAstSetVar setVar)
+    {
+        var instructions = context.Instructions;
+        
+        var localVarIndex = context.GetLocal(setVar.VarName);
+        var isLocal = localVarIndex != -1;
+                
+        if (!isLocal && _namedFunctionsMap.ContainsKey(setVar.VarName))
+        {
+            throw new LjsCompilerError($"named function assign {setVar.VarName}");
+        }
+                
+        if (setVar.AssignMode == LjsAstAssignMode.Normal)
+        {
+            ProcessNode(setVar.Expression, context);
+        }
+        else
+        {
+            instructions.Add(CreateVarLoadInstruction(setVar.VarName, context));
+                    
+            ProcessNode(setVar.Expression, context);
+                    
+            instructions.Add(new LjsInstruction(
+                LjsCompileUtils.GetComplexAssignmentOpCode(setVar.AssignMode)));
+        }
+        
+        instructions.Add(CreateVarStoreInstruction(setVar.VarName, context));
+    }
+    
     
 }
