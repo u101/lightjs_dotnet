@@ -55,6 +55,23 @@ public class LjsCompiler
         
         return _program;
     }
+    
+    private class Context
+    {
+        public LjsInstructionsList Instructions { get; }
+        public Context? ParentContext { get; }
+
+        public Context(LjsInstructionsList instructions)
+        {
+            Instructions = instructions;
+        }
+        
+        public Context(LjsInstructionsList instructions, Context parentContext)
+        {
+            Instructions = instructions;
+            ParentContext = parentContext;
+        }
+    }
 
     private LjsFunction CreateFunction(LjsAstFunctionDeclaration functionDeclaration)
     {
