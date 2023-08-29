@@ -8,69 +8,69 @@ public static class LjsCompileUtils
 {
     
     
-    public static byte GetBinaryOpCode(LjsAstBinaryOperationType binaryOperationType)
+    public static LjsInstructionCode GetBinaryOpCode(LjsAstBinaryOperationType binaryOperationType)
     {
         switch (binaryOperationType)
         {
             case LjsAstBinaryOperationType.Plus:
-                return LjsInstructionCodes.Add;
+                return LjsInstructionCode.Add;
 
             case LjsAstBinaryOperationType.Minus:
-                return LjsInstructionCodes.Sub;
+                return LjsInstructionCode.Sub;
 
             case LjsAstBinaryOperationType.Multiply:
-                return LjsInstructionCodes.Mul;
+                return LjsInstructionCode.Mul;
 
             case LjsAstBinaryOperationType.Div:
-                return LjsInstructionCodes.Div;
+                return LjsInstructionCode.Div;
 
             case LjsAstBinaryOperationType.Modulo:
-                return LjsInstructionCodes.Mod;
+                return LjsInstructionCode.Mod;
 
             case LjsAstBinaryOperationType.BitAnd:
-                return LjsInstructionCodes.BitAnd;
+                return LjsInstructionCode.BitAnd;
 
             case LjsAstBinaryOperationType.BitOr:
-                return LjsInstructionCodes.BitOr;
+                return LjsInstructionCode.BitOr;
 
             case LjsAstBinaryOperationType.BitLeftShift:
-                return LjsInstructionCodes.BitShiftLeft;
+                return LjsInstructionCode.BitShiftLeft;
 
             case LjsAstBinaryOperationType.BitRightShift:
-                return LjsInstructionCodes.BitSShiftRight;
+                return LjsInstructionCode.BitSShiftRight;
 
             case LjsAstBinaryOperationType.BitUnsignedRightShift:
-                return LjsInstructionCodes.BitUShiftRight;
+                return LjsInstructionCode.BitUShiftRight;
 
             case LjsAstBinaryOperationType.Greater:
-                return LjsInstructionCodes.Gt;
+                return LjsInstructionCode.Gt;
 
             case LjsAstBinaryOperationType.GreaterOrEqual:
-                return LjsInstructionCodes.Gte;
+                return LjsInstructionCode.Gte;
 
             case LjsAstBinaryOperationType.Less:
-                return LjsInstructionCodes.Lt;
+                return LjsInstructionCode.Lt;
 
             case LjsAstBinaryOperationType.LessOrEqual:
-                return LjsInstructionCodes.Lte;
+                return LjsInstructionCode.Lte;
 
             case LjsAstBinaryOperationType.Equals:
-                return LjsInstructionCodes.Eq;
+                return LjsInstructionCode.Eq;
 
             case LjsAstBinaryOperationType.EqualsStrict:
-                return LjsInstructionCodes.Eqs;
+                return LjsInstructionCode.Eqs;
 
             case LjsAstBinaryOperationType.NotEqual:
-                return LjsInstructionCodes.Neq;
+                return LjsInstructionCode.Neq;
 
             case LjsAstBinaryOperationType.NotEqualStrict:
-                return LjsInstructionCodes.Neqs;
+                return LjsInstructionCode.Neqs;
 
             case LjsAstBinaryOperationType.LogicalAnd:
-                return LjsInstructionCodes.And;
+                return LjsInstructionCode.And;
 
             case LjsAstBinaryOperationType.LogicalOr:
-                return LjsInstructionCodes.Or;
+                return LjsInstructionCode.Or;
 
             default:
                 throw new ArgumentOutOfRangeException(binaryOperationType.ToString());
@@ -79,27 +79,27 @@ public static class LjsCompileUtils
         
     }
 
-    public static byte GetComplexAssignmentOpCode(LjsAstAssignMode assignMode)
+    public static LjsInstructionCode GetComplexAssignmentOpCode(LjsAstAssignMode assignMode)
     {
         switch (assignMode)
         {
-            case LjsAstAssignMode.PlusAssign: return LjsInstructionCodes.Add;
-            case LjsAstAssignMode.MinusAssign: return LjsInstructionCodes.Sub;
-            case LjsAstAssignMode.MulAssign: return LjsInstructionCodes.Mul;
-            case LjsAstAssignMode.DivAssign: return LjsInstructionCodes.Div;
-            case LjsAstAssignMode.BitOrAssign: return LjsInstructionCodes.BitOr;
-            case LjsAstAssignMode.BitAndAssign: return LjsInstructionCodes.BitAnd;
-            case LjsAstAssignMode.LogicalOrAssign: return LjsInstructionCodes.Or;
-            case LjsAstAssignMode.LogicalAndAssign: return LjsInstructionCodes.And;
+            case LjsAstAssignMode.PlusAssign: return LjsInstructionCode.Add;
+            case LjsAstAssignMode.MinusAssign: return LjsInstructionCode.Sub;
+            case LjsAstAssignMode.MulAssign: return LjsInstructionCode.Mul;
+            case LjsAstAssignMode.DivAssign: return LjsInstructionCode.Div;
+            case LjsAstAssignMode.BitOrAssign: return LjsInstructionCode.BitOr;
+            case LjsAstAssignMode.BitAndAssign: return LjsInstructionCode.BitAnd;
+            case LjsAstAssignMode.LogicalOrAssign: return LjsInstructionCode.Or;
+            case LjsAstAssignMode.LogicalAndAssign: return LjsInstructionCode.And;
             default:
                 throw new LjsInternalError($"invalid complex assign mode {assignMode}");
         }
     }
 
-    public static byte GetIncrementOpCode(LjsAstIncrementSign incrementSign) => incrementSign switch
+    public static LjsInstructionCode GetIncrementOpCode(LjsAstIncrementSign incrementSign) => incrementSign switch
     {
-        LjsAstIncrementSign.Plus => LjsInstructionCodes.Add,
-        LjsAstIncrementSign.Minus => LjsInstructionCodes.Sub,
+        LjsAstIncrementSign.Plus => LjsInstructionCode.Add,
+        LjsAstIncrementSign.Minus => LjsInstructionCode.Sub,
         _ => throw new LjsInternalError($"invalid increment sign {incrementSign}")
     };
 

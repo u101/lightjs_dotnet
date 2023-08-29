@@ -6,9 +6,9 @@ namespace LightJS.Runtime;
 public static class LjsRuntimeUtils
 {
 
-    public static LjsObject ExecuteArithmeticOperation(LjsObject left, LjsObject right, byte opCode)
+    public static LjsObject ExecuteArithmeticOperation(LjsObject left, LjsObject right, LjsInstructionCode opCode)
     {
-        if (opCode == LjsInstructionCodes.Add && (left is LjsValue<string> || right is LjsValue<string>))
+        if (opCode == LjsInstructionCode.Add && (left is LjsValue<string> || right is LjsValue<string>))
         {
             return new LjsValue<string>(left.ToString() + right.ToString());
         }
@@ -20,22 +20,22 @@ public static class LjsRuntimeUtils
             ExecuteArithmeticOperation(GetIntValue(left), GetIntValue(right), opCode);
     }
 
-    public static LjsObject ExecuteBitwiseOperation(LjsObject left, LjsObject right, byte opCode)
+    public static LjsObject ExecuteBitwiseOperation(LjsObject left, LjsObject right, LjsInstructionCode opCode)
     {
         var a = GetIntValue(left);
         var b = GetIntValue(right);
         
         switch (opCode)
         {
-            case LjsInstructionCodes.BitAnd:
+            case LjsInstructionCode.BitAnd:
                 return new LjsValue<int>(a & b);
-            case LjsInstructionCodes.BitOr:
+            case LjsInstructionCode.BitOr:
                 return new LjsValue<int>(a | b);
-            case LjsInstructionCodes.BitShiftLeft:
+            case LjsInstructionCode.BitShiftLeft:
                 return new LjsValue<int>(a << b);
-            case LjsInstructionCodes.BitSShiftRight:
+            case LjsInstructionCode.BitSShiftRight:
                 return new LjsValue<int>(a >> b);
-            case LjsInstructionCodes.BitUShiftRight:
+            case LjsInstructionCode.BitUShiftRight:
                 return new LjsValue<int>(a >>> b);
             default:
                 throw new LjsInternalError($"unsupported bitwise op code {opCode}");
@@ -69,38 +69,38 @@ public static class LjsRuntimeUtils
         _ => obj == LjsObject.Null || obj == LjsObject.Undefined ? 0 : 1
     };
 
-    public static LjsObject ExecuteArithmeticOperation(int left, int right, byte opCode)
+    public static LjsObject ExecuteArithmeticOperation(int left, int right, LjsInstructionCode opCode)
     {
         switch (opCode)
         {
-            case LjsInstructionCodes.Add:
+            case LjsInstructionCode.Add:
                 return new LjsValue<int>(left + right);
-            case LjsInstructionCodes.Sub:
+            case LjsInstructionCode.Sub:
                 return new LjsValue<int>(left - right);
-            case LjsInstructionCodes.Mul:
+            case LjsInstructionCode.Mul:
                 return new LjsValue<int>(left * right);
-            case LjsInstructionCodes.Div:
+            case LjsInstructionCode.Div:
                 return new LjsValue<int>(left / right);
-            case LjsInstructionCodes.Mod:
+            case LjsInstructionCode.Mod:
                 return new LjsValue<int>(left % right);
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
         }
     }
     
-    public static LjsObject ExecuteArithmeticOperation(double left, double right, byte opCode)
+    public static LjsObject ExecuteArithmeticOperation(double left, double right, LjsInstructionCode opCode)
     {
         switch (opCode)
         {
-            case LjsInstructionCodes.Add:
+            case LjsInstructionCode.Add:
                 return new LjsValue<double>(left + right);
-            case LjsInstructionCodes.Sub:
+            case LjsInstructionCode.Sub:
                 return new LjsValue<double>(left - right);
-            case LjsInstructionCodes.Mul:
+            case LjsInstructionCode.Mul:
                 return new LjsValue<double>(left * right);
-            case LjsInstructionCodes.Div:
+            case LjsInstructionCode.Div:
                 return new LjsValue<double>(left / right);
-            case LjsInstructionCodes.Mod:
+            case LjsInstructionCode.Mod:
                 return new LjsValue<double>(left % right);
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
@@ -109,28 +109,28 @@ public static class LjsRuntimeUtils
 
     public static bool IsNumber(LjsObject o) => o is LjsValue<int> or LjsValue<double>;
 
-    public static LjsObject ExecuteComparisonOperation(LjsObject left, LjsObject right, byte opCode)
+    public static LjsObject ExecuteComparisonOperation(LjsObject left, LjsObject right, LjsInstructionCode opCode)
     {
         switch (opCode)
         {
-            case LjsInstructionCodes.Gt:
+            case LjsInstructionCode.Gt:
                 return GetDoubleValue(left) > GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
                 
-            case LjsInstructionCodes.Gte:
+            case LjsInstructionCode.Gte:
                 return GetDoubleValue(left) >= GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
                 
-            case LjsInstructionCodes.Lt:
+            case LjsInstructionCode.Lt:
                 return GetDoubleValue(left) < GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
                 
-            case LjsInstructionCodes.Lte:
+            case LjsInstructionCode.Lte:
                 return GetDoubleValue(left) <= GetDoubleValue(right) ? LjsValue.True : LjsValue.False;
                 
-            case LjsInstructionCodes.Eq:
-            case LjsInstructionCodes.Eqs:
+            case LjsInstructionCode.Eq:
+            case LjsInstructionCode.Eqs:
                 return left.Equals(right) ? LjsValue.True : LjsValue.False;
                 
-            case LjsInstructionCodes.Neq:
-            case LjsInstructionCodes.Neqs:
+            case LjsInstructionCode.Neq:
+            case LjsInstructionCode.Neqs:
                 return left.Equals(right) ? LjsValue.False : LjsValue.True;
                 
             default:
@@ -138,24 +138,24 @@ public static class LjsRuntimeUtils
         }
     }
 
-    public static LjsObject ExecuteLogicalOperation(LjsObject left, LjsObject right, byte opCode)
+    public static LjsObject ExecuteLogicalOperation(LjsObject left, LjsObject right, LjsInstructionCode opCode)
     {
         switch (opCode)
         {
-            case LjsInstructionCodes.And:
+            case LjsInstructionCode.And:
                 return ToBool(left) && ToBool(right) ? LjsValue.True : LjsValue.False;
-            case LjsInstructionCodes.Or:
+            case LjsInstructionCode.Or:
                 return ToBool(left) || ToBool(right) ? LjsValue.True : LjsValue.False;
             default:
                 throw new LjsInternalError($"unsupported logical op code {opCode}");
         }
     }
 
-    public static LjsObject ExecuteUnaryOperation(LjsObject operand, byte opCode)
+    public static LjsObject ExecuteUnaryOperation(LjsObject operand, LjsInstructionCode opCode)
     {
         switch (opCode)
         {
-            case LjsInstructionCodes.Minus:
+            case LjsInstructionCode.Minus:
                 if (operand is LjsValue<double> d)
                 {
                     return new LjsValue<double>(-d.Value);
@@ -163,10 +163,10 @@ public static class LjsRuntimeUtils
 
                 return new LjsValue<int>(-GetIntValue(operand));
                 
-            case LjsInstructionCodes.BitNot:
+            case LjsInstructionCode.BitNot:
                 return new LjsValue<int>(~GetIntValue(operand));
                 
-            case LjsInstructionCodes.Not:
+            case LjsInstructionCode.Not:
                 return ToBool(operand) ? LjsValue.False : LjsValue.True;
                 
             default:
