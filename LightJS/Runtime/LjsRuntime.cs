@@ -87,11 +87,6 @@ public sealed class LjsRuntime
         var mainFunc = prg.MainFunction;
         
         var ctx = new Context(mainFunc.InstructionsList);
-
-        foreach (var funcName in prg.FunctionsNames.ToArray())
-        {
-            _varSpace.Store(funcName, prg.GetFunction(funcName));
-        }
         
         _contextsStack.Add(ctx);
         

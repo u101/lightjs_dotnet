@@ -93,6 +93,20 @@ public class LjsCompiler
         _ => LjsObject.Undefined
     };
 
+    private LjsFunction CreateNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
+    {
+        var namedFunc = new LjsFunction();
+        var namedFunctionIndex = _functionsList.Count;
+                
+        _functionsList.Add(namedFunc);
+        _namedFunctionsMap[namedFunctionDeclaration.Name] = namedFunctionIndex;
+        return namedFunc;
+    }
+
+    private LjsFunction GetNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration) =>
+        _functionsList[_namedFunctionsMap[namedFunctionDeclaration.Name]];
+    
+
     private void ProcessNode(
         ILjsAstNode node, 
         LjsInstructionsList instructions,
@@ -116,11 +130,13 @@ public class LjsCompiler
                 break;
             
             case LjsAstNamedFunctionDeclaration namedFunctionDeclaration:
-                var namedFunc = new LjsFunction();
-                var namedFunctionIndex = _functionsList.Count;
-                
-                _functionsList.Add(namedFunc);
-                _namedFunctionsMap[namedFunctionDeclaration.Name] = namedFunctionIndex;
+                var namedFunc = _namedFunctionsMap.ContainsKey(namedFunctionDeclaration.Name)
+                        ? GetNamedFunction(namedFunctionDeclaration) : CreateNamedFunction(namedFunctionDeclaration);
+
+                if (namedFunc != GetNamedFunction(namedFunctionDeclaration))
+                {
+                    throw new LjsCompilerError($"duplicate function names {namedFunctionDeclaration.Name}");
+                }
                 
                 ProcessFunction(namedFunc, namedFunctionDeclaration);
                 break;
@@ -261,12 +277,25 @@ public class LjsCompiler
                 break;
             
             case LjsAstGetVar getVar:
-                instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.VarLoad, _constants.AddStringConstant(getVar.VarName)));
+
+                if (_namedFunctionsMap.ContainsKey(getVar.VarName))
+                {
+                    instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, _namedFunctionsMap[getVar.VarName]));
+                }
+                else
+                {
+                    instructions.Add(new LjsInstruction(
+                        LjsInstructionCode.VarLoad, _constants.AddStringConstant(getVar.VarName)));
+                }
                 break;
             
             case LjsAstSetVar setVar:
 
+                if (_namedFunctionsMap.ContainsKey(setVar.VarName))
+                {
+                    throw new LjsCompilerError($"named function assign {setVar.VarName}");
+                }
+                
                 if (setVar.AssignMode == LjsAstAssignMode.Normal)
                 {
                     ProcessNode(setVar.Expression, instructions);
@@ -421,6 +450,12 @@ public class LjsCompiler
             
             case LjsAstSequence sequence:
 
+                foreach (var n in 
+                         sequence.ChildNodes.OfType<LjsAstNamedFunctionDeclaration>())
+                {
+                    CreateNamedFunction(n);
+                }
+                
                 foreach (var n in sequence.ChildNodes)
                 {
                     ProcessNode(n, instructions, startIndex, jumpToTheEndPlaceholdersIndices);
