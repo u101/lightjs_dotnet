@@ -3,14 +3,11 @@ namespace LightJS.Program;
 public enum LjsInstructionCode
 {
     Halt = 0x00,
-    
-    // define local var, argument = string const index
-    VarDef = 0x01, 
     // similar to VarStore except value is not pushed to the stack
     VarInit = 0x02, 
-    // load local var and push to the stack, argument = string const index
+    // load local var and push to the stack, argument = local index
     VarLoad = 0x03, 
-    // store last value from the stack in var, argument = string const index
+    // store last value from the stack in local var, argument = local index
     VarStore = 0x04, 
     // load int const, followed by const index byte
     ConstInt = 0x05,
@@ -89,5 +86,10 @@ public enum LjsInstructionCode
     FuncCall = 0x41,
     // load function reference to stack, argument = function index
     FuncRef = 0x42,
+    
+    // load var and push to the stack, argument = string const index
+    ExtLoad = 0x45,
+    // store last value from the stack in var, argument = string const index
+    ExtStore = 0x46,
 
 }

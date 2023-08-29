@@ -10,89 +10,92 @@ public sealed class LjsRuntime
     private readonly Stack<LjsObject> _stack = new();
     
     private readonly List<FunctionContext> _functionCallStack = new();
-    
-    private readonly VarSpace _varSpace;
+
+    private readonly List<LjsObject> _locals = new();
 
     public LjsRuntime(LjsProgram program)
     {
         _program = program;
         _constants = program.Constants;
-        _varSpace = new VarSpace();
-    }
-    
-    private sealed class VarSpace
-    {
-        private readonly Dictionary<string, LjsObject> _vars = new();
-        
-        private readonly VarSpace? _parent;
-        
-        public VarSpace() {}
-
-        private VarSpace(VarSpace parentSpace)
-        {
-            _parent = parentSpace;
-        }
-        
-        public LjsObject Get(string varName)
-        {
-            if (_vars.ContainsKey(varName))
-            {
-                return _vars[varName];
-            }
-
-            if (_parent != null) return _parent.Get(varName);
-        
-            throw new LjsRuntimeError($"{varName} is not defined");
-        
-        }
-
-        public void Declare(string varName)
-        {
-            if (_vars.ContainsKey(varName))
-            {
-                throw new LjsRuntimeError($"variable already declared {varName}");
-            }
-            _vars[varName] = LjsObject.Undefined;
-        }
-
-        public void Store(string varName, LjsObject value)
-        {
-            _vars[varName] = value;
-        }
-
-        public VarSpace CreateChild()
-        {
-            return new VarSpace(this);
-        }
-
-        public VarSpace GetParent()
-        {
-            return _parent ?? this;
-        }
     }
     
     private readonly struct FunctionContext
     {
         public int FunctionIndex { get; }
         public int InstructionIndex { get; }
+        
+        public int LocalsCount { get; }
+        public int LocalsOffset { get; }
 
-        public FunctionContext(int functionIndex, int instructionIndex)
+        public FunctionContext(
+            int functionIndex, 
+            int instructionIndex, 
+            int localsCount,
+            int localsOffset)
         {
             FunctionIndex = functionIndex;
             InstructionIndex = instructionIndex;
+            LocalsCount = localsCount;
+            LocalsOffset = localsOffset;
         }
+
+        public FunctionContext NextInstruction => 
+            new(FunctionIndex, InstructionIndex + 1, LocalsCount, LocalsOffset);
+        
+        public FunctionContext JumpToInstruction(int instructionIndex) =>
+            new(FunctionIndex, instructionIndex, LocalsCount, LocalsOffset);
+
+        public int GetNextFunctionLocalsOffset() => LocalsOffset + LocalsCount;
+    }
+    
+    private FunctionContext StartFunction(int index, int localsCount)
+    {
+        var localsOffset = _functionCallStack.Count != 0 ? 
+            _functionCallStack[^1].GetNextFunctionLocalsOffset() : 0;
+
+
+        var context = new FunctionContext(
+            index,0, localsCount, localsOffset);
+        
+        _functionCallStack.Add(context);
+        
+        for (var i = 0; i < localsCount; i++)
+        {
+            _locals.Add(LjsObject.Undefined);
+        }
+
+        return context;
+    }
+
+    private void StopFunction()
+    {
+        var fc = _functionCallStack[^1];
+        _locals.RemoveRange(fc.LocalsOffset, fc.LocalsCount);
+        _functionCallStack.RemoveAt(_functionCallStack.Count - 1);
+    }
+
+    private void ExtStore(string varName, LjsObject v)
+    {
+        throw new NotImplementedException($"ExtStore {varName}");
+    }
+    
+    private LjsObject ExtLoad(string varName)
+    {
+        throw new NotImplementedException($"ExtLoad {varName}");
     }
     
     public LjsObject Execute()
     {
         // start main function at instruction 0
-        _functionCallStack.Add(new FunctionContext(0,0));
+        var mainFunc = _program.GetFunction(0);
+
+        StartFunction(0, mainFunc.LocalsCount);
 
         var varName = string.Empty;
+        var varIndex = -1;
         var v = LjsObject.Undefined;
 
         var execute = true;
-        var varSpace = _varSpace;
 
         while (execute)
         {
@@ -106,8 +109,7 @@ public sealed class LjsRuntime
             switch (instructionCode)
             {
                 case LjsInstructionCode.Jump:
-                    _functionCallStack[^1] = 
-                        new FunctionContext(fCtx.FunctionIndex, instruction.Argument);
+                    _functionCallStack[^1] = fCtx.JumpToInstruction(instruction.Argument);
                     jump = true;
                     break;
                 
@@ -116,8 +118,7 @@ public sealed class LjsRuntime
                     var jumpCondition = LjsRuntimeUtils.ToBool(jumpConditionObj);
                     if (!jumpCondition)
                     {
-                        _functionCallStack[^1] = 
-                            new FunctionContext(fCtx.FunctionIndex, instruction.Argument);
+                        _functionCallStack[^1] = fCtx.JumpToInstruction(instruction.Argument);
                         jump = true;
                     }
                     break;
@@ -132,20 +133,20 @@ public sealed class LjsRuntime
 
                     if (funcRef is LjsFunctionPointer functionPointer)
                     {
+                        // move instruction pointer
+                        _functionCallStack[^1] = fCtx.NextInstruction;
+                        
                         var argsCount = instruction.Argument;
                         var f = _program.GetFunction(functionPointer.FunctionIndex);
-                    
-                        varSpace = varSpace.CreateChild();
+
+                        var fc = StartFunction(functionPointer.FunctionIndex, f.LocalsCount);
 
                         for (var j = f.Args.Count - 1; j >= 0; --j)
                         {
                             var arg = f.Args[j];
-                        
-                            varSpace.Store(arg.Name, j < argsCount ? _stack.Pop() : arg.DefaultValue);
+                            _locals[fc.LocalsOffset + j] = 
+                                j < argsCount ? _stack.Pop() : arg.DefaultValue;
                         }
-
-                        _functionCallStack[^1] = new FunctionContext(fCtx.FunctionIndex, fCtx.InstructionIndex + 1);
-                        _functionCallStack.Add(new FunctionContext(functionPointer.FunctionIndex, 0));
 
                         jump = true;
                         
@@ -158,8 +159,7 @@ public sealed class LjsRuntime
                     break;
                 
                 case LjsInstructionCode.Return:
-                    varSpace = varSpace.GetParent();
-                    _functionCallStack.RemoveAt(_functionCallStack.Count - 1);
+                    StopFunction();
                     jump = true;
                     break;
                     
@@ -243,34 +243,46 @@ public sealed class LjsRuntime
                     break;
                 
                 // vars 
-                case LjsInstructionCode.VarDef:
-                    varName = _constants.GetStringConstant(instruction.Argument);
-                    
-                    varSpace.Declare(varName);
-                    
-                    break;
                 
                 case LjsInstructionCode.VarInit:
                     
-                    varName = _constants.GetStringConstant(instruction.Argument);
                     v = _stack.Pop();
+                    varIndex = instruction.Argument;
                     
-                    varSpace.Store(varName, v);
+                    _locals[fCtx.LocalsOffset + varIndex] = v;
                     break;
                 
-                case LjsInstructionCode.VarStore:
+                case LjsInstructionCode.ExtStore:
                     varName = _constants.GetStringConstant(instruction.Argument);
                     
                     v = _stack.Peek();
                     
-                    varSpace.Store(varName, v);
+                    ExtStore(varName, v);
+                    break;
+                
+                case LjsInstructionCode.VarStore:
+                    varIndex = instruction.Argument;
+                    
+                    v = _stack.Peek();
+                    
+                    _locals[fCtx.LocalsOffset + varIndex] = v;
+                    break;
+                
+                case LjsInstructionCode.ExtLoad:
+                    
+                    varName = _constants.GetStringConstant(instruction.Argument);
+
+                    v = ExtLoad(varName);
+                    
+                    _stack.Push(v);
+                    
                     break;
                 
                 case LjsInstructionCode.VarLoad:
                     
-                    varName = _constants.GetStringConstant(instruction.Argument);
+                    varIndex = instruction.Argument;
 
-                    v = varSpace.Get(varName);
+                    v = _locals[fCtx.LocalsOffset + varIndex];
                     
                     _stack.Push(v);
                     
@@ -283,8 +295,7 @@ public sealed class LjsRuntime
 
             if (!jump)
             {
-                _functionCallStack[^1] = 
-                    new FunctionContext(fCtx.FunctionIndex, fCtx.InstructionIndex + 1);
+                _functionCallStack[^1] = fCtx.NextInstruction;
             }
         }
 
