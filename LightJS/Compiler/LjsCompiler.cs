@@ -9,6 +9,7 @@ namespace LightJS.Compiler;
 public class LjsCompiler
 {
     private readonly LjsAstModel _astModel;
+    private readonly LjsProgramConstants _constants = new();
     private readonly LjsProgram _program = new();
 
     public LjsCompiler(string sourceCodeString)
@@ -156,19 +157,19 @@ public class LjsCompiler
             case LjsAstLiteral<int> lit:
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.ConstInt, 
-                    _program.AddIntegerConstant(lit.Value)));
+                    _constants.AddIntegerConstant(lit.Value)));
                 break;
             
             case LjsAstLiteral<double> lit:
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.ConstDouble, 
-                    _program.AddDoubleConstant(lit.Value)));
+                    _constants.AddDoubleConstant(lit.Value)));
                 break;
             
             case LjsAstLiteral<string> lit:
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.ConstString, 
-                    _program.AddStringConstant(lit.Value)));
+                    _constants.AddStringConstant(lit.Value)));
                 break;
             
             case LjsAstNull _:
@@ -226,7 +227,7 @@ public class LjsCompiler
             
             case LjsAstVariableDeclaration variableDeclaration:
 
-                var varNameIndex = _program.AddStringConstant(variableDeclaration.Name);
+                var varNameIndex = _constants.AddStringConstant(variableDeclaration.Name);
 
                 instructions.Add(new LjsInstruction(LjsInstructionCode.VarDef, varNameIndex));
 
@@ -241,7 +242,7 @@ public class LjsCompiler
             
             case LjsAstGetVar getVar:
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.VarLoad, _program.AddStringConstant(getVar.VarName)));
+                    LjsInstructionCode.VarLoad, _constants.AddStringConstant(getVar.VarName)));
                 break;
             
             case LjsAstSetVar setVar:
@@ -253,7 +254,7 @@ public class LjsCompiler
                 else
                 {
                     instructions.Add(new LjsInstruction(
-                        LjsInstructionCode.VarLoad, _program.AddStringConstant(setVar.VarName)));
+                        LjsInstructionCode.VarLoad, _constants.AddStringConstant(setVar.VarName)));
                     
                     ProcessNode(setVar.Expression, instructions);
                     
@@ -262,7 +263,7 @@ public class LjsCompiler
                 }
                 
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.VarStore, _program.AddStringConstant(setVar.VarName)));
+                    LjsInstructionCode.VarStore, _constants.AddStringConstant(setVar.VarName)));
                 
                 break;
             
@@ -272,25 +273,25 @@ public class LjsCompiler
                 {
                     // we leave old var value on stack
                     instructions.Add(new LjsInstruction(
-                        LjsInstructionCode.VarLoad, _program.AddStringConstant(incrementVar.VarName)));
+                        LjsInstructionCode.VarLoad, _constants.AddStringConstant(incrementVar.VarName)));
                 }
                 
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.VarLoad, _program.AddStringConstant(incrementVar.VarName)));
+                    LjsInstructionCode.VarLoad, _constants.AddStringConstant(incrementVar.VarName)));
                 instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.ConstInt, _program.AddIntegerConstant(1)));
+                    LjsInstructionCode.ConstInt, _constants.AddIntegerConstant(1)));
                 instructions.Add(new LjsInstruction(LjsCompileUtils.GetIncrementOpCode(incrementVar.Sign)));
                 
                 switch (incrementVar.Order)
                 {
                     case LjsAstIncrementOrder.Prefix:
                         instructions.Add(new LjsInstruction(
-                            LjsInstructionCode.VarStore, _program.AddStringConstant(incrementVar.VarName)));
+                            LjsInstructionCode.VarStore, _constants.AddStringConstant(incrementVar.VarName)));
                         break;
                     
                     case LjsAstIncrementOrder.Postfix:
                         instructions.Add(new LjsInstruction(
-                            LjsInstructionCode.VarInit, _program.AddStringConstant(incrementVar.VarName)));
+                            LjsInstructionCode.VarInit, _constants.AddStringConstant(incrementVar.VarName)));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();

@@ -6,6 +6,7 @@ namespace LightJS.Runtime;
 public sealed class LjsRuntime
 {
     private readonly LjsProgram _program;
+    private readonly LjsProgramConstants _constants;
     private readonly Stack<LjsObject> _stack = new();
     private readonly List<Context> _contextsStack = new();
     private readonly VarSpace _varSpace;
@@ -13,6 +14,7 @@ public sealed class LjsRuntime
     public LjsRuntime(LjsProgram program)
     {
         _program = program;
+        _constants = program.Constants;
         _varSpace = new VarSpace();
     }
     
@@ -162,13 +164,13 @@ public sealed class LjsRuntime
                     break;
                 
                 case LjsInstructionCode.ConstInt:
-                    _stack.Push(new LjsValue<int>(prg.GetIntegerConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<int>(_constants.GetIntegerConstant(instruction.Index)));
                     break;
                 case LjsInstructionCode.ConstDouble:
-                    _stack.Push(new LjsValue<double>(prg.GetDoubleConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<double>(_constants.GetDoubleConstant(instruction.Index)));
                     break;
                 case LjsInstructionCode.ConstString:
-                    _stack.Push(new LjsValue<string>(prg.GetStringConstant(instruction.Index)));
+                    _stack.Push(new LjsValue<string>(_constants.GetStringConstant(instruction.Index)));
                     break;
                 case LjsInstructionCode.ConstTrue:
                     _stack.Push(LjsValue.True);
@@ -237,7 +239,7 @@ public sealed class LjsRuntime
                 
                 // vars 
                 case LjsInstructionCode.VarDef:
-                    varName = prg.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Index);
                     
                     varSpace.Declare(varName);
                     
@@ -245,14 +247,14 @@ public sealed class LjsRuntime
                 
                 case LjsInstructionCode.VarInit:
                     
-                    varName = prg.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Index);
                     v = _stack.Pop();
                     
                     varSpace.Store(varName, v);
                     break;
                 
                 case LjsInstructionCode.VarStore:
-                    varName = prg.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Index);
                     
                     v = _stack.Peek();
                     
@@ -261,7 +263,7 @@ public sealed class LjsRuntime
                 
                 case LjsInstructionCode.VarLoad:
                     
-                    varName = prg.GetStringConstant(instruction.Index);
+                    varName = _constants.GetStringConstant(instruction.Index);
 
                     v = varSpace.Get(varName);
                     
