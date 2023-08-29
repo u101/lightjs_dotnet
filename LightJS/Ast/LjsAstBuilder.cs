@@ -6,7 +6,7 @@ namespace LightJS.Ast;
 public class LjsAstBuilder
 {
     private readonly string _sourceCodeString;
-    private readonly TokensReader _tokensReader;
+    private readonly TokensIterator _tokensIterator;
     
     private readonly List<ILjsAstNode> _postfixExpression = new();
     private readonly Stack<Op> _operatorsStack = new();
@@ -28,7 +28,7 @@ public class LjsAstBuilder
         var tokens = ljsTokenizer.ReadTokens();
         
         _sourceCodeString = sourceCodeString;
-        _tokensReader = new TokensReader(tokens);
+        _tokensIterator = new TokensIterator(tokens);
     }
     
     public LjsAstBuilder(string sourceCodeString, List<LjsToken> tokens)
@@ -45,12 +45,12 @@ public class LjsAstBuilder
             throw new ArgumentException("empty tokens list");
         
         _sourceCodeString = sourceCodeString;
-        _tokensReader = new TokensReader(tokens);
+        _tokensIterator = new TokensIterator(tokens);
     }
 
     public LjsAstModel Build()
     {
-        if (!_tokensReader.HasNextToken)
+        if (!_tokensIterator.HasNextToken)
         {
             throw new Exception("no tokens");
         }
@@ -203,13 +203,13 @@ public class LjsAstBuilder
         
         SkipRedundantSemicolons();
 
-        if (!_tokensReader.HasNextToken) 
+        if (!_tokensIterator.HasNextToken) 
             return firstExpression;
         
         var sq = new LjsAstSequence();
         sq.AddNode(firstExpression);
 
-        while (_tokensReader.HasNextToken)
+        while (_tokensIterator.HasNextToken)
         {
             sq.AddNode(ProcessCodeLine(StopSymbolType.Eof));
             SkipRedundantSemicolons();
@@ -228,7 +228,7 @@ public class LjsAstBuilder
         
         CheckEarlyEof();
 
-        if (allowEmptyBlock && _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketClose)
+        if (allowEmptyBlock && _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketClose)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
             return LjsAstEmptyNode.Instance;
@@ -239,7 +239,7 @@ public class LjsAstBuilder
         SkipRedundantSemicolons();
         CheckEarlyEof();
 
-        if (_tokensReader.NextToken.TokenType == LjsTokenType.OpBracketClose)
+        if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketClose)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
             return firstExpression;
@@ -248,8 +248,8 @@ public class LjsAstBuilder
         var sq = new LjsAstSequence();
         sq.AddNode(firstExpression);
 
-        while (_tokensReader.HasNextToken &&
-               _tokensReader.NextToken.TokenType != LjsTokenType.OpBracketClose)
+        while (_tokensIterator.HasNextToken &&
+               _tokensIterator.NextToken.TokenType != LjsTokenType.OpBracketClose)
         {
             sq.AddNode(ProcessCodeLine(StopSymbolType.BracketClose));
             SkipRedundantSemicolons();
@@ -262,16 +262,16 @@ public class LjsAstBuilder
     }
     private void CheckEarlyEof()
     {
-        if (!_tokensReader.HasNextToken)
+        if (!_tokensIterator.HasNextToken)
         {
-            throw new LjsSyntaxError("unexpected EOF", _tokensReader.CurrentToken.Position);
+            throw new LjsSyntaxError("unexpected EOF", _tokensIterator.CurrentToken.Position);
         }
     }
 
     private void SkipRedundantSemicolons()
     {
-        while (_tokensReader.HasNextToken &&
-               _tokensReader.NextToken.TokenType == LjsTokenType.OpSemicolon)
+        while (_tokensIterator.HasNextToken &&
+               _tokensIterator.NextToken.TokenType == LjsTokenType.OpSemicolon)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.OpSemicolon);
         }
@@ -281,7 +281,7 @@ public class LjsAstBuilder
     {
         CheckEarlyEof();
 
-        var nextToken = _tokensReader.NextToken;
+        var nextToken = _tokensIterator.NextToken;
 
         var expressionStopSymbolType = 
             stopSymbolType | StopSymbolType.Auto | StopSymbolType.Semicolon;
@@ -308,7 +308,7 @@ public class LjsAstBuilder
                 CheckExpectedNextAndMoveForward(LjsTokenType.Break);
                 
                 var breakNode = new LjsAstBreak();
-                RegisterNodePosition(breakNode, _tokensReader.CurrentToken);
+                RegisterNodePosition(breakNode, _tokensIterator.CurrentToken);
 
                 return breakNode;
             
@@ -316,7 +316,7 @@ public class LjsAstBuilder
                 CheckExpectedNextAndMoveForward(LjsTokenType.Continue);
                 
                 var continueNode = new LjsAstContinue();
-                RegisterNodePosition(continueNode, _tokensReader.CurrentToken);
+                RegisterNodePosition(continueNode, _tokensIterator.CurrentToken);
 
                 return continueNode;
             
@@ -327,13 +327,13 @@ public class LjsAstBuilder
 
                 CheckExpectedNextAndMoveForward(LjsTokenType.Return);
                 
-                var returnNodeToken = _tokensReader.CurrentToken;
+                var returnNodeToken = _tokensIterator.CurrentToken;
 
                 var returnExpression = LjsAstEmptyNode.Instance;
                 
-                if (_tokensReader.HasNextToken &&
+                if (_tokensIterator.HasNextToken &&
                     ShouldProcessReturnStatementExpression(
-                        _tokensReader.CurrentToken, _tokensReader.NextToken))
+                        _tokensIterator.CurrentToken, _tokensIterator.NextToken))
                 {
                     returnExpression = ProcessExpression(
                         expressionStopSymbolType | StopSymbolType.BracketClose);
@@ -348,12 +348,12 @@ public class LjsAstBuilder
                 
                 CheckExpectedNextAndMoveForward(LjsTokenType.Function);
                 
-                var functionToken = _tokensReader.CurrentToken;
+                var functionToken = _tokensIterator.CurrentToken;
                 
                 CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
 
                 var funcName = LjsTokenizerUtils.GetTokenStringValue(
-                    _sourceCodeString, _tokensReader.CurrentToken);
+                    _sourceCodeString, _tokensIterator.CurrentToken);
                 
                 var funcDeclaration = ProcessFunctionDeclaration(funcName);
                 
@@ -370,9 +370,9 @@ public class LjsAstBuilder
     {
         CheckEarlyEof();
         
-        if (_tokensReader.NextToken.TokenType != tokenType)
+        if (_tokensIterator.NextToken.TokenType != tokenType)
         {
-            throw new LjsSyntaxError($"expected {tokenType}", _tokensReader.NextToken.Position);
+            throw new LjsSyntaxError($"expected {tokenType}", _tokensIterator.NextToken.Position);
         }
     }
     
@@ -380,7 +380,7 @@ public class LjsAstBuilder
     {
         CheckExpectedNext(tokenType);
         
-        _tokensReader.MoveForward();
+        _tokensIterator.MoveForward();
     }
 
     private ILjsAstNode ProcessVariableDeclaration(StopSymbolType stopSymbol, LjsTokenType tokenType)
@@ -389,10 +389,10 @@ public class LjsAstBuilder
         
         CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
 
-        var firstVarNameToken = _tokensReader.CurrentToken;
+        var firstVarNameToken = _tokensIterator.CurrentToken;
         var firstVarValue = LjsAstEmptyNode.Instance;
 
-        if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
+        if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpAssign)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.OpAssign);
             firstVarValue = ProcessExpression(stopSymbol | StopSymbolType.Comma);
@@ -406,7 +406,7 @@ public class LjsAstBuilder
         
         RegisterNodePosition(firstVar, firstVarNameToken);
         
-        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpComma)
+        if (_tokensIterator.NextToken.TokenType != LjsTokenType.OpComma)
         {
             return firstVar;
         }
@@ -414,16 +414,16 @@ public class LjsAstBuilder
         var seq = new LjsAstSequence();
         seq.AddNode(firstVar);
         
-        while (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
+        while (_tokensIterator.NextToken.TokenType == LjsTokenType.OpComma)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
             
             CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
             
-            var nextVarToken = _tokensReader.CurrentToken;
+            var nextVarToken = _tokensIterator.CurrentToken;
             var nextVarValue = LjsAstEmptyNode.Instance;
             
-            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
+            if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpAssign)
             {
                 CheckExpectedNextAndMoveForward(LjsTokenType.OpAssign);
                 
@@ -453,23 +453,23 @@ public class LjsAstBuilder
         var condExpr = LjsAstEmptyNode.Instance;
         var iterExpr = LjsAstEmptyNode.Instance;
 
-        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpSemicolon)
+        if (_tokensIterator.NextToken.TokenType != LjsTokenType.OpSemicolon)
         {
-            initExpr = _tokensReader.NextToken.TokenType == LjsTokenType.Var
-                ? ProcessVariableDeclaration(StopSymbolType.Semicolon, _tokensReader.NextToken.TokenType)
+            initExpr = _tokensIterator.NextToken.TokenType == LjsTokenType.Var
+                ? ProcessVariableDeclaration(StopSymbolType.Semicolon, _tokensIterator.NextToken.TokenType)
                 : ProcessExpression(StopSymbolType.Semicolon);
         }
         
         CheckExpectedNextAndMoveForward(LjsTokenType.OpSemicolon);
         
-        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpSemicolon)
+        if (_tokensIterator.NextToken.TokenType != LjsTokenType.OpSemicolon)
         {
             condExpr = ProcessExpression(StopSymbolType.Semicolon);
         }
         
         CheckExpectedNextAndMoveForward(LjsTokenType.OpSemicolon);
         
-        if (_tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
+        if (_tokensIterator.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
         {
             iterExpr = ProcessExpression(StopSymbolType.ParenthesesClose);
         }
@@ -477,7 +477,7 @@ public class LjsAstBuilder
         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
         
         var hasBrackets =
-            _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+            _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketOpen;
         
         var mainBody = hasBrackets ? 
             ProcessBlockInBrackets() : 
@@ -503,7 +503,7 @@ public class LjsAstBuilder
         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
         
         var hasBrackets =
-            _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+            _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketOpen;
         
         var mainBody = hasBrackets ? 
             ProcessBlockInBrackets() : 
@@ -528,7 +528,7 @@ public class LjsAstBuilder
         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
         
         var hasBrackets =
-            _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+            _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketOpen;
 
         var mainBody = hasBrackets ? 
             ProcessBlockInBrackets() : 
@@ -540,7 +540,7 @@ public class LjsAstBuilder
         var ifBlock = new LjsAstIfBlock(
             new LjsAstConditionalExpression(mainCondition, mainBody));
 
-        while (_tokensReader.NextToken.TokenType == LjsTokenType.ElseIf)
+        while (_tokensIterator.NextToken.TokenType == LjsTokenType.ElseIf)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.ElseIf);
             
@@ -552,7 +552,7 @@ public class LjsAstBuilder
             CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
 
             hasBrackets =
-                _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+                _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketOpen;
 
             var altBody = hasBrackets
                 ? ProcessBlockInBrackets()
@@ -566,14 +566,14 @@ public class LjsAstBuilder
                 conditionalExpression);
         }
 
-        if (_tokensReader.NextToken.TokenType == LjsTokenType.Else)
+        if (_tokensIterator.NextToken.TokenType == LjsTokenType.Else)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.Else);
             
             CheckEarlyEof();
 
             hasBrackets =
-                _tokensReader.NextToken.TokenType == LjsTokenType.OpBracketOpen;
+                _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketOpen;
 
             var elseBody = hasBrackets
                 ? ProcessBlockInBrackets()
@@ -590,7 +590,7 @@ public class LjsAstBuilder
     private LjsAstObjectLiteral ProcessObjectLiteral()
     {
         // current token = {
-        if (_tokensReader.NextToken.TokenType == LjsTokenType.OpBracketClose)
+        if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketClose)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
             return new LjsAstObjectLiteral();
@@ -598,11 +598,11 @@ public class LjsAstBuilder
         
         var obj = new LjsAstObjectLiteral();
 
-        while (_tokensReader.NextToken.TokenType != LjsTokenType.OpBracketClose)
+        while (_tokensIterator.NextToken.TokenType != LjsTokenType.OpBracketClose)
         {
             CheckEarlyEof();
 
-            var nextTokenType = _tokensReader.NextToken.TokenType;
+            var nextTokenType = _tokensIterator.NextToken.TokenType;
 
             var propName = string.Empty;
             
@@ -610,22 +610,22 @@ public class LjsAstBuilder
             {
                 CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
                 propName = LjsTokenizerUtils.GetTokenStringValue(
-                    _sourceCodeString, _tokensReader.CurrentToken);
+                    _sourceCodeString, _tokensIterator.CurrentToken);
             }
             else if (nextTokenType == LjsTokenType.StringLiteral)
             {
                 CheckExpectedNextAndMoveForward(LjsTokenType.StringLiteral);
-                propName = LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, _tokensReader.CurrentToken);
+                propName = LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, _tokensIterator.CurrentToken);
             }
             else if (nextTokenType == LjsTokenType.IntDecimal)
             {
                 CheckExpectedNextAndMoveForward(LjsTokenType.IntDecimal);
-                propName = LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, _tokensReader.CurrentToken);
+                propName = LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, _tokensIterator.CurrentToken);
                 
             }
             else
             {
-                throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+                throw new LjsSyntaxError("unexpected token", _tokensIterator.NextToken.Position);
             }
             
             CheckExpectedNextAndMoveForward(LjsTokenType.OpColon);
@@ -637,7 +637,7 @@ public class LjsAstBuilder
             
             CheckEarlyEof();
 
-            switch (_tokensReader.NextToken.TokenType)
+            switch (_tokensIterator.NextToken.TokenType)
             {
                 case LjsTokenType.OpComma:
                     CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
@@ -646,7 +646,7 @@ public class LjsAstBuilder
                     // we'll stop here
                     break;
                 default:
-                    throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+                    throw new LjsSyntaxError("unexpected token", _tokensIterator.NextToken.Position);
             }
         }
 
@@ -658,7 +658,7 @@ public class LjsAstBuilder
     private LjsAstArrayLiteral ProcessArrayLiteral()
     {
         // current token = [
-        if (_tokensReader.NextToken.TokenType == LjsTokenType.OpSquareBracketsClose)
+        if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpSquareBracketsClose)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.OpSquareBracketsClose);
             return new LjsAstArrayLiteral();
@@ -666,7 +666,7 @@ public class LjsAstBuilder
 
         var arr = new LjsAstArrayLiteral();
         
-        while (_tokensReader.NextToken.TokenType != LjsTokenType.OpSquareBracketsClose)
+        while (_tokensIterator.NextToken.TokenType != LjsTokenType.OpSquareBracketsClose)
         {
             CheckEarlyEof();
             
@@ -677,7 +677,7 @@ public class LjsAstBuilder
             
             CheckEarlyEof();
 
-            switch (_tokensReader.NextToken.TokenType)
+            switch (_tokensIterator.NextToken.TokenType)
             {
                 case LjsTokenType.OpComma:
                     CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
@@ -686,7 +686,7 @@ public class LjsAstBuilder
                     // we'll stop here
                     break;
                 default:
-                    throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+                    throw new LjsSyntaxError("unexpected token", _tokensIterator.NextToken.Position);
             }
         }
         
@@ -714,20 +714,20 @@ public class LjsAstBuilder
         
         var processFinished = false;
 
-        while (_tokensReader.HasNextToken && !processFinished)
+        while (_tokensIterator.HasNextToken && !processFinished)
         {
-            _tokensReader.MoveForward();
+            _tokensIterator.MoveForward();
 
-            var token = _tokensReader.CurrentToken;
+            var token = _tokensIterator.CurrentToken;
             var prevToken = lastProcessedToken.TokenType != LjsTokenType.None ?
-                _tokensReader.PrevToken : lastProcessedToken;
-            var nextToken = _tokensReader.NextToken;
+                _tokensIterator.PrevToken : lastProcessedToken;
+            var nextToken = _tokensIterator.NextToken;
 
             if (IsStopSymbol(token.TokenType, stopSymbolType))
             {
                 if (mode == ProcessExpressionMode.StopBeforeStopSymbol)
                 {
-                    _tokensReader.MoveBackward();
+                    _tokensIterator.MoveBackward();
                 }
                 processFinished = true;
                 break;
@@ -738,7 +738,7 @@ public class LjsAstBuilder
                 prevToken.TokenType != LjsTokenType.None &&
                 ShouldAutoTerminateExpression(prevToken, token))
             {
-                _tokensReader.MoveBackward();
+                _tokensIterator.MoveBackward();
                 processFinished = true;
                 break;
             }
@@ -854,7 +854,7 @@ public class LjsAstBuilder
                         
                         _postfixExpression.Add(funcArg);
                         
-                        while (_tokensReader.CurrentToken.TokenType == LjsTokenType.OpComma)
+                        while (_tokensIterator.CurrentToken.TokenType == LjsTokenType.OpComma)
                         {
                             funcArg = ProcessExpression(
                                 StopSymbolType.FuncCall, ProcessExpressionMode.StopAtStopSymbol);
@@ -945,7 +945,7 @@ public class LjsAstBuilder
         if (!processFinished)
         {
             var eofTermination = 
-                (stopSymbolType & StopSymbolType.Eof) != 0 && !_tokensReader.HasNextToken;
+                (stopSymbolType & StopSymbolType.Eof) != 0 && !_tokensIterator.HasNextToken;
 
             if (!eofTermination)
             {
@@ -1190,30 +1190,30 @@ public class LjsAstBuilder
         
         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
 
-        while (_tokensReader.HasNextToken && 
-               _tokensReader.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
+        while (_tokensIterator.HasNextToken && 
+               _tokensIterator.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
         {
             CheckExpectedNextAndMoveForward(LjsTokenType.Identifier);
 
-            var argNameToken = _tokensReader.CurrentToken;
+            var argNameToken = _tokensIterator.CurrentToken;
             var defaultValue = LjsAstEmptyNode.Instance;
 
             if (argNameToken.TokenType != LjsTokenType.Identifier)
                 throw new LjsSyntaxError("expected identifier", argNameToken.Position);
 
-            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpAssign)
+            if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpAssign)
             {
                 CheckExpectedNextAndMoveForward(LjsTokenType.OpAssign);
                 
-                if (!LjsAstBuilderUtils.IsLiteral(_tokensReader.NextToken.TokenType))
+                if (!LjsAstBuilderUtils.IsLiteral(_tokensIterator.NextToken.TokenType))
                 {
-                    throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+                    throw new LjsSyntaxError("unexpected token", _tokensIterator.NextToken.Position);
                 }
                 
-                _tokensReader.MoveForward();
+                _tokensIterator.MoveForward();
                     
                 defaultValue = LjsAstBuilderUtils.CreateLiteralNode(
-                    _tokensReader.CurrentToken, _sourceCodeString);
+                    _tokensIterator.CurrentToken, _sourceCodeString);
             }
             
             _functionDeclarationParameters.Add(new LjsAstFunctionDeclarationParameter(
@@ -1221,17 +1221,17 @@ public class LjsAstBuilder
                 defaultValue
                 ));
 
-            if (_tokensReader.NextToken.TokenType == LjsTokenType.OpComma)
+            if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpComma)
             {
                 CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
             }
-            else if (_tokensReader.NextToken.TokenType == LjsTokenType.OpParenthesesClose)
+            else if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpParenthesesClose)
             {
                 break; // arguments section finish
             }
             else
             {
-                throw new LjsSyntaxError("unexpected token", _tokensReader.NextToken.Position);
+                throw new LjsSyntaxError("unexpected token", _tokensIterator.NextToken.Position);
             }
         }
         
@@ -1256,13 +1256,13 @@ public class LjsAstBuilder
 
     }
 
-    private class TokensReader
+    private class TokensIterator
     {
         private readonly List<LjsToken> _tokens;
 
         private int _currentIndex = -1;
     
-        public TokensReader(List<LjsToken> tokens)
+        public TokensIterator(List<LjsToken> tokens)
         {
             _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
         }
