@@ -25,6 +25,33 @@ public class FunctionsTests
     }
     
     [Test]
+    public void FactorialIterationsCountTest()
+    {
+        var code = """
+        
+        var iterations = 0
+        
+        fact(8)
+        
+        function fact(n) {
+            ++iterations;
+            
+            if (n <= 0) return 0;
+            if (n == 1) return 1;
+            
+            return n * fact(n - 1); 
+        }
+        
+        iterations
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, 8);
+    }
+    
+    [Test]
     public void FactorialTest2()
     {
         var code = """
