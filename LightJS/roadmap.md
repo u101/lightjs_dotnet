@@ -19,6 +19,13 @@
 * 'this' reference support
 * Math package
 
+### Compiler features
+* Save token positions in compiled code
+
+### Project-wide
+* Helper class(es) for raising exceptions
+* Add extended info in exception (pointer to the token that caused an Exception) 
+
 ### Ast features
 * Try catch block
 * 'new' operator
