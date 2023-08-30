@@ -54,7 +54,7 @@ public class LjsCompiler
         
         _functionsList.Add(mainFunc);
 
-        var context = new FunctionContext(mainFunc.InstructionsList);
+        var context = new FunctionContext(mainFunc.InstructionsList, 0);
         
         ProcessNode(_astModel.RootNode, context);
 
@@ -71,18 +71,21 @@ public class LjsCompiler
     {
         private readonly FunctionContext? _parentContext;
         public LjsInstructionsList Instructions { get; }
-        
+        public int FunctionIndex { get; }
+
         private readonly Dictionary<string, int> _localVarIndices = new();
         
-        public FunctionContext(LjsInstructionsList instructions)
+        public FunctionContext(LjsInstructionsList instructions, int functionIndex)
         {
             Instructions = instructions;
+            FunctionIndex = functionIndex;
             _parentContext = null;
         }
 
-        private FunctionContext(LjsInstructionsList instructions, FunctionContext parentContext)
+        private FunctionContext(LjsInstructionsList instructions, int functionIndex, FunctionContext parentContext)
         {
             Instructions = instructions;
+            FunctionIndex = functionIndex;
             _parentContext = parentContext;
         }
 
@@ -99,13 +102,32 @@ public class LjsCompiler
 
         public int GetLocal(string name) => _localVarIndices.TryGetValue(name, out var i) ? i : -1;
 
-        public FunctionContext CreateChild(LjsInstructionsList instructions) => new(instructions, this);
+        public bool HasLocalInHierarchy(string name) => _localVarIndices.ContainsKey(name) ||
+                                                        (_parentContext != null &&
+                                                         _parentContext.HasLocalInHierarchy(name));
+
+        public (int, int) GetLocalInHierarchy(string name)
+        {
+            if (_localVarIndices.TryGetValue(name, out var i))
+            {
+                return (i, FunctionIndex);
+            }
+
+            return _parentContext?.GetLocalInHierarchy(name) ?? (-1, -1);
+        }
+
+        public FunctionContext CreateChild(LjsInstructionsList instructions, int functionIndex) => 
+            new(instructions, functionIndex, this);
     }
 
-    private void ProcessFunction(LjsFunctionData f, LjsAstFunctionDeclaration functionDeclaration, FunctionContext context)
+    private void ProcessFunction(
+        LjsFunctionData f, 
+        LjsAstFunctionDeclaration functionDeclaration, 
+        FunctionContext parentContext,
+        int functionIndex)
     {
         
-        var childContext = context.CreateChild(f.InstructionsList);
+        var childContext = parentContext.CreateChild(f.InstructionsList, functionIndex);
 
         var parameters = functionDeclaration.Parameters;
 
@@ -155,7 +177,21 @@ public class LjsCompiler
     private LjsFunctionData GetNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration) =>
         _functionsList[_namedFunctionsMap[namedFunctionDeclaration.Name]];
 
-    
+    private (LjsFunctionData, int) GetOrCreateNamedFunctionData(LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
+    {
+        if (_namedFunctionsMap.ContainsKey(namedFunctionDeclaration.Name))
+        {
+            var functionIndex = _namedFunctionsMap[namedFunctionDeclaration.Name];
+            var functionData = _functionsList[functionIndex];
+            return (functionData, functionIndex);
+        }
+        else
+        {
+            var functionIndex = _functionsList.Count;
+            var functionData = CreateNamedFunction(namedFunctionDeclaration);
+            return (functionData, functionIndex);
+        }
+    }
 
     private void ProcessNode(
         ILjsAstNode node, 
@@ -174,22 +210,21 @@ public class LjsCompiler
                 
                 _functionsList.Add(anonFunc);
                 
-                ProcessFunction(anonFunc, funcDeclaration, context);
+                ProcessFunction(anonFunc, funcDeclaration, context, anonFunctionIndex);
                 
                 instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, anonFunctionIndex));
                 
                 break;
             
             case LjsAstNamedFunctionDeclaration namedFunctionDeclaration:
-                var namedFunc = _namedFunctionsMap.ContainsKey(namedFunctionDeclaration.Name)
-                        ? GetNamedFunction(namedFunctionDeclaration) : CreateNamedFunction(namedFunctionDeclaration);
+                var (namedFunc, namedFuncIndex) = GetOrCreateNamedFunctionData(namedFunctionDeclaration);
 
                 if (namedFunc != GetNamedFunction(namedFunctionDeclaration))
                 {
                     throw new LjsCompilerError($"duplicate function names {namedFunctionDeclaration.Name}");
                 }
                 
-                ProcessFunction(namedFunc, namedFunctionDeclaration, context);
+                ProcessFunction(namedFunc, namedFunctionDeclaration, context, namedFuncIndex);
                 break;
             
             case LjsAstFunctionCall functionCall:
@@ -473,6 +508,14 @@ public class LjsCompiler
         {
             instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, _namedFunctionsMap[getVar.VarName]));
         }
+        else if (context.HasLocalInHierarchy(getVar.VarName))
+        {
+            var (varIndex, functionIndex) = context.GetLocalInHierarchy(getVar.VarName);
+            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            
+            instructions.Add(new LjsInstruction(LjsInstructionCode.ParentVarLoad, instructionArg));
+            
+        }
         else
         {
             instructions.Add(new LjsInstruction(
@@ -484,9 +527,19 @@ public class LjsCompiler
     {
         var localVarIndex = context.GetLocal(varName);
         var isLocal = localVarIndex != -1;
-        return isLocal
-            ? new LjsInstruction(LjsInstructionCode.VarLoad, localVarIndex)
-            : new LjsInstruction(
+
+        if (isLocal) 
+            return new LjsInstruction(LjsInstructionCode.VarLoad, localVarIndex);
+
+        if (context.HasLocalInHierarchy(varName))
+        {
+            var (varIndex, functionIndex) = context.GetLocalInHierarchy(varName);
+            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            
+            return new LjsInstruction(LjsInstructionCode.ParentVarLoad, instructionArg);
+        }
+        
+        return new LjsInstruction(
                 LjsInstructionCode.ExtLoad, _constants.AddStringConstant(varName));
     }
     
@@ -494,9 +547,19 @@ public class LjsCompiler
     {
         var localVarIndex = context.GetLocal(varName);
         var isLocal = localVarIndex != -1;
-        return isLocal
-            ? new LjsInstruction(LjsInstructionCode.VarStore, localVarIndex)
-            : new LjsInstruction(
+        
+        if (isLocal) 
+            return new LjsInstruction(LjsInstructionCode.VarStore, localVarIndex);
+        
+        if (context.HasLocalInHierarchy(varName))
+        {
+            var (varIndex, functionIndex) = context.GetLocalInHierarchy(varName);
+            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            
+            return new LjsInstruction(LjsInstructionCode.ParentVarStore, instructionArg);
+        }
+        
+        return new LjsInstruction(
                 LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
     }
     
@@ -504,9 +567,19 @@ public class LjsCompiler
     {
         var localVarIndex = context.GetLocal(varName);
         var isLocal = localVarIndex != -1;
-        return isLocal
-            ? new LjsInstruction(LjsInstructionCode.VarInit, localVarIndex)
-            : new LjsInstruction(
+        
+        if (isLocal) 
+            return new LjsInstruction(LjsInstructionCode.VarInit, localVarIndex);
+        
+        if (context.HasLocalInHierarchy(varName))
+        {
+            var (varIndex, functionIndex) = context.GetLocalInHierarchy(varName);
+            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            
+            return new LjsInstruction(LjsInstructionCode.ParentVarInit, instructionArg);
+        }
+        
+        return new LjsInstruction(
                 LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
     }
     

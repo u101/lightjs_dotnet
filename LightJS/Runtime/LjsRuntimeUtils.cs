@@ -174,6 +174,19 @@ public static class LjsRuntimeUtils
         }
     }
 
+    public static int CombineLocalIndexAndFunctionIndex(int localIndex, int funcIndex)
+    {
+        if (localIndex < 0 || localIndex >= short.MaxValue)
+            throw new ArgumentException($"localIndex {localIndex} out of range");
+        
+        if (funcIndex < 0 || funcIndex >= short.MaxValue)
+            throw new ArgumentException($"localIndex {localIndex} out of range");
+
+        return (localIndex & 0x0000FFFF) | (funcIndex << 16);
+    }
+
+    public static int GetLocalIndex(int combinedValue) => combinedValue & 0x0000FFFF;
+    public static int GetFunctionIndex(int combinedValue) => (combinedValue >>> 16) & 0x0000FFFF;
 
 
 }

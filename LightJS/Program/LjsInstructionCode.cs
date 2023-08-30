@@ -87,9 +87,18 @@ public enum LjsInstructionCode
     // load function reference to stack, argument = function index
     FuncRef = 0x42,
     
+    // similar to ParentVarStore except value is not pushed to the stack
+    ParentVarInit = 0x45, 
+    // load local var from parent function context and push to the stack,
+    // argument = 2 bytes local var index, 2 bytes function index
+    ParentVarLoad = 0x46, 
+    // store last value from the stack in parent function context local var,
+    // argument = 2 bytes local var index, 2 bytes function index
+    ParentVarStore = 0x47, 
+    
     // load var and push to the stack, argument = string const index
-    ExtLoad = 0x45,
+    ExtLoad = 0x50,
     // store last value from the stack in var, argument = string const index
-    ExtStore = 0x46,
+    ExtStore = 0x51,
 
 }

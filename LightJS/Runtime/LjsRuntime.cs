@@ -74,6 +74,17 @@ public sealed class LjsRuntime
         _functionCallStack.RemoveAt(_functionCallStack.Count - 1);
     }
 
+    private FunctionContext GetParentFunctionContext(int functionIndex)
+    {
+        for (var i = _functionCallStack.Count - 1; i >= 0; --i)
+        {
+            var fc = _functionCallStack[i];
+            if (fc.FunctionIndex == functionIndex) return fc;
+        }
+
+        throw new LjsInternalError($"function with index {functionIndex} not found in call stack");
+    }
+
     private void ExtStore(string varName, LjsObject v)
     {
         throw new NotImplementedException($"ExtStore {varName}");
@@ -286,6 +297,39 @@ public sealed class LjsRuntime
                     
                     _stack.Push(v);
                     
+                    break;
+                
+                case LjsInstructionCode.ParentVarInit:
+                    v = _stack.Pop();
+                    
+                    varIndex = LjsRuntimeUtils.GetLocalIndex(instruction.Argument);
+                    
+                    var funcIndex = LjsRuntimeUtils.GetFunctionIndex(instruction.Argument);
+                    var parentFc = GetParentFunctionContext(funcIndex);
+                    
+                    _locals[parentFc.LocalsOffset + varIndex] = v;
+
+                    break;
+                case LjsInstructionCode.ParentVarLoad:
+
+                    varIndex = LjsRuntimeUtils.GetLocalIndex(instruction.Argument);
+                    
+                    var funcIndex3 = LjsRuntimeUtils.GetFunctionIndex(instruction.Argument);
+                    var parentFc3 = GetParentFunctionContext(funcIndex3);
+                    
+                    v = _locals[parentFc3.LocalsOffset + varIndex];
+                    
+                    _stack.Push(v);
+                    break;
+                case LjsInstructionCode.ParentVarStore:
+                    v = _stack.Peek();
+                    
+                    varIndex = LjsRuntimeUtils.GetLocalIndex(instruction.Argument);
+                    
+                    var funcIndex2 = LjsRuntimeUtils.GetFunctionIndex(instruction.Argument);
+                    var parentFc2 = GetParentFunctionContext(funcIndex2);
+                    
+                    _locals[parentFc2.LocalsOffset + varIndex] = v;
                     break;
                     
                 default:
