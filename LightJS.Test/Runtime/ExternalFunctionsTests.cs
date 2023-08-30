@@ -1,3 +1,5 @@
+using LightJS.Runtime;
+
 namespace LightJS.Test.Runtime;
 
 [TestFixture]
@@ -7,18 +9,24 @@ public class ExternalFunctionsTests
     [Test]
     public void SimpleFunctionInvocationTest()
     {
-        var code = """
         var c = 0;
+        
+        var code = """
         for(var i = 0; i < 100; i++) {
-            c++;
+            foo(1,2,3);
         }
-        c;
         """;
         
         var runtime = CreateRuntime(code);
-        var result = runtime.Execute();
+
+        runtime.AddExternal("foo",LjsExternalFunction.Create(() =>
+        {
+            c++;
+        }));
+
+        runtime.Execute();
         
-        CheckResult(result, 100);
+        Assert.That(c, Is.EqualTo(100));
     }
     
 }

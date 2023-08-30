@@ -16,10 +16,17 @@ public sealed class LjsRuntime
     private bool _isExecutionCalled = false;
     private bool _isRunning = false;
 
+    private readonly Dictionary<string, LjsObject> _externals = new();
+
     public LjsRuntime(LjsProgram program)
     {
         _program = program;
         _constants = program.Constants;
+    }
+
+    public void AddExternal(string name, LjsObject obj)
+    {
+        _externals[name] = obj;
     }
 
     public bool HasLocal(string name) => IsValidLocalIndex(GetLocalIndex(name));
@@ -176,7 +183,12 @@ public sealed class LjsRuntime
     
     private LjsObject ExtLoad(string varName)
     {
-        throw new NotImplementedException($"ExtLoad {varName}");
+        if (_externals.ContainsKey(varName))
+        {
+            return _externals[varName];
+        }
+
+        throw new LjsRuntimeError($"external object not found: {varName}");
     }
 
     public LjsObject Execute()
@@ -245,36 +257,67 @@ public sealed class LjsRuntime
                 case LjsInstructionCode.FuncCall:
 
                     var funcRef = _stack.Pop();
-
-                    if (funcRef is LjsFunctionPointer functionPointer)
+                    
+                    var argsCount = instruction.Argument;
+                    
+                    switch (funcRef)
                     {
-                        // move instruction pointer
-                        _functionCallStack[^1] = fCtx.NextInstruction;
-                        
-                        var argsCount = instruction.Argument;
-                        var f = _program.GetFunction(functionPointer.FunctionIndex);
+                        case LjsFunctionPointer functionPointer:
+                            // move instruction pointer
+                            _functionCallStack[^1] = fCtx.NextInstruction;
+                            
+                            var f = _program.GetFunction(functionPointer.FunctionIndex);
 
-                        var fc = StartFunction(functionPointer.FunctionIndex, f.LocalsCount);
+                            var fc = StartFunction(functionPointer.FunctionIndex, f.LocalsCount);
 
-                        // remove arguments from stack that can not be used by specified function
-                        while (argsCount > f.Arguments.Length)
-                        {
-                            _stack.Pop();
-                        }
+                            // remove arguments from stack that can not be used by specified function
+                            while (argsCount > f.Arguments.Length)
+                            {
+                                _stack.Pop();
+                                --argsCount;
+                            }
                         
-                        for (var j = f.Arguments.Length - 1; j >= 0; --j)
-                        {
-                            var arg = f.Arguments[j];
-                            _locals[fc.LocalsOffset + j] = 
-                                j < argsCount ? _stack.Pop() : arg.DefaultValue;
-                        }
+                            for (var j = f.Arguments.Length - 1; j >= 0; --j)
+                            {
+                                var arg = f.Arguments[j];
+                                _locals[fc.LocalsOffset + j] = 
+                                    j < argsCount ? _stack.Pop() : arg.DefaultValue;
+                            }
 
-                        jump = true;
+                            jump = true;
+                            break;
                         
-                    }
-                    else
-                    {
-                        throw new LjsRuntimeError("not a function");
+                        case LjsExternalFunction extFunc:
+                            
+                            // remove arguments from stack that can not be used by specified function
+                            while (argsCount > extFunc.ArgumentsCount)
+                            {
+                                _stack.Pop();
+                                --argsCount;
+                            }
+
+                            var args = LjsRuntimeUtils.GetTemporaryObjectsList();
+
+                            while (args.Count < extFunc.ArgumentsCount)
+                            {
+                                args.Add(LjsObject.Undefined);
+                            }
+                            
+                            for (var j = extFunc.ArgumentsCount - 1; j >= 0; --j)
+                            {
+                                args[j] = j < argsCount ? _stack.Pop() : LjsObject.Undefined;
+                            }
+                            
+                            var extFuncResult = extFunc.Invoke(args);
+                            
+                            _stack.Push(extFuncResult);
+                            
+                            LjsRuntimeUtils.ReleaseTemporaryObjectsList(args);
+                            
+                            break;
+                        
+                        default:
+                            throw new LjsRuntimeError("not a function");
                     }
                     
                     break;

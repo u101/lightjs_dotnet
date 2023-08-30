@@ -189,4 +189,25 @@ public static class LjsRuntimeUtils
     public static int GetFunctionIndex(int combinedValue) => (combinedValue >>> 16) & 0x0000FFFF;
 
 
+    private static readonly List<List<LjsObject>> ObjectsListsPool = new();
+
+    public static List<LjsObject> GetTemporaryObjectsList()
+    {
+        if (ObjectsListsPool.Count > 0)
+        {
+            var list = ObjectsListsPool[^1];
+            ObjectsListsPool.RemoveAt(ObjectsListsPool.Count - 1);
+            list.Clear();
+            return list;
+        }
+
+        return new List<LjsObject>(8);
+    }
+
+    public static void ReleaseTemporaryObjectsList(List<LjsObject> list)
+    {
+        list.Clear();
+        ObjectsListsPool.Add(list);
+    }
+    
 }
