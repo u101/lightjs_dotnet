@@ -13,6 +13,9 @@ public sealed class LjsRuntime
 
     private readonly List<LjsObject> _locals = new();
 
+    private bool _isExecutionCalled = false;
+    private bool _isRunning = false;
+
     public LjsRuntime(LjsProgram program)
     {
         _program = program;
@@ -74,9 +77,30 @@ public sealed class LjsRuntime
         return true;
     }
 
-    public void Invoke(string functionName)
+    public bool CanInvoke(string functionName)
     {
-        throw new NotImplementedException();
+        if (_isRunning) return false;
+
+        if (!_program.ContainsFunction(functionName)) return false;
+        
+        if (_functionCallStack.Count == 0) return false;
+        
+        var functionContext = _functionCallStack[0];
+        
+        return functionContext.FunctionIndex == 0;
+    }
+    
+    public bool Invoke(string functionName)
+    {
+        if (!CanInvoke(functionName)) return false;
+
+        var functionData = _program.GetFunction(functionName);
+
+        StartFunction(functionData.FunctionIndex, functionData.LocalsCount);
+        
+        ExecuteInternal(1);
+
+        return true;
     }
     
     private readonly struct FunctionContext
@@ -154,13 +178,33 @@ public sealed class LjsRuntime
     {
         throw new NotImplementedException($"ExtLoad {varName}");
     }
-    
+
     public LjsObject Execute()
     {
+        if (_isExecutionCalled)
+            throw new Exception("you can not call Execute more then once");
+
+        _isExecutionCalled = true;
+
         // start main function at instruction 0
         var mainFunc = _program.GetFunction(0);
 
         StartFunction(0, mainFunc.LocalsCount);
+
+        ExecuteInternal();
+        
+        var executionResult = 
+            (_stack.Count > 0) ? _stack.Pop() : LjsObject.Undefined;
+
+        return executionResult;
+    }
+    
+    private void ExecuteInternal(int haltOnFunctionStackCount = 0)
+    {
+        if (_isRunning)
+            throw new Exception("concurrent execution access");
+        
+        _isRunning = true;
 
         var varName = string.Empty;
         var varIndex = -1;
@@ -230,8 +274,23 @@ public sealed class LjsRuntime
                     break;
                 
                 case LjsInstructionCode.Return:
-                    StopFunction();
-                    jump = true;
+                    // we treat return in main function as hault
+                    if (fCtx.FunctionIndex != 0)
+                    {
+                        StopFunction();
+                        if (haltOnFunctionStackCount == _functionCallStack.Count)
+                        {
+                            execute = false;
+                        }
+                        else
+                        {
+                            jump = true;
+                        }
+                    }
+                    else
+                    {
+                        execute = false;
+                    }
                     break;
                     
                 
@@ -397,12 +456,12 @@ public sealed class LjsRuntime
                     
             }
 
-            if (!jump)
+            if (execute && !jump)
             {
                 _functionCallStack[^1] = fCtx.NextInstruction;
             }
         }
 
-        return (_stack.Count > 0) ? _stack.Pop() : LjsObject.Undefined;
+        _isRunning = false;
     }
 }

@@ -60,7 +60,10 @@ public class LjsCompiler
             new LjsInstruction(LjsInstructionCode.Halt));
 
         var functions = _functionsList.Select(fd => new LjsFunctionData(
-            fd.Instructions.Instructions.ToArray(), fd.Args.ToArray(), fd.LocalVars.ToArray()
+            fd.FunctionIndex,
+            fd.Instructions.Instructions.ToArray(), 
+            fd.Args.ToArray(), 
+            fd.LocalVars.ToArray()
         )).ToArray();
         
         return new LjsProgram(

@@ -68,5 +68,33 @@ public class RuntimeLocalsAccessTests
         
         CheckResult(runtime.GetLocal("x"), 123);
     }
+
+    [Test]
+    public void InvokeFunctionTest()
+    {
+        var code = """
+        var x = 123
+
+        function foo() {
+            ++x;
+        }
+        """;
+        
+        var runtime = CreateRuntime(code);
+        runtime.Execute();
+        
+        CheckResult(runtime.GetLocal("x"), 123);
+
+        for (var i = 0; i < 100; i++)
+        {
+            var invocationResult = runtime.Invoke("foo");
+        
+            Assert.That(invocationResult, Is.True);
+        
+            CheckResult(runtime.GetLocal("x"), 124 + i);
+        }
+
+    }
+    
     
 }
