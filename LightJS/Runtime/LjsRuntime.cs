@@ -18,6 +18,67 @@ public sealed class LjsRuntime
         _program = program;
         _constants = program.Constants;
     }
+
+    public bool HasLocal(string name)
+    {
+        if (_functionCallStack.Count == 0) return false;
+        
+        var functionContext = _functionCallStack[0];
+        
+        if (functionContext.FunctionIndex != 0) return false;
+
+        var localIndex = GetLocalIndex(name);
+
+        return localIndex >= 0 &&
+               localIndex < _locals.Count;
+    }
+
+    private int GetLocalIndex(string name)
+    {
+        var mainFunctionData = _program.MainFunctionData;
+
+        var locals = mainFunctionData.Locals;
+
+        foreach (var p in locals)
+        {
+            if (p.Name == name) return p.Index;
+        }
+
+        return -1;
+    }
+    
+    /// <summary>
+    /// Returns value of the local var in main function with specified name;
+    /// Returns LjsObject.Undefined if local var not found or not on the stack;
+    /// Please use HasLocal to check if var with specified name exists in current context
+    /// </summary>
+    public LjsObject GetLocal(string name)
+    {
+        if (_functionCallStack.Count == 0) 
+            return LjsObject.Undefined;
+        
+        var functionContext = _functionCallStack[0];
+        
+        if (functionContext.FunctionIndex != 0) 
+            return LjsObject.Undefined;
+
+        var localIndex = GetLocalIndex(name);
+
+        if (localIndex < 0 || localIndex >= _locals.Count) 
+            return LjsObject.Undefined;
+
+        return _locals[localIndex];
+    }
+
+    public void SetLocal(string name, LjsObject value)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Invoke(string functionName)
+    {
+        throw new NotImplementedException();
+    }
     
     private readonly struct FunctionContext
     {
