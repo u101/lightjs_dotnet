@@ -1,4 +1,3 @@
-using FluentAssertions;
 using LightJS.Errors;
 using LightJS.Tokenizer;
 

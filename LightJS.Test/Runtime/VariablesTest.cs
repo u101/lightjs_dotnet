@@ -13,7 +13,7 @@ public class VariablesTest
         a
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(123)));
@@ -27,7 +27,7 @@ public class VariablesTest
         a + b + c
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(123+456+789)));
@@ -41,7 +41,7 @@ public class VariablesTest
         a += 321
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(123+321)));
@@ -55,7 +55,7 @@ public class VariablesTest
         a -= 321
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(123-321)));
@@ -69,7 +69,7 @@ public class VariablesTest
         a *= 111
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(123*111)));
@@ -83,7 +83,7 @@ public class VariablesTest
         a ||= false
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<bool>(true)));
@@ -97,7 +97,7 @@ public class VariablesTest
         a &&= false
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<bool>(false)));
@@ -111,7 +111,7 @@ public class VariablesTest
         a |= 0b000111
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(0b010101 | 0b000111)));
@@ -125,7 +125,7 @@ public class VariablesTest
         a &= 0b000111
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(0b010101 & 0b000111)));

@@ -1,5 +1,3 @@
-using static LightJS.Test.Ast.NodesUtils;
-
 namespace LightJS.Test.Ast;
 
 [TestFixture]
@@ -8,7 +6,7 @@ public class ObjectLiteralsTests
     [Test]
     public void EmptyObjectLiteralTest()
     {
-        var node = TestUtils.BuildAstNode("x = {}");
+        var node = BuildAstNode("x = {}");
 
         var expected = "x".Assign(ObjectLit());
         Match(node, expected);
@@ -17,7 +15,7 @@ public class ObjectLiteralsTests
     [Test]
     public void BinaryOperationTest()
     {
-        var node = TestUtils.BuildAstNode("x = {x:1,y:2} + {x:3,y:4}");
+        var node = BuildAstNode("x = {x:1,y:2} + {x:3,y:4}");
 
         var expected = "x".Assign(
             ObjectLit().AddProp("x",1).AddProp("y",2).Plus(
@@ -30,7 +28,7 @@ public class ObjectLiteralsTests
     [Test]
     public void SimpleObjectLiteralTest()
     {
-        var node = TestUtils.BuildAstNode("x = { a:1, b:2, c:3, 'd':'hi'}");
+        var node = BuildAstNode("x = { a:1, b:2, c:3, 'd':'hi'}");
 
         var expected = "x".Assign(
             ObjectLit()
@@ -56,7 +54,7 @@ public class ObjectLiteralsTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = "x".Assign(
             ObjectLit(
@@ -84,7 +82,7 @@ public class ObjectLiteralsTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = "x".Assign(
             ObjectLit()

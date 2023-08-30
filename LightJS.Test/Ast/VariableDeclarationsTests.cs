@@ -1,5 +1,3 @@
-using static LightJS.Test.Ast.NodesUtils;
-
 namespace LightJS.Test.Ast;
 
 [TestFixture]
@@ -9,7 +7,7 @@ public class VariableDeclarationsTests
     [Test]
     public void ConstDeclarationTest()
     {
-        var node = TestUtils.BuildAstNode("const a = 123");
+        var node = BuildAstNode("const a = 123");
 
         var expected = Const("a", 123.ToLit());
         Match(node, expected);
@@ -18,7 +16,7 @@ public class VariableDeclarationsTests
     [Test]
     public void SimpleVarTest()
     {
-        var node = TestUtils.BuildAstNode("var a = 123");
+        var node = BuildAstNode("var a = 123");
 
         var expected = Var("a", 123.ToLit());
         Match(node, expected);
@@ -27,7 +25,7 @@ public class VariableDeclarationsTests
     [Test]
     public void MultipleVarTest()
     {
-        var node = TestUtils.BuildAstNode("var a = 123, b\n, c = 'hi'");
+        var node = BuildAstNode("var a = 123, b\n, c = 'hi'");
 
         var expected = Sequence(Var("a", 123.ToLit()),
             Var("b"),
@@ -47,7 +45,7 @@ public class VariableDeclarationsTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = NamedFunc("foo", Sequence(
             

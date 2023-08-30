@@ -1,6 +1,3 @@
-using LightJS.Ast;
-using static LightJS.Test.Ast.NodesUtils;
-
 namespace LightJS.Test.Ast;
 
 [TestFixture]
@@ -10,7 +7,7 @@ public class WhileLoopTests
     [Test]
     public void EmptyLoopTest()
     {
-        var node = TestUtils.BuildAstNode("while(true) {}");
+        var node = BuildAstNode("while(true) {}");
 
         var expected = While(True, Nothing);
         Match(node, expected);
@@ -25,7 +22,7 @@ public class WhileLoopTests
         }
         """;
 
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = While(
                 "a".ToVar(), "x".WithPostfixIncrement());
@@ -43,7 +40,7 @@ public class WhileLoopTests
         }
         """;
 
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = While(
                 "a".ToVar(), Sequence(
@@ -64,7 +61,7 @@ public class WhileLoopTests
         }
         """;
 
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = While(
                 "a".ToVar(), Sequence(
@@ -79,7 +76,7 @@ public class WhileLoopTests
     public void SimpleBlockWithoutBracketsTest()
     {
 
-        var node = TestUtils.BuildAstNode("while(a) x++");
+        var node = BuildAstNode("while(a) x++");
 
         var expected = While(
                 "a".ToVar(), "x".WithPostfixIncrement());
