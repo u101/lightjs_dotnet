@@ -6,25 +6,25 @@ public sealed class LjsProgram
     public LjsProgramConstants Constants { get; }
     
     private readonly Dictionary<string, int> _namedFunctionsMap;
-    private readonly List<LjsFunctionData> _functionsList;
+    private readonly LjsFunctionData[] _functions;
 
     public LjsProgram(
         LjsProgramConstants constants,
-        List<LjsFunctionData> functionsList,
+        LjsFunctionData[] functions,
         Dictionary<string, int> namedFunctionsMap)
     {
-        if (functionsList == null)
-            throw new ArgumentNullException(nameof(functionsList));
-        if (functionsList.Count == 0)
+        if (functions == null)
+            throw new ArgumentNullException(nameof(functions));
+        if (functions.Length == 0)
             throw new ArgumentException(
-                "functionsList must contain at leas one function", nameof(functionsList));
+                "functions must contain at leas one function", nameof(functions));
         
         Constants = constants;
         _namedFunctionsMap = namedFunctionsMap;
-        _functionsList = functionsList;
+        _functions = functions;
     }
 
-    public LjsFunctionData MainFunctionData => _functionsList[0];
+    public LjsFunctionData MainFunctionData => _functions[0];
 
     public IEnumerable<string> FunctionsNames => _namedFunctionsMap.Keys;
 
@@ -34,7 +34,7 @@ public sealed class LjsProgram
     {
         if (_namedFunctionsMap.TryGetValue(name, out var index))
         {
-            return _functionsList[index];
+            return _functions[index];
         }
 
         throw new Exception($"function '{name}' not found");
@@ -42,9 +42,9 @@ public sealed class LjsProgram
 
     public LjsFunctionData GetFunction(int index)
     {
-        if (index < 0 || index >= _functionsList.Count)
-            throw new IndexOutOfRangeException($"index {index} out of range [0..{_functionsList.Count}]");
-        return _functionsList[index];
+        if (index < 0 || index >= _functions.Length)
+            throw new IndexOutOfRangeException($"index {index} out of range [0..{_functions.Length}]");
+        return _functions[index];
     }
     
 

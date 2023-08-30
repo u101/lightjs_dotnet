@@ -1,9 +1,20 @@
 namespace LightJS.Program;
 
-public class LjsFunctionData 
+public sealed class LjsFunctionData 
 {
-    public LjsInstructionsList InstructionsList { get; } = new();
-    public List<LjsFunctionArg> Args { get; } = new();
+    public LjsInstruction[] Instructions { get; }
+    public LjsFunctionArgument[] Arguments { get; }
+    public LjsLocalVarPointer[] Locals { get; }
 
-    public int LocalsCount { get; set; } = 0;
+    public int LocalsCount => Locals.Length;
+
+    public LjsFunctionData(
+        LjsInstruction[] instructions, 
+        LjsFunctionArgument[] arguments, 
+        LjsLocalVarPointer[] locals)
+    {
+        Instructions = instructions;
+        Arguments = arguments;
+        Locals = locals;
+    }
 }

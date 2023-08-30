@@ -114,7 +114,7 @@ public sealed class LjsRuntime
             var ff = _program.GetFunction(fCtx.FunctionIndex);
             
             var jump = false;
-            var instruction = ff.InstructionsList.Instructions[fCtx.InstructionIndex];
+            var instruction = ff.Instructions[fCtx.InstructionIndex];
             var instructionCode = instruction.Code;
 
             switch (instructionCode)
@@ -152,9 +152,9 @@ public sealed class LjsRuntime
 
                         var fc = StartFunction(functionPointer.FunctionIndex, f.LocalsCount);
 
-                        for (var j = f.Args.Count - 1; j >= 0; --j)
+                        for (var j = f.Arguments.Length - 1; j >= 0; --j)
                         {
-                            var arg = f.Args[j];
+                            var arg = f.Arguments[j];
                             _locals[fc.LocalsOffset + j] = 
                                 j < argsCount ? _stack.Pop() : arg.DefaultValue;
                         }
