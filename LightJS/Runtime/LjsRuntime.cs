@@ -19,22 +19,16 @@ public sealed class LjsRuntime
         _constants = program.Constants;
     }
 
-    public bool HasLocal(string name)
-    {
-        if (_functionCallStack.Count == 0) return false;
-        
-        var functionContext = _functionCallStack[0];
-        
-        if (functionContext.FunctionIndex != 0) return false;
-
-        var localIndex = GetLocalIndex(name);
-
-        return localIndex >= 0 &&
-               localIndex < _locals.Count;
-    }
+    public bool HasLocal(string name) => IsValidLocalIndex(GetLocalIndex(name));
 
     private int GetLocalIndex(string name)
     {
+        if (_functionCallStack.Count == 0) return -1;
+        
+        var functionContext = _functionCallStack[0];
+        
+        if (functionContext.FunctionIndex != 0) return -1;
+        
         var mainFunctionData = _program.MainFunctionData;
 
         var locals = mainFunctionData.Locals;
@@ -47,6 +41,8 @@ public sealed class LjsRuntime
         return -1;
     }
     
+    private bool IsValidLocalIndex(int localIndex) => localIndex >= 0 && localIndex < _locals.Count;
+    
     /// <summary>
     /// Returns value of the local var in main function with specified name;
     /// Returns LjsObject.Undefined if local var not found or not on the stack;
@@ -54,25 +50,28 @@ public sealed class LjsRuntime
     /// </summary>
     public LjsObject GetLocal(string name)
     {
-        if (_functionCallStack.Count == 0) 
-            return LjsObject.Undefined;
-        
-        var functionContext = _functionCallStack[0];
-        
-        if (functionContext.FunctionIndex != 0) 
-            return LjsObject.Undefined;
-
         var localIndex = GetLocalIndex(name);
 
-        if (localIndex < 0 || localIndex >= _locals.Count) 
-            return LjsObject.Undefined;
-
-        return _locals[localIndex];
+        return IsValidLocalIndex(localIndex) ? _locals[localIndex] : LjsObject.Undefined;
     }
 
-    public void SetLocal(string name, LjsObject value)
+    /// <summary>
+    /// Returns true if local var is successfully set, false otherwise
+    /// </summary>
+    public bool SetLocal(string name, LjsObject value)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(name))
+            throw new ArgumentException("name is null or empty", nameof(name));
+        
+        if (value == null)
+            throw new ArgumentNullException(nameof(value));
+            
+        var localIndex = GetLocalIndex(name);
+        
+        if (!IsValidLocalIndex(localIndex)) return false;
+
+        _locals[localIndex] = value;
+        return true;
     }
 
     public void Invoke(string functionName)

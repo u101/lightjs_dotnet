@@ -47,4 +47,26 @@ public class RuntimeLocalsAccessTests
         CheckResult(y, LjsObject.Undefined);
     }
     
+    [Test]
+    public void SetLocalTest()
+    {
+        var code = """
+        var x = 456
+        """;
+        
+        var runtime = CreateRuntime(code);
+        runtime.Execute();
+
+        var x = runtime.GetLocal("x");
+        
+        CheckResult(x, 456);
+
+        var setResult = runtime.SetLocal(
+            "x", new LjsValue<int>(123));
+        
+        Assert.That(setResult, Is.True);
+        
+        CheckResult(runtime.GetLocal("x"), 123);
+    }
+    
 }
