@@ -176,10 +176,10 @@ public static class LjsRuntimeUtils
 
     public static int CombineLocalIndexAndFunctionIndex(int localIndex, int funcIndex)
     {
-        if (localIndex < 0 || localIndex >= short.MaxValue)
+        if (localIndex < 0 || localIndex >= ushort.MaxValue)
             throw new ArgumentException($"localIndex {localIndex} out of range");
         
-        if (funcIndex < 0 || funcIndex >= short.MaxValue)
+        if (funcIndex < 0 || funcIndex >= ushort.MaxValue)
             throw new ArgumentException($"localIndex {localIndex} out of range");
 
         return (localIndex & 0x0000FFFF) | (funcIndex << 16);
