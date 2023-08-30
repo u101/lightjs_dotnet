@@ -2,11 +2,13 @@
 
 * LjsRuntime variables access
 
-    > LjsRuntime.GetVar(string varName)
+    > ~~LjsRuntime.GetVar(string varName)~~
  
-    > LjsRuntime.SetVar(string varName, LjsObject value)
+    > ~~LjsRuntime.SetVar(string varName, LjsObject value)~~
 
 * LjsRuntime function invokation
+
+    > ~~LjsRuntime.Invoke(string functionName)~~
 
     > LjsRuntime.Invoke(string functionName) with overloads for different arguments count
 
