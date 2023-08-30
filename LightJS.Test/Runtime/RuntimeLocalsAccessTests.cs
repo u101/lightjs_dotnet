@@ -1,5 +1,4 @@
 using LightJS.Runtime;
-using static LightJS.Test.Runtime.RuntimeTestUtils;
 
 namespace LightJS.Test.Runtime;
 
