@@ -1,8 +1,8 @@
 using LightJS.Ast;
 
-namespace LightJS.Test.Ast;
+namespace LightJS.Test.Utils;
 
-public static class NodesExtensions
+public static class AstNodesExtensions
 {
     public static LjsAstLiteral<int> ToLit(this int x)
     {

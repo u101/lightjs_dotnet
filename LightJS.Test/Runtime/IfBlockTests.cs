@@ -16,7 +16,7 @@ public class IfBlockTests
             a;
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(123)));
@@ -36,7 +36,7 @@ public class IfBlockTests
             a;
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(987)));
@@ -66,7 +66,7 @@ public class IfBlockTests
             a;
         """;
         
-        var runtime = RuntimeTestUtils.CreateRuntime(code);
+        var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
         Assert.That(result, Is.EqualTo(new LjsValue<int>(111)));

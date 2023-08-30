@@ -1,5 +1,3 @@
-using static LightJS.Test.Ast.NodesUtils;
-
 namespace LightJS.Test.Ast;
 
 [TestFixture]
@@ -9,7 +7,7 @@ public class CodeBlocksTests
     [Test]
     public void SimpleExpressionsSequenceTest()
     {
-        var node = TestUtils.BuildAstNode("a = b + c;\nx = y - z");
+        var node = BuildAstNode("a = b + c;\nx = y - z");
         
         var expected = Sequence(
             "a".Assign("b".Plus("c")),
@@ -21,7 +19,7 @@ public class CodeBlocksTests
     [Test]
     public void SimpleExpressionsSequenceWithRedundantSemicolonsTest()
     {
-        var node = TestUtils.BuildAstNode(";a = b + c;;;\n;\n;;x = y - z;;;");
+        var node = BuildAstNode(";a = b + c;;;\n;\n;;x = y - z;;;");
         
         var expected = Sequence(
             "a".Assign("b".Plus("c")),
@@ -44,7 +42,7 @@ public class CodeBlocksTests
 
         void CheckVariant(string expression)
         {
-            var node = TestUtils.BuildAstNode(expression);
+            var node = BuildAstNode(expression);
             var expected = Sequence(
                 "a".Assign("b".ToVar()),
                 "y".Assign("x".WithPrefixIncrement())
@@ -65,7 +63,7 @@ public class CodeBlocksTests
         
         void CheckVariant(string expression)
         {
-            var node = TestUtils.BuildAstNode(expression);
+            var node = BuildAstNode(expression);
             var expected = Sequence(
                 "a".Plus("b"),
                 "x".WithPrefixIncrement().MultiplyBy("y"));

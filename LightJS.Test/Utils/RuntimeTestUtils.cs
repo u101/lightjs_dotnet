@@ -1,7 +1,7 @@
 using LightJS.Compiler;
 using LightJS.Runtime;
 
-namespace LightJS.Test.Runtime;
+namespace LightJS.Test.Utils;
 
 public static class RuntimeTestUtils
 {

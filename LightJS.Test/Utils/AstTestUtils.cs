@@ -1,10 +1,18 @@
 using FluentAssertions;
 using LightJS.Ast;
+using LightJS.Test.Ast;
 
-namespace LightJS.Test.Ast;
+namespace LightJS.Test.Utils;
 
-public static class NodesUtils
+public static class AstTestUtils
 {
+    public static ILjsAstNode BuildAstNode(string sourceCode)
+    {
+        var builder = new LjsAstBuilder(sourceCode);
+        var model = builder.Build();
+        return model.RootNode;
+    }
+    
     public static LjsAstSequence Sequence(params ILjsAstNode[] nodes)
     {
         return new LjsAstSequence(nodes);
@@ -153,5 +161,4 @@ public static class NodesUtils
 
     public static ILjsAstNode Break => new LjsAstBreak();
     public static ILjsAstNode Continue => new LjsAstContinue();
-
 }

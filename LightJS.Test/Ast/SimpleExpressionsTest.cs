@@ -1,4 +1,3 @@
-using static LightJS.Test.Ast.NodesUtils;
 using LightJS.Ast;
 using FluentAssertions;
 using LightJS.Errors;
@@ -11,7 +10,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildPostfixIncrementExpression()
     {
-        var rootNode = TestUtils.BuildAstNode("a++ + b--");
+        var rootNode = BuildAstNode("a++ + b--");
 
         var expected = "a".WithPostfixIncrement().Plus("b".WithPostfixDecrement());
         
@@ -21,7 +20,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildPrefixIncrementExpression()
     {
-        var rootNode = TestUtils.BuildAstNode("++a + --b");
+        var rootNode = BuildAstNode("++a + --b");
 
         var expected = "a".WithPrefixIncrement().Plus("b".WithPrefixDecrement());
         
@@ -31,7 +30,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildUnaryMinusExpression()
     {
-        var rootNode = TestUtils.BuildAstNode("a + -b");
+        var rootNode = BuildAstNode("a + -b");
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstBinaryOperation(
@@ -43,7 +42,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildSimpleUnaryMinusAssignment()
     {
-        var rootNode = TestUtils.BuildAstNode("a = -b");
+        var rootNode = BuildAstNode("a = -b");
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstSetVar(
@@ -55,7 +54,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildSimpleExpression()
     {
-        var rootNode = TestUtils.BuildAstNode("a + b");
+        var rootNode = BuildAstNode("a + b");
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstBinaryOperation(
@@ -67,7 +66,7 @@ public class SimpleExpressionsTest
     [Test]
     public void SimpleVarAssignTest()
     {
-        var rootNode = TestUtils.BuildAstNode("a = b + c");
+        var rootNode = BuildAstNode("a = b + c");
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstSetVar("a",
@@ -81,7 +80,7 @@ public class SimpleExpressionsTest
     [Test]
     public void SimplePropertyAssignTest()
     {
-        var rootNode = TestUtils.BuildAstNode("a.foo = b + c");
+        var rootNode = BuildAstNode("a.foo = b + c");
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstSetNamedProperty("foo", new LjsAstGetVar("a"),
@@ -95,7 +94,7 @@ public class SimpleExpressionsTest
     [Test]
     public void SimpleSquareBracketsPropertyAssignTest()
     {
-        var rootNode = TestUtils.BuildAstNode("a[0] = b + c");
+        var rootNode = BuildAstNode("a[0] = b + c");
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstSetProperty(new LjsAstLiteral<int>(0), new LjsAstGetVar("a"),
@@ -109,7 +108,7 @@ public class SimpleExpressionsTest
     [Test]
     public void SimpleFunctionCallTest()
     {
-        var rootNode = TestUtils.BuildAstNode("foo.bar(a,b)");
+        var rootNode = BuildAstNode("foo.bar(a,b)");
 
         rootNode.Should().BeEquivalentTo(
             new LjsAstFunctionCall(
@@ -153,7 +152,7 @@ public class SimpleExpressionsTest
         
         void Check(string expression)
         {
-            var rootNode = TestUtils.BuildAstNode(expression);
+            var rootNode = BuildAstNode(expression);
         
             rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -188,7 +187,7 @@ public class SimpleExpressionsTest
     private static void ValidLiteralTest<TLiteralType>(
         string literal, TLiteralType expectedValue)
     {
-        var rootNode = TestUtils.BuildAstNode(literal);
+        var rootNode = BuildAstNode(literal);
 
         rootNode.Should().BeOfType<LjsAstLiteral<TLiteralType>>();
         rootNode.Should().BeEquivalentTo(new LjsAstLiteral<TLiteralType>(expectedValue));
@@ -197,7 +196,7 @@ public class SimpleExpressionsTest
     [Test]
     public void SimpleTest()
     {
-        var node = TestUtils.BuildAstNode("a + b + 5");
+        var node = BuildAstNode("a + b + 5");
 
         node.Should().BeEquivalentTo("a".ToVar().Plus("b".ToVar()).Plus(5.ToLit()));
     }
@@ -205,17 +204,17 @@ public class SimpleExpressionsTest
     [Test]
     public void IncrementSimpleTest()
     {
-        var a = TestUtils.BuildAstNode("++a");
+        var a = BuildAstNode("++a");
         Match(a, "a".WithPrefixIncrement());
         
-        a = TestUtils.BuildAstNode("a++");
+        a = BuildAstNode("a++");
         Match(a,"a".WithPostfixIncrement());
     }
 
     [Test]
     public void UnaryMinusSimpleTest()
     {
-        var node = TestUtils.BuildAstNode("-a + b");
+        var node = BuildAstNode("-a + b");
 
         node.Should().BeEquivalentTo("a".WithUnaryMinus().Plus("b"));
     }
@@ -223,7 +222,7 @@ public class SimpleExpressionsTest
     [Test]
     public void UnaryMinusAssignmentTest()
     {
-        var node = TestUtils.BuildAstNode("x = -a + -b");
+        var node = BuildAstNode("x = -a + -b");
 
         node.Should().BeEquivalentTo(
             "x".Assign("a".WithUnaryMinus().Plus("b".WithUnaryMinus())));
@@ -232,7 +231,7 @@ public class SimpleExpressionsTest
     [Test]
     public void UnaryMinusAssignmentWithParentheses()
     {
-        var node = TestUtils.BuildAstNode("x = (-(a + b))");
+        var node = BuildAstNode("x = (-(a + b))");
 
         node.Should().BeEquivalentTo("x".Assign("a".Plus("b").WithUnaryMinus()));
     }
@@ -240,7 +239,7 @@ public class SimpleExpressionsTest
     [Test]
     public void UnaryMinusSequence()
     {
-        var node = TestUtils.BuildAstNode("x = a - - - - - b");
+        var node = BuildAstNode("x = a - - - - - b");
 
         node.Should()
             .BeEquivalentTo(
@@ -250,7 +249,7 @@ public class SimpleExpressionsTest
     [Test]
     public void UnaryPlusMinusSequence()
     {
-        var node = TestUtils.BuildAstNode("x = a - + - + - b");
+        var node = BuildAstNode("x = a - + - + - b");
 
         node.Should()
             .BeEquivalentTo(
@@ -260,7 +259,7 @@ public class SimpleExpressionsTest
     [Test]
     public void UnaryMinusAssignmentComplexTest()
     {
-        var node = TestUtils.BuildAstNode("x = -(a + -b)");
+        var node = BuildAstNode("x = -(a + -b)");
 
         node.Should()
             .BeEquivalentTo(
@@ -270,7 +269,7 @@ public class SimpleExpressionsTest
     [Test]
     public void UnaryPlusAssignmentTest()
     {
-        var node = TestUtils.BuildAstNode("x = +a + +b");
+        var node = BuildAstNode("x = +a + +b");
 
         node.Should().BeEquivalentTo("x".Assign("a".WithUnaryPlus().Plus("b".WithUnaryPlus())));
     }
@@ -278,7 +277,7 @@ public class SimpleExpressionsTest
     [Test]
     public void ParenthesesTest()
     {
-        var node = TestUtils.BuildAstNode("a + ( b - c ) + d");
+        var node = BuildAstNode("a + ( b - c ) + d");
 
         node.Should().BeEquivalentTo(
             "a".Plus("b".Minus("c")).Plus("d"));
@@ -287,7 +286,7 @@ public class SimpleExpressionsTest
     [Test]
     public void ParenthesesSimpleExpressionTest2()
     {
-        var node = TestUtils.BuildAstNode("((a)+(b))");
+        var node = BuildAstNode("((a)+(b))");
         node.Should().BeEquivalentTo(("a".Plus("b")));
     }
     
@@ -301,7 +300,7 @@ public class SimpleExpressionsTest
 
         void Check(string expression)
         {
-            var node = TestUtils.BuildAstNode(expression);
+            var node = BuildAstNode(expression);
             node.Should().BeEquivalentTo(("a".Plus("b")).Minus("c".Plus("d")));
         }
     }
@@ -309,7 +308,7 @@ public class SimpleExpressionsTest
     [Test]
     public void AssignSimpleTest()
     {
-        var node = TestUtils.BuildAstNode("a = b + c");
+        var node = BuildAstNode("a = b + c");
 
         node.Should().BeEquivalentTo("a".Assign("b".Plus("c")));
     }
@@ -317,7 +316,7 @@ public class SimpleExpressionsTest
     [Test]
     public void AssignSequenceTest()
     {
-        var node = TestUtils.BuildAstNode("x = y = a = b + c");
+        var node = BuildAstNode("x = y = a = b + c");
 
         node.Should().BeEquivalentTo(
             "x".Assign("y".Assign("a".Assign(
@@ -328,7 +327,7 @@ public class SimpleExpressionsTest
     [Test]
     public void AssignWithParenthesesTest()
     {
-        var node = TestUtils.BuildAstNode("x = a + ( b - c ) + d");
+        var node = BuildAstNode("x = a + ( b - c ) + d");
 
         node.Should().BeEquivalentTo(
             "x".Assign(
@@ -338,7 +337,7 @@ public class SimpleExpressionsTest
     [Test]
     public void DotAccessSimpleTest()
     {
-        var node = TestUtils.BuildAstNode("x = a.foo.bar");
+        var node = BuildAstNode("x = a.foo.bar");
         node.Should().BeEquivalentTo(
             "x".Assign("a".GetProp("foo").GetProp("bar")));
     }
@@ -346,7 +345,7 @@ public class SimpleExpressionsTest
     [Test]
     public void DotPropertyAssignSimpleTest()
     {
-        var node = TestUtils.BuildAstNode("a.foo.bar = x");
+        var node = BuildAstNode("a.foo.bar = x");
         var expected = "a".GetProp("foo").SetProp("bar", "x".ToVar());
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
@@ -354,7 +353,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BracketsPropertySimpleTest()
     {
-        var node = TestUtils.BuildAstNode("x = a['foo']");
+        var node = BuildAstNode("x = a['foo']");
         var expected = "x".Assign("a".GetProp("foo".ToLit()));
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
@@ -362,7 +361,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BracketsPropertyNestedSimpleTest()
     {
-        var node = TestUtils.BuildAstNode("x = a[foo[0]]");
+        var node = BuildAstNode("x = a[foo[0]]");
         var expected = "x".Assign("a".GetProp("foo".GetProp(0.ToLit())));
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
@@ -370,7 +369,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BracketsPropertyAssignSimpleTest()
     {
-        var node = TestUtils.BuildAstNode("a['foo'] = x");
+        var node = BuildAstNode("a['foo'] = x");
         var expected = "a".SetProp("foo".ToLit(), "x".ToVar());
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
@@ -378,7 +377,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildSimpleTernaryIfExpression()
     {
-        var node = TestUtils.BuildAstNode("a ? b : c");
+        var node = BuildAstNode("a ? b : c");
         var expected = "a".ToVar().TernaryIf("b".ToVar(), "c".ToVar());
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
     }
@@ -386,7 +385,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildNestedInParenthesesTernaryIfExpression()
     {
-        var node = TestUtils.BuildAstNode("a ? (x?y:z) : c");
+        var node = BuildAstNode("a ? (x?y:z) : c");
         var expected = "a".ToVar().TernaryIf(
             "x".ToVar().TernaryIf("y".ToVar(), "z".ToVar()), 
             "c".ToVar());
@@ -396,7 +395,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildNestedTernaryIfExpression()
     {
-        var node = TestUtils.BuildAstNode("a ? b ? b1 : b2 : c");
+        var node = BuildAstNode("a ? b ? b1 : b2 : c");
         
         var expected = "a".ToVar().TernaryIf(
             "b".ToVar().TernaryIf("b1".ToVar(), "b2".ToVar()), 
@@ -408,7 +407,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildTernaryIfExpressionWithAssignment()
     {
-        var node = TestUtils.BuildAstNode("x = a ? b : c");
+        var node = BuildAstNode("x = a ? b : c");
         var expected = "x".Assign("a".ToVar().TernaryIf("b".ToVar(), "c".ToVar()));
         
         node.Should().BeEquivalentTo(expected, options => options.RespectingRuntimeTypes());
@@ -417,7 +416,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildSimpleExpressionWithOperatorsPriority()
     {
-        var rootNode = TestUtils.BuildAstNode("a + b/c + d");
+        var rootNode = BuildAstNode("a + b/c + d");
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
 
@@ -435,7 +434,7 @@ public class SimpleExpressionsTest
     [Test]
     public void BuildSimpleLogicalExpression()
     {
-        var rootNode = TestUtils.BuildAstNode("a + b != c + d");
+        var rootNode = BuildAstNode("a + b != c + d");
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
         
@@ -462,7 +461,7 @@ public class SimpleExpressionsTest
 
     private static void BuildInvalidExpression(string expression)
     {
-        Assert.Throws<LjsSyntaxError>(() => TestUtils.BuildAstNode(expression));
+        Assert.Throws<LjsSyntaxError>(() => BuildAstNode(expression));
     }
 
     

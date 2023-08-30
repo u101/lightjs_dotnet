@@ -1,6 +1,3 @@
-using LightJS.Ast;
-using static LightJS.Test.Ast.NodesUtils;
-
 namespace LightJS.Test.Ast;
 
 [TestFixture]
@@ -40,7 +37,7 @@ public class IfBlockTests
 
         void CheckVariant(string code)
         {
-            var node = TestUtils.BuildAstNode(code);
+            var node = BuildAstNode(code);
 
             var expected = IfBlock(
                     "a".ToVar(), "x".Assign("b".ToVar())).
@@ -63,7 +60,7 @@ public class IfBlockTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected =
             IfBlock(
@@ -93,7 +90,7 @@ public class IfBlockTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected =
             IfBlock(

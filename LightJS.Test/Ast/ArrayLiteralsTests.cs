@@ -1,5 +1,3 @@
-using static LightJS.Test.Ast.NodesUtils;
-
 namespace LightJS.Test.Ast;
 
 [TestFixture]
@@ -9,7 +7,7 @@ public class ArrayLiteralsTests
     [Test]
     public void BinaryOperationTest()
     {
-        var node = TestUtils.BuildAstNode("x = [1,2,3] + [4,5,6]");
+        var node = BuildAstNode("x = [1,2,3] + [4,5,6]");
 
         var expected = "x".Assign(ArrayLit(1,2,3).Plus(ArrayLit(4,5,6)));
         Match(node, expected);
@@ -18,7 +16,7 @@ public class ArrayLiteralsTests
     [Test]
     public void EmptyArrayLiteralTest()
     {
-        var node = TestUtils.BuildAstNode("x = []");
+        var node = BuildAstNode("x = []");
 
         var expected = "x".Assign(ArrayLit());
         Match(node, expected);
@@ -29,7 +27,7 @@ public class ArrayLiteralsTests
     public void SimpleArrayLiteralTest()
     {
         
-        var node = TestUtils.BuildAstNode("x = [1,2,3]");
+        var node = BuildAstNode("x = [1,2,3]");
 
         var expected = "x".Assign(ArrayLit(1,2,3));
         Match(node, expected);
@@ -38,7 +36,7 @@ public class ArrayLiteralsTests
     [Test]
     public void NestedArrayLiteralTest()
     {
-        var node = TestUtils.BuildAstNode("x = [1,2,'hi', [], [true, true, false] ]");
+        var node = BuildAstNode("x = [1,2,'hi', [], [true, true, false] ]");
 
         var expected = "x".Assign(ArrayLit(
             1.ToLit(),

@@ -1,5 +1,4 @@
 using LightJS.Ast;
-using static LightJS.Test.Ast.NodesUtils;
 
 namespace LightJS.Test.Ast;
 
@@ -10,7 +9,7 @@ public class FunctionDeclarationTests
     [Test]
     public void FunctionAsParameterInFunctionCallTest()
     {
-        var node = TestUtils.BuildAstNode(
+        var node = BuildAstNode(
             "x = foo(a, b, function(x) { return x+x })");
         var expected = "x".Assign("foo".FuncCall(
             "a".ToVar(),
@@ -33,7 +32,7 @@ public class FunctionDeclarationTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = NamedFunc("foo",Return(
             Func("a", "b", Return("a".Plus("b")))
@@ -46,7 +45,7 @@ public class FunctionDeclarationTests
     public void TernaryIfFunctionAssign()
     {
         
-        var node = TestUtils.BuildAstNode(
+        var node = BuildAstNode(
             "x = true ? function(a) {return a+1} : function(b) {return b-1}");
 
         var expected = "x".Assign(new LjsAstTernaryIfOperation(
@@ -77,7 +76,7 @@ public class FunctionDeclarationTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = NamedFunc("foo", Sequence(
             
@@ -97,7 +96,7 @@ public class FunctionDeclarationTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = NamedFunc("foo",Return("y".ToVar()));
         
@@ -108,7 +107,7 @@ public class FunctionDeclarationTests
     [Test]
     public void EmptyFunctionTest()
     {
-        var node = TestUtils.BuildAstNode("x = function() {}");
+        var node = BuildAstNode("x = function() {}");
 
         var expected = "x".Assign(Func(LjsAstEmptyNode.Instance));
         
@@ -124,7 +123,7 @@ public class FunctionDeclarationTests
         }
         """;
         
-        var node = TestUtils.BuildAstNode(code);
+        var node = BuildAstNode(code);
 
         var expected = "x".Assign(Func(Return("y".ToVar()))); 
             
