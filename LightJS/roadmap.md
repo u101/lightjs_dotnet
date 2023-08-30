@@ -3,7 +3,7 @@
 * LjsRuntime variables access
 
     > LjsRuntime.GetVar(string varName)
-   
+ 
     > LjsRuntime.SetVar(string varName, LjsObject value)
 
 * LjsRuntime function invokation
@@ -12,21 +12,21 @@
 
 * LjsString methods and operations
 
-  > substring(..)
+    > substring(..)
 
-  > str[] character access
+    > str[] character access
 
 * Global functions
 
-  > int(..)
-  
-  > Number(..)
+    > int(..)
 
-  > String(..)
+    > Number(..)
 
-  > parseInt(..)
+    > String(..)
 
-  > parseFloat(..)
+    > parseInt(..)
+
+    > parseFloat(..)
 
 * LjsObject toString()
 
