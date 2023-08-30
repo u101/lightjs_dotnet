@@ -1,23 +1,30 @@
 ### Runtime/Compiler features
 * LjsRuntime variables access
-* * LjsRuntime.GetVar(string varName)
-* * LjsRuntime.SetVar(string varName, LjsObject value)
+    > LjsRuntime.GetVar(string varName)
+   
+    > LjsRuntime.SetVar(string varName, LjsObject value)
 * LjsRuntime function invokation
-* * LjsRuntime.Invoke(string functionName) with overloads for different arguments count
+    > LjsRuntime.Invoke(string functionName) with overloads for different arguments count
 * LjsString methods and operations
-* * substring(..)
-* * str[] character access
+  > substring(..)
+
+  > str[] character access
 * Global functions
-* * int(..)
-* * Number(..)
-* * String(..)
-* * parseInt(..)
-* * parseFloat(..)
+  > int(..)
+  
+  > Number(..)
+
+  > String(..)
+
+  > parseInt(..)
+
+  > parseFloat(..)
 * LjsObject toString()
 * LjsArray with methods and length property
 * LjsDict
 * 'this' reference support
 * Math package
+* Named functions inside functions
 
 ### Compiler features
 * Save token positions in compiled code
