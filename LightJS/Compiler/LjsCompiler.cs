@@ -232,7 +232,7 @@ public class LjsCompiler
     private void ProcessNode(
         ILjsAstNode node, 
         FunctionData functionData,
-        int startIndex = -1, 
+        ICollection<int>? jumpToTheStartPlaceholdersIndices = null, 
         ICollection<int>? jumpToTheEndPlaceholdersIndices = null)
     {
         var instructions = functionData.Instructions;
@@ -307,9 +307,10 @@ public class LjsCompiler
                 break;
             
             case LjsAstContinue _:
-                if (startIndex == -1)
+                if (jumpToTheStartPlaceholdersIndices == null)
                     throw new LjsCompilerError("unexpected continue statement");
-                instructions.Add(new LjsInstruction(LjsInstructionCode.Jump, startIndex));
+                jumpToTheStartPlaceholdersIndices.Add(instructions.Count);
+                instructions.Add(default);
                 break;
             
             case LjsAstLiteral<int> lit:
@@ -419,7 +420,8 @@ public class LjsCompiler
                 // if false jump to next condition or to the else block or to the end
                 instructions.Add(default);
                 
-                ProcessNode(ifBlock.MainBlock.Expression, functionData, startIndex, jumpToTheEndPlaceholdersIndices);
+                ProcessNode(ifBlock.MainBlock.Expression, functionData, 
+                    jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 
                 ifEndIndices.Add(instructions.Count);
                 instructions.Add(default);
@@ -438,7 +440,8 @@ public class LjsCompiler
                         ifConditionalJumpIndex = instructions.Count;
                         instructions.Add(default);
                         
-                        ProcessNode(alternative.Expression, functionData, startIndex, jumpToTheEndPlaceholdersIndices);
+                        ProcessNode(alternative.Expression, functionData,
+                            jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                         
                         ifEndIndices.Add(instructions.Count);
                         instructions.Add(default);
@@ -453,7 +456,8 @@ public class LjsCompiler
 
                     ifConditionalJumpIndex = -1;
                     
-                    ProcessNode(ifBlock.ElseBlock, functionData, startIndex, jumpToTheEndPlaceholdersIndices);
+                    ProcessNode(ifBlock.ElseBlock, functionData,
+                        jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 }
                 
                 var ifBlockEndIndex = instructions.Count;
@@ -475,6 +479,60 @@ public class LjsCompiler
                 
                 break;
             
+            case LjsAstForLoop forLoop:
+                
+                ProcessNode(forLoop.InitExpression, functionData);
+                
+                var loopStartIndex = instructions.Count;
+                var loopConditionalJumpIndex = -1;
+                
+                if (forLoop.Condition != LjsAstEmptyNode.Instance)
+                {
+                    ProcessNode(forLoop.Condition, functionData);
+                
+                    loopConditionalJumpIndex = instructions.Count;
+                    instructions.Add(default);
+                }
+                
+                // for break statements inside
+                var loopEndIndices = LjsCompileUtils.GetTemporaryIntList();
+                var loopContinueIndices = LjsCompileUtils.GetTemporaryIntList();
+
+                ProcessNode(forLoop.Body, functionData,
+                    loopContinueIndices, loopEndIndices);
+
+                var loopIteratorIndex = instructions.Count;
+                
+                ProcessNode(forLoop.IterationExpression, functionData);
+                
+                instructions.Add(new LjsInstruction(
+                    LjsInstructionCode.Jump, loopStartIndex));
+
+                var loopEndIndex = instructions.Count;
+
+                if (loopConditionalJumpIndex != -1)
+                {
+                    instructions.SetAt(new LjsInstruction(
+                            LjsInstructionCode.JumpIfFalse, loopEndIndex), 
+                        loopConditionalJumpIndex);
+                }
+                
+                foreach (var i in loopContinueIndices)
+                {
+                    instructions.SetAt(new LjsInstruction(
+                        LjsInstructionCode.Jump, loopIteratorIndex), i);
+                }
+                
+                foreach (var i in loopEndIndices)
+                {
+                    instructions.SetAt(new LjsInstruction(
+                        LjsInstructionCode.Jump, loopEndIndex), i);
+                }
+                
+                LjsCompileUtils.ReleaseTemporaryIntList(loopEndIndices);
+                LjsCompileUtils.ReleaseTemporaryIntList(loopContinueIndices);
+                break;
+            
             case LjsAstWhileLoop whileLoop:
                 
                 var whileStartIndex = instructions.Count;
@@ -486,8 +544,10 @@ public class LjsCompiler
                 
                 // for break statements inside
                 var whileEndIndices = LjsCompileUtils.GetTemporaryIntList();
+                var whileContinueIndices = LjsCompileUtils.GetTemporaryIntList();
                 
-                ProcessNode(whileLoop.Body, functionData, whileStartIndex, whileEndIndices);
+                ProcessNode(whileLoop.Body, functionData, 
+                    whileContinueIndices, whileEndIndices);
                 
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.Jump, whileStartIndex));
@@ -497,6 +557,12 @@ public class LjsCompiler
                 instructions.SetAt(new LjsInstruction(
                     LjsInstructionCode.JumpIfFalse, whileEndIndex), 
                     whileConditionalJumpIndex);
+
+                foreach (var i in whileContinueIndices)
+                {
+                    instructions.SetAt(new LjsInstruction(
+                        LjsInstructionCode.Jump, whileStartIndex), i);
+                }
                 
                 foreach (var i in whileEndIndices)
                 {
@@ -505,6 +571,7 @@ public class LjsCompiler
                 }
                 
                 LjsCompileUtils.ReleaseTemporaryIntList(whileEndIndices);
+                LjsCompileUtils.ReleaseTemporaryIntList(whileContinueIndices);
                 break;
             
             case LjsAstSequence sequence:
@@ -517,14 +584,15 @@ public class LjsCompiler
                 
                 foreach (var n in sequence.ChildNodes)
                 {
-                    ProcessNode(n, functionData, startIndex, jumpToTheEndPlaceholdersIndices);
+                    ProcessNode(n, functionData, 
+                        jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 }
                 
                 break;
             
             
             default:
-                throw new LjsCompilerError("unsupported ast node");
+                throw new LjsCompilerError($"unsupported ast node {node.GetType().Name}");
         }
     }
     

@@ -256,6 +256,12 @@ public sealed class LjsRuntime
 
                         var fc = StartFunction(functionPointer.FunctionIndex, f.LocalsCount);
 
+                        // remove arguments from stack that can not be used by specified function
+                        while (argsCount > f.Arguments.Length)
+                        {
+                            _stack.Pop();
+                        }
+                        
                         for (var j = f.Arguments.Length - 1; j >= 0; --j)
                         {
                             var arg = f.Arguments[j];
