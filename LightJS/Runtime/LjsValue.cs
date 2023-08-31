@@ -40,9 +40,3 @@ public class LjsValue<TValueType> : LjsObject where TValueType : struct
         return EqualityComparer<TValueType>.Default.GetHashCode(Value);
     }
 }
-
-public static class LjsValue
-{
-    public static readonly LjsValue<bool> True = new (true);
-    public static readonly LjsValue<bool> False = new (false);
-}

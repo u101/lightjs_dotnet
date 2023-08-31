@@ -183,7 +183,7 @@ public class LjsCompiler
         LjsAstLiteral<int> i => new LjsValue<int>(i.Value),
         LjsAstLiteral<double> i => new LjsValue<double>(i.Value),
         LjsAstLiteral<string> i => new LjsString(i.Value),
-        LjsAstLiteral<bool> i => i.Value ? LjsValue.True : LjsValue.False,
+        LjsAstLiteral<bool> i => i.Value ? LjsBoolean.True : LjsBoolean.False,
         _ => LjsObject.Undefined
     };
 

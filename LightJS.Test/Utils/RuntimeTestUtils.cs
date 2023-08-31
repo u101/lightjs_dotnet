@@ -29,7 +29,7 @@ public static class RuntimeTestUtils
     
     public static void CheckResult(LjsObject result, bool expectedValue)
     {
-        Assert.That(result, Is.EqualTo(new LjsValue<bool>(expectedValue)));
+        Assert.That(result, Is.EqualTo(expectedValue ? LjsBoolean.True : LjsBoolean.False));
     }
     
     public static void CheckResult(LjsObject result, string expectedValue)

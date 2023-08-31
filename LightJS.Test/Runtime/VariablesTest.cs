@@ -86,7 +86,7 @@ public class VariablesTest
         var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<bool>(true)));
+        CheckResult(result, LjsBoolean.True);
     }
     
     [Test]
@@ -100,7 +100,7 @@ public class VariablesTest
         var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<bool>(false)));
+        CheckResult(result, LjsBoolean.False);
     }
     
     [Test]

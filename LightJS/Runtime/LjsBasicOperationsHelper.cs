@@ -86,24 +86,24 @@ internal static class LjsBasicOperationsHelper
         switch (opCode)
         {
             case LjsInstructionCode.Gt:
-                return ToDouble(left) > ToDouble(right) ? LjsValue.True : LjsValue.False;
+                return ToDouble(left) > ToDouble(right) ? LjsBoolean.True : LjsBoolean.False;
                 
             case LjsInstructionCode.Gte:
-                return ToDouble(left) >= ToDouble(right) ? LjsValue.True : LjsValue.False;
+                return ToDouble(left) >= ToDouble(right) ? LjsBoolean.True : LjsBoolean.False;
                 
             case LjsInstructionCode.Lt:
-                return ToDouble(left) < ToDouble(right) ? LjsValue.True : LjsValue.False;
+                return ToDouble(left) < ToDouble(right) ? LjsBoolean.True : LjsBoolean.False;
                 
             case LjsInstructionCode.Lte:
-                return ToDouble(left) <= ToDouble(right) ? LjsValue.True : LjsValue.False;
+                return ToDouble(left) <= ToDouble(right) ? LjsBoolean.True : LjsBoolean.False;
                 
             case LjsInstructionCode.Eq:
             case LjsInstructionCode.Eqs:
-                return left.Equals(right) ? LjsValue.True : LjsValue.False;
+                return left.Equals(right) ? LjsBoolean.True : LjsBoolean.False;
                 
             case LjsInstructionCode.Neq:
             case LjsInstructionCode.Neqs:
-                return left.Equals(right) ? LjsValue.False : LjsValue.True;
+                return left.Equals(right) ? LjsBoolean.False : LjsBoolean.True;
                 
             default:
                 throw new LjsInternalError($"unsupported comparison op code {opCode}");
@@ -115,9 +115,9 @@ internal static class LjsBasicOperationsHelper
         switch (opCode)
         {
             case LjsInstructionCode.And:
-                return ToBool(left) && ToBool(right) ? LjsValue.True : LjsValue.False;
+                return ToBool(left) && ToBool(right) ? LjsBoolean.True : LjsBoolean.False;
             case LjsInstructionCode.Or:
-                return ToBool(left) || ToBool(right) ? LjsValue.True : LjsValue.False;
+                return ToBool(left) || ToBool(right) ? LjsBoolean.True : LjsBoolean.False;
             default:
                 throw new LjsInternalError($"unsupported logical op code {opCode}");
         }
@@ -139,7 +139,7 @@ internal static class LjsBasicOperationsHelper
                 return new LjsValue<int>(~ToInt(operand));
                 
             case LjsInstructionCode.Not:
-                return ToBool(operand) ? LjsValue.False : LjsValue.True;
+                return ToBool(operand) ? LjsBoolean.False : LjsBoolean.True;
                 
             default:
                 throw new LjsInternalError($"unsupported unary op code {opCode}");

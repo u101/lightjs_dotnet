@@ -6,7 +6,7 @@ public static class LjsTypesConverter
     {
         LjsValue<int> i => i.Value == 0,
         LjsValue<double> i => i.Value == 0,
-        LjsValue<bool> i => i.Value,
+        LjsBoolean i => i.Value,
         LjsString i => !string.IsNullOrEmpty(i.Value),
         _ => obj != LjsObject.Null && obj != LjsObject.Undefined
     };
@@ -15,7 +15,7 @@ public static class LjsTypesConverter
     {
         LjsValue<int> i => i.Value,
         LjsValue<double> i => (int)i.Value,
-        LjsValue<bool> i => i.Value ? 1 : 0,
+        LjsBoolean i => i.Value ? 1 : 0,
         _ => 0
     };
     
@@ -23,7 +23,7 @@ public static class LjsTypesConverter
     {
         LjsValue<int> i => i.Value,
         LjsValue<double> i => i.Value,
-        LjsValue<bool> i => i.Value ? 1 : 0,
+        LjsBoolean i => i.Value ? 1 : 0,
         _ => double.NaN
     };
     
