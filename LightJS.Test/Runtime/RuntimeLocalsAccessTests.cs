@@ -60,8 +60,7 @@ public class RuntimeLocalsAccessTests
         
         CheckResult(x, 456);
 
-        var setResult = runtime.SetLocal(
-            "x", new LjsValue<int>(123));
+        var setResult = runtime.SetLocal("x", 123);
         
         Assert.That(setResult, Is.True);
         

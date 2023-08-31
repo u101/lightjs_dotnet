@@ -1,5 +1,3 @@
-using LightJS.Runtime;
-
 namespace LightJS.Test.Runtime;
 
 [TestFixture]
@@ -19,7 +17,7 @@ public class IfBlockTests
         var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<int>(123)));
+        CheckResult(result, 123);
 
     }
     
@@ -39,7 +37,7 @@ public class IfBlockTests
         var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<int>(987)));
+        CheckResult(result, 987);
 
     }
     
@@ -69,7 +67,7 @@ public class IfBlockTests
         var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<int>(111)));
+        CheckResult(result, 111);
 
     }
 }

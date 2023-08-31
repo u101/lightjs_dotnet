@@ -19,12 +19,12 @@ public static class RuntimeTestUtils
     
     public static void CheckResult(LjsObject result, int expectedValue)
     {
-        Assert.That(result, Is.EqualTo(new LjsValue<int>(expectedValue)));
+        Assert.That(result, Is.EqualTo(new LjsInteger(expectedValue)));
     }
     
     public static void CheckResult(LjsObject result, double expectedValue)
     {
-        Assert.That(result, Is.EqualTo(new LjsValue<double>(expectedValue)));
+        Assert.That(result, Is.EqualTo(new LjsDouble(expectedValue)));
     }
     
     public static void CheckResult(LjsObject result, bool expectedValue)

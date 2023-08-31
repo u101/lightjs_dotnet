@@ -20,8 +20,8 @@ public static class LjsLanguageApi
     };
 
 
-    private static LjsObject ConvertToInt(LjsObject v) => new LjsValue<int>(LjsTypesConverter.ToInt(v));
-    private static LjsObject ConvertToNumber(LjsObject v) => new LjsValue<double>(LjsTypesConverter.ToDouble(v));
+    private static LjsObject ConvertToInt(LjsObject v) => new LjsInteger(LjsTypesConverter.ToInt(v));
+    private static LjsObject ConvertToNumber(LjsObject v) => new LjsDouble(LjsTypesConverter.ToDouble(v));
     private static LjsObject ConvertToString(LjsObject v) => new LjsString(v.ToString());
 
     private static LjsObject ParseInt(LjsObject str)
@@ -34,19 +34,19 @@ public static class LjsLanguageApi
 
                 if (int.TryParse(v, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out var result))
                 {
-                    return new LjsValue<int>(result);
+                    return new LjsInteger(result);
                 }
 
-                return new LjsValue<int>(0);
+                return new LjsInteger(0);
             
-            case LjsValue<int> i:
-                return new LjsValue<int>(i.Value);
+            case LjsInteger i:
+                return new LjsInteger(i.Value);
             
-            case LjsValue<double> d:
-                return new LjsValue<int>((int) d.Value);
+            case LjsDouble d:
+                return new LjsInteger((int) d.Value);
             
             default:
-                return new LjsValue<int>(0);
+                return new LjsInteger(0);
         }
     } 
     
@@ -61,19 +61,19 @@ public static class LjsLanguageApi
 
                 if (double.TryParse(v, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out var result))
                 {
-                    return new LjsValue<double>(result);
+                    return new LjsDouble(result);
                 }
 
-                return new LjsValue<double>(double.NaN);
+                return new LjsDouble(double.NaN);
             
-            case LjsValue<int> i:
-                return new LjsValue<double>(i.Value);
+            case LjsInteger i:
+                return new LjsDouble(i.Value);
             
-            case LjsValue<double> d:
-                return new LjsValue<double>(d.Value);
+            case LjsDouble d:
+                return new LjsDouble(d.Value);
             
             default:
-                return new LjsValue<double>(double.NaN);
+                return new LjsDouble(double.NaN);
         }
     } 
     

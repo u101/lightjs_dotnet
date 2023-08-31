@@ -14,7 +14,7 @@ internal static class LjsBasicOperationsHelper
             return new LjsString(left.ToString() + right.ToString());
         }
 
-        var isDouble = left is LjsValue<double> || right is LjsValue<double>;
+        var isDouble = left is LjsDouble || right is LjsDouble;
 
         return isDouble ?
             ExecuteArithmeticOperation(ToDouble(left), ToDouble(right), opCode):
@@ -29,15 +29,15 @@ internal static class LjsBasicOperationsHelper
         switch (opCode)
         {
             case LjsInstructionCode.BitAnd:
-                return new LjsValue<int>(a & b);
+                return new LjsInteger(a & b);
             case LjsInstructionCode.BitOr:
-                return new LjsValue<int>(a | b);
+                return new LjsInteger(a | b);
             case LjsInstructionCode.BitShiftLeft:
-                return new LjsValue<int>(a << b);
+                return new LjsInteger(a << b);
             case LjsInstructionCode.BitSShiftRight:
-                return new LjsValue<int>(a >> b);
+                return new LjsInteger(a >> b);
             case LjsInstructionCode.BitUShiftRight:
-                return new LjsValue<int>(a >>> b);
+                return new LjsInteger(a >>> b);
             default:
                 throw new LjsInternalError($"unsupported bitwise op code {opCode}");
         }
@@ -48,15 +48,15 @@ internal static class LjsBasicOperationsHelper
         switch (opCode)
         {
             case LjsInstructionCode.Add:
-                return new LjsValue<int>(left + right);
+                return new LjsInteger(left + right);
             case LjsInstructionCode.Sub:
-                return new LjsValue<int>(left - right);
+                return new LjsInteger(left - right);
             case LjsInstructionCode.Mul:
-                return new LjsValue<int>(left * right);
+                return new LjsInteger(left * right);
             case LjsInstructionCode.Div:
-                return new LjsValue<int>(left / right);
+                return new LjsInteger(left / right);
             case LjsInstructionCode.Mod:
-                return new LjsValue<int>(left % right);
+                return new LjsInteger(left % right);
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
         }
@@ -67,15 +67,15 @@ internal static class LjsBasicOperationsHelper
         switch (opCode)
         {
             case LjsInstructionCode.Add:
-                return new LjsValue<double>(left + right);
+                return new LjsDouble(left + right);
             case LjsInstructionCode.Sub:
-                return new LjsValue<double>(left - right);
+                return new LjsDouble(left - right);
             case LjsInstructionCode.Mul:
-                return new LjsValue<double>(left * right);
+                return new LjsDouble(left * right);
             case LjsInstructionCode.Div:
-                return new LjsValue<double>(left / right);
+                return new LjsDouble(left / right);
             case LjsInstructionCode.Mod:
-                return new LjsValue<double>(left % right);
+                return new LjsDouble(left % right);
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
         }
@@ -128,15 +128,15 @@ internal static class LjsBasicOperationsHelper
         switch (opCode)
         {
             case LjsInstructionCode.Minus:
-                if (operand is LjsValue<double> d)
+                if (operand is LjsDouble d)
                 {
-                    return new LjsValue<double>(-d.Value);
+                    return new LjsDouble(-d.Value);
                 }
 
-                return new LjsValue<int>(-ToInt(operand));
+                return new LjsInteger(-ToInt(operand));
                 
             case LjsInstructionCode.BitNot:
-                return new LjsValue<int>(~ToInt(operand));
+                return new LjsInteger(~ToInt(operand));
                 
             case LjsInstructionCode.Not:
                 return ToBool(operand) ? LjsBoolean.False : LjsBoolean.True;

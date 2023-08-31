@@ -32,12 +32,7 @@ public class ExternalFunctionsTests
     [Test]
     public void ParseIntTest()
     {
-        var code = """
-        var x = parseInt('123');
-        x
-        """;
-        
-        var runtime = CreateRuntime(code);
+        var runtime = CreateRuntime("parseInt('123')");
 
         var result = runtime.Execute();
         
@@ -47,12 +42,7 @@ public class ExternalFunctionsTests
     [Test]
     public void ParseFloatTest()
     {
-        var code = """
-        var x = parseFloat('3.1415');
-        x
-        """;
-        
-        var runtime = CreateRuntime(code);
+        var runtime = CreateRuntime("parseFloat('3.1415')");
 
         var result = runtime.Execute();
         
@@ -62,12 +52,8 @@ public class ExternalFunctionsTests
     [Test]
     public void ParseFloatWithInvalidArgumentTest()
     {
-        var code = """
-        var x = parseFloat('asdf');
-        x
-        """;
         
-        var runtime = CreateRuntime(code);
+        var runtime = CreateRuntime("parseFloat('asdf')");
 
         var result = runtime.Execute();
         
@@ -77,12 +63,7 @@ public class ExternalFunctionsTests
     [Test]
     public void ConvertToIntTest()
     {
-        var code = """
-        var x = int(3.1415);
-        x
-        """;
-        
-        var runtime = CreateRuntime(code);
+        var runtime = CreateRuntime("int(3.1415)");
 
         var result = runtime.Execute();
         
@@ -92,12 +73,8 @@ public class ExternalFunctionsTests
     [Test]
     public void ConvertToNumberTest()
     {
-        var code = """
-        var x = Number(true);
-        x
-        """;
         
-        var runtime = CreateRuntime(code);
+        var runtime = CreateRuntime("Number(true)");
 
         var result = runtime.Execute();
         
@@ -105,18 +82,24 @@ public class ExternalFunctionsTests
     }
     
     [Test]
-    public void ConvertToStringTest()
+    public void ConvertBoolToStringTest()
     {
-        var code = """
-        var x = String(true);
-        x
-        """;
         
-        var runtime = CreateRuntime(code);
+        var runtime = CreateRuntime("String(true)");
 
         var result = runtime.Execute();
         
         CheckResult(result, "true");
+    }
+    
+    [Test]
+    public void ConvertDoubleToStringTest()
+    {
+        var runtime = CreateRuntime("String(3.1415)");
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, "3.1415");
     }
     
 }
