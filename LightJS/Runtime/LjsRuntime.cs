@@ -511,22 +511,47 @@ public sealed class LjsRuntime
 
     #region Invoke Script Function
 
-    public bool Invoke(string functionName)
+    private void ThrowFunctionInvocationError(string functionName)
     {
-        if (!CanInvoke(functionName)) return false;
+        if (_isRunning)
+            throw new Exception("can not call function while script is running");
+
+        if (!_program.ContainsFunction(functionName)) 
+            throw new Exception($"function {functionName} not found");
+
+        if (_functionCallStack.Count == 0)
+            throw new Exception("invalid execution state. " +
+                                "You should call LjsRuntime.Execute() method before to initialize runtime. " +
+                                "Remember not to call LjsRuntime.Execute() method more then once");
+        
+        var functionContext = _functionCallStack[0];
+
+        if (functionContext.FunctionIndex != 0)
+            throw new Exception("invalid internal execution state. runtime is broken");
+    }
+
+    private LjsObject ExecuteFunctionAndGetResult()
+    {
+        ExecuteInternal(1);
+        return _stack.Pop();
+    }
+    
+    public LjsObject Invoke(string functionName)
+    {
+        if (!CanInvoke(functionName)) 
+            ThrowFunctionInvocationError(functionName);
 
         var functionData = _program.GetFunction(functionName);
 
         StartFunction(functionData.FunctionIndex, functionData.LocalsCount);
-        
-        ExecuteInternal(1);
 
-        return true;
+        return ExecuteFunctionAndGetResult();
     }
     
-    public bool Invoke(string functionName, LjsObject arg0)
+    public LjsObject Invoke(string functionName, LjsObject arg0)
     {
-        if (!CanInvoke(functionName)) return false;
+        if (!CanInvoke(functionName)) 
+            ThrowFunctionInvocationError(functionName);
 
         var functionData = _program.GetFunction(functionName);
 
@@ -537,14 +562,13 @@ public sealed class LjsRuntime
         
         if (argsLn >= 1) _locals[ctx.LocalsOffset + 0] = arg0;
         
-        ExecuteInternal(1);
-
-        return true;
+        return ExecuteFunctionAndGetResult();
     }
     
-    public bool Invoke(string functionName, LjsObject arg0, LjsObject arg1)
+    public LjsObject Invoke(string functionName, LjsObject arg0, LjsObject arg1)
     {
-        if (!CanInvoke(functionName)) return false;
+        if (!CanInvoke(functionName)) 
+            ThrowFunctionInvocationError(functionName);
 
         var functionData = _program.GetFunction(functionName);
 
@@ -556,14 +580,13 @@ public sealed class LjsRuntime
         if (argsLn >= 1) _locals[ctx.LocalsOffset + 0] = arg0;
         if (argsLn >= 2) _locals[ctx.LocalsOffset + 1] = arg1;
         
-        ExecuteInternal(1);
-
-        return true;
+        return ExecuteFunctionAndGetResult();
     }
     
-    public bool Invoke(string functionName, LjsObject arg0, LjsObject arg1, LjsObject arg2)
+    public LjsObject Invoke(string functionName, LjsObject arg0, LjsObject arg1, LjsObject arg2)
     {
-        if (!CanInvoke(functionName)) return false;
+        if (!CanInvoke(functionName)) 
+            ThrowFunctionInvocationError(functionName);
 
         var functionData = _program.GetFunction(functionName);
 
@@ -576,15 +599,14 @@ public sealed class LjsRuntime
         if (argsLn >= 2) _locals[ctx.LocalsOffset + 1] = arg1;
         if (argsLn >= 3) _locals[ctx.LocalsOffset + 2] = arg2;
         
-        ExecuteInternal(1);
-
-        return true;
+        return ExecuteFunctionAndGetResult();
     }
     
-    public bool Invoke(string functionName, 
+    public LjsObject Invoke(string functionName, 
         LjsObject arg0, LjsObject arg1, LjsObject arg2, LjsObject arg3)
     {
-        if (!CanInvoke(functionName)) return false;
+        if (!CanInvoke(functionName)) 
+            ThrowFunctionInvocationError(functionName);
 
         var functionData = _program.GetFunction(functionName);
 
@@ -598,14 +620,13 @@ public sealed class LjsRuntime
         if (argsLn >= 3) _locals[ctx.LocalsOffset + 2] = arg2;
         if (argsLn >= 4) _locals[ctx.LocalsOffset + 3] = arg3;
         
-        ExecuteInternal(1);
-
-        return true;
+        return ExecuteFunctionAndGetResult();
     }
     
-    public bool Invoke(string functionName, LjsObject[] args)
+    public LjsObject Invoke(string functionName, LjsObject[] args)
     {
-        if (!CanInvoke(functionName)) return false;
+        if (!CanInvoke(functionName)) 
+            ThrowFunctionInvocationError(functionName);
 
         var functionData = _program.GetFunction(functionName);
 
@@ -619,9 +640,7 @@ public sealed class LjsRuntime
             _locals[ctx.LocalsOffset + i] = args[i];
         }
         
-        ExecuteInternal(1);
-
-        return true;
+        return ExecuteFunctionAndGetResult();
     }
 
     #endregion

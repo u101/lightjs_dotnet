@@ -74,7 +74,8 @@ public class RuntimeLocalsAccessTests
         var x = 123
 
         function foo() {
-            ++x;
+            x++;
+            return x;
         }
         """;
         
@@ -87,9 +88,7 @@ public class RuntimeLocalsAccessTests
         {
             var invocationResult = runtime.Invoke("foo");
         
-            Assert.That(invocationResult, Is.True);
-        
-            CheckResult(runtime.GetLocal("x"), 124 + i);
+            CheckResult(invocationResult, 124 + i);
         }
 
     }
@@ -98,10 +97,8 @@ public class RuntimeLocalsAccessTests
     public void InvokeFunctionWithOneArgumentTest()
     {
         var code = """
-        var x = '';
-
         function foo(a) {
-            x = a;
+            return a;
         }
         """;
         
@@ -110,9 +107,7 @@ public class RuntimeLocalsAccessTests
         
         var invocationResult = runtime.Invoke("foo", "hi");
         
-        Assert.That(invocationResult, Is.True);
-        
-        CheckResult(runtime.GetLocal("x"), "hi");
+        CheckResult(invocationResult, "hi");
 
     }
     
@@ -120,10 +115,8 @@ public class RuntimeLocalsAccessTests
     public void InvokeFunctionWithTwoArgumentsTest()
     {
         var code = """
-        var x = '';
-
         function foo(a, b) {
-            x = a + b;
+            return a + b;
         }
         """;
         
@@ -132,9 +125,26 @@ public class RuntimeLocalsAccessTests
         
         var invocationResult = runtime.Invoke("foo", "hello_", "world");
         
-        Assert.That(invocationResult, Is.True);
+        CheckResult(invocationResult, "hello_world");
+
+    }
+    
+    [Test]
+    public void InvokeFunctionWithThreeArgumentsTest()
+    {
+        var code = """
+        function foo(a, b, c) {
+            return a + b + c;
+        }
+        """;
         
-        CheckResult(runtime.GetLocal("x"), "hello_world");
+        var runtime = CreateRuntime(code);
+        runtime.Execute();
+        
+        var invocationResult = runtime.Invoke(
+            "foo", "hello_", "world", "!!!");
+        
+        CheckResult(invocationResult, "hello_world!!!");
 
     }
     
