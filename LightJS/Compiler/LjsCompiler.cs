@@ -614,7 +614,7 @@ public class LjsCompiler
         else if (data.HasLocalInHierarchy(getVar.VarName))
         {
             var (varIndex, functionIndex) = data.GetLocalInHierarchy(getVar.VarName);
-            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            var instructionArg = LjsRuntimeUtils.CombineTwoShorts(varIndex, functionIndex);
             
             instructions.Add(new LjsInstruction(LjsInstructionCode.ParentVarLoad, instructionArg));
             
@@ -637,7 +637,7 @@ public class LjsCompiler
         if (data.HasLocalInHierarchy(varName))
         {
             var (varIndex, functionIndex) = data.GetLocalInHierarchy(varName);
-            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            var instructionArg = LjsRuntimeUtils.CombineTwoShorts(varIndex, functionIndex);
             
             return new LjsInstruction(LjsInstructionCode.ParentVarLoad, instructionArg);
         }
@@ -657,7 +657,7 @@ public class LjsCompiler
         if (data.HasLocalInHierarchy(varName))
         {
             var (varIndex, functionIndex) = data.GetLocalInHierarchy(varName);
-            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            var instructionArg = LjsRuntimeUtils.CombineTwoShorts(varIndex, functionIndex);
             
             return new LjsInstruction(LjsInstructionCode.ParentVarStore, instructionArg);
         }
@@ -677,7 +677,7 @@ public class LjsCompiler
         if (data.HasLocalInHierarchy(varName))
         {
             var (varIndex, functionIndex) = data.GetLocalInHierarchy(varName);
-            var instructionArg = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(varIndex, functionIndex);
+            var instructionArg = LjsRuntimeUtils.CombineTwoShorts(varIndex, functionIndex);
             
             return new LjsInstruction(LjsInstructionCode.ParentVarInit, instructionArg);
         }

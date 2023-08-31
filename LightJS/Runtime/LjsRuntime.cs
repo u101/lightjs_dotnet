@@ -1,3 +1,6 @@
+using static LightJS.Runtime.LjsTypesConverter;
+using static LightJS.Runtime.LjsBasicOperationsHelper;
+
 using LightJS.Errors;
 using LightJS.Program;
 
@@ -16,12 +19,13 @@ public sealed class LjsRuntime
     private bool _isExecutionCalled = false;
     private bool _isRunning = false;
 
-    private readonly Dictionary<string, LjsObject> _externals = new();
+    private readonly Dictionary<string, LjsObject> _externals;
 
     public LjsRuntime(LjsProgram program)
     {
         _program = program;
         _constants = program.Constants;
+        _externals = LjsLanguageApi.CreateApiDictionary();
     }
 
     public void AddExternal(string name, LjsObject obj)
@@ -242,7 +246,7 @@ public sealed class LjsRuntime
                 
                 case LjsInstructionCode.JumpIfFalse:
                     var jumpConditionObj = _stack.Pop();
-                    var jumpCondition = LjsRuntimeUtils.ToBool(jumpConditionObj);
+                    var jumpCondition = ToBool(jumpConditionObj);
                     if (!jumpCondition)
                     {
                         _functionCallStack[^1] = fCtx.JumpToInstruction(instruction.Argument);
@@ -378,7 +382,7 @@ public sealed class LjsRuntime
                 case LjsInstructionCode.Mod:
                     var right = _stack.Pop();
                     var left = _stack.Pop();
-                    _stack.Push(LjsRuntimeUtils.ExecuteArithmeticOperation(left, right, instructionCode));
+                    _stack.Push(ExecuteArithmeticOperation(left, right, instructionCode));
                     break;
                 // bitwise ops
                 case LjsInstructionCode.BitAnd:
@@ -389,7 +393,7 @@ public sealed class LjsRuntime
                     var bitsOperandRight = _stack.Pop();
                     var bitsOperandLeft = _stack.Pop();
                     _stack.Push(
-                        LjsRuntimeUtils.ExecuteBitwiseOperation(bitsOperandLeft, bitsOperandRight, instructionCode));
+                        ExecuteBitwiseOperation(bitsOperandLeft, bitsOperandRight, instructionCode));
                     break;
                 // compare ops
                 case LjsInstructionCode.Gt:
@@ -403,7 +407,7 @@ public sealed class LjsRuntime
                     var compareRight = _stack.Pop();
                     var compareLeft = _stack.Pop();
                     _stack.Push(
-                        LjsRuntimeUtils.ExecuteComparisonOperation(compareLeft, compareRight, instructionCode));
+                        ExecuteComparisonOperation(compareLeft, compareRight, instructionCode));
                     break;
                 // compare ops
                 case LjsInstructionCode.And:
@@ -411,14 +415,14 @@ public sealed class LjsRuntime
                     var flagRight = _stack.Pop();
                     var flagLeft = _stack.Pop();
                     _stack.Push(
-                        LjsRuntimeUtils.ExecuteLogicalOperation(flagLeft, flagRight, instructionCode));
+                        ExecuteLogicalOperation(flagLeft, flagRight, instructionCode));
                     break;
                 // unary ops
                 case LjsInstructionCode.Minus:
                 case LjsInstructionCode.BitNot:
                 case LjsInstructionCode.Not:
                     var unaryOperand = _stack.Pop();
-                    _stack.Push(LjsRuntimeUtils.ExecuteUnaryOperation(unaryOperand, instructionCode));
+                    _stack.Push(ExecuteUnaryOperation(unaryOperand, instructionCode));
                     break;
                 
                 // vars 

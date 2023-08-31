@@ -28,5 +28,20 @@ public class ExternalFunctionsTests
         
         Assert.That(c, Is.EqualTo(100));
     }
+
+    [Test]
+    public void ParseIntTest()
+    {
+        var code = """
+        var x = parseInt('123');
+        x
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, 123);
+    }
     
 }

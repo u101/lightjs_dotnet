@@ -28,7 +28,7 @@ public class RuntimeUtilsTests
         for (var i = 0; i < pairs.Length; i++)
         {
             var (localIndex, funcIndex) = pairs[i];
-            var j = LjsRuntimeUtils.CombineLocalIndexAndFunctionIndex(localIndex, funcIndex);
+            var j = LjsRuntimeUtils.CombineTwoShorts(localIndex, funcIndex);
 
             var lci = LjsRuntimeUtils.GetLocalIndex(j);
             var fci = LjsRuntimeUtils.GetFunctionIndex(j);
