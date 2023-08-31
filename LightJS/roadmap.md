@@ -24,7 +24,7 @@
 
     > ~~Number(..)~~
 
-    > String(..)
+    > ~~String(..)~~
 
     > ~~parseInt(..)~~
 
