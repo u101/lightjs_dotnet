@@ -44,4 +44,34 @@ public class ExternalFunctionsTests
         CheckResult(result, 123);
     }
     
+    [Test]
+    public void ParseFloatTest()
+    {
+        var code = """
+        var x = parseFloat('3.1415');
+        x
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, 3.1415);
+    }
+    
+    [Test]
+    public void ParseFloatWithInvalidArgumentTest()
+    {
+        var code = """
+        var x = parseFloat('asdf');
+        x
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, double.NaN);
+    }
+    
 }
