@@ -1,11 +1,7 @@
 namespace LightJS.Runtime;
 
-public abstract class LjsExternalFunction : LjsObject
+public abstract class LjsExternalFunction : LjsFunction
 {
-    public abstract int ArgumentsCount { get; }
-
-    public abstract LjsObject Invoke(List<LjsObject> arguments);
-
     public static LjsExternalFunction Create(Func<LjsObject> f) => new LjsExternalFunction0(f);
     public static LjsExternalFunction Create(Action f) => new LjsExternalAction0(f);
 

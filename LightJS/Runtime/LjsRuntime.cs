@@ -282,7 +282,7 @@ public sealed class LjsRuntime
                             jump = true;
                             break;
                         
-                        case LjsExternalFunction extFunc:
+                        case LjsFunction extFunc:
                             
                             // remove arguments from stack that can not be used by specified function
                             while (argsCount > extFunc.ArgumentsCount)
