@@ -5,9 +5,8 @@ namespace LightJS.Runtime;
 /// </summary>
 public class LjsObject : IEquatable<LjsObject>
 {
-
-    public static readonly LjsObject Null = new LjsNull();
-    public static readonly LjsObject Undefined = new LjsUndefined();
+    public static readonly LjsObject Null = LjsNull.Instance;
+    public static readonly LjsObject Undefined = LjsUndefined.Instance;
 
     public override string ToString()
     {
@@ -16,19 +15,12 @@ public class LjsObject : IEquatable<LjsObject>
 
     public virtual bool Equals(LjsObject? other)
     {
-        return other != null && other == this;
-    }
-
-    private sealed class LjsNull : LjsObject
-    {
-        public LjsNull() {}
-        public override string ToString() => "null";
+        return other != null && ReferenceEquals(other, this);
     }
     
-    private sealed class LjsUndefined : LjsObject
+    public override bool Equals(object? obj)
     {
-        public LjsUndefined() {}
-        public override string ToString() => "undefined";
+        return obj is LjsObject o && Equals(o);
     }
     
     #region type coercing
@@ -37,6 +29,8 @@ public class LjsObject : IEquatable<LjsObject>
     public static implicit operator LjsObject(int v) => new LjsInteger(v);
     public static implicit operator LjsObject(double v) => new LjsDouble(v);
     public static implicit operator LjsObject(bool v) => v ? LjsBoolean.True : LjsBoolean.False;
+
+    
 
     #endregion
 
