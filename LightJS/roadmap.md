@@ -18,7 +18,7 @@
 
     > str[] character access
 
-* Global functions
+* ~~Global functions~~
 
     > ~~int(..)~~
 
