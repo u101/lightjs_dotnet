@@ -1,6 +1,6 @@
-namespace LightJS.Runtime;
+namespace LightJS.Runtime.PropertyProviders;
 
-public interface ILjsTypePropertiesProvider
+public interface ILjsObjectPropertiesProvider
 {
     bool HasProperty(string propertyName);
 

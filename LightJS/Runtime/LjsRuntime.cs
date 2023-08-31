@@ -3,6 +3,7 @@ using static LightJS.Runtime.LjsBasicOperationsHelper;
 
 using LightJS.Errors;
 using LightJS.Program;
+using LightJS.Runtime.PropertyProviders;
 
 namespace LightJS.Runtime;
 
@@ -493,6 +494,18 @@ public sealed class LjsRuntime
                     var parentFc2 = GetParentFunctionContext(funcIndex2);
                     
                     _locals[parentFc2.LocalsOffset + varIndex] = v;
+                    break;
+                
+                case LjsInstructionCode.GetNamedProp:
+
+                    var propName = _stack.Pop();
+                    var propSource = _stack.Pop();
+
+                    var prop = 
+                        LjsObjectPropertiesProviderDefault.Instance.GetProperty(propSource, propName);
+                    
+                    _stack.Push(prop);
+
                     break;
                     
                 default:

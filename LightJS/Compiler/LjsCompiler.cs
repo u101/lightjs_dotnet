@@ -590,6 +590,17 @@ public class LjsCompiler
                 
                 break;
             
+            case LjsAstGetNamedProperty astGetNamedProperty:
+
+                ProcessNode(astGetNamedProperty.PropertySource, functionData);
+                
+                instructions.Add(new LjsInstruction(
+                    LjsInstructionCode.ConstString, 
+                    _constants.AddStringConstant(astGetNamedProperty.PropertyName)));
+
+                instructions.Add(new LjsInstruction(LjsInstructionCode.GetNamedProp));
+                break;
+            
             
             default:
                 throw new LjsCompilerError($"unsupported ast node {node.GetType().Name}");

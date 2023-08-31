@@ -100,5 +100,7 @@ public enum LjsInstructionCode
     ExtLoad = 0x50,
     // store last value from the stack in var, argument = string const index
     ExtStore = 0x51,
+    
+    GetNamedProp = 0x55
 
 }
