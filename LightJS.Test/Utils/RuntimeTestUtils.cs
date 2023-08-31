@@ -34,7 +34,7 @@ public static class RuntimeTestUtils
     
     public static void CheckResult(LjsObject result, string expectedValue)
     {
-        Assert.That(result, Is.EqualTo(new LjsValue<string>(expectedValue)));
+        Assert.That(result, Is.EqualTo(new LjsString(expectedValue)));
     }
 
 }

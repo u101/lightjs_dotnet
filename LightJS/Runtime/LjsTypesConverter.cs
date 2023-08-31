@@ -7,7 +7,7 @@ public static class LjsTypesConverter
         LjsValue<int> i => i.Value == 0,
         LjsValue<double> i => i.Value == 0,
         LjsValue<bool> i => i.Value,
-        LjsValue<string> i => !string.IsNullOrEmpty(i.Value),
+        LjsString i => !string.IsNullOrEmpty(i.Value),
         _ => obj != LjsObject.Null && obj != LjsObject.Undefined
     };
 

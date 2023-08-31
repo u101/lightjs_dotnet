@@ -1,17 +1,13 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace LightJS.Runtime;
 
 /// <summary>
 /// Value type wrap
 /// </summary>
-public class LjsValue<TValueType> : LjsObject
+public class LjsValue<TValueType> : LjsObject where TValueType : struct
 {
-    [NotNull]
     public TValueType Value { get; }
 
-    public LjsValue(
-        [DisallowNull] TValueType value)
+    public LjsValue(TValueType value)
     {
         Value = value;
     }
@@ -41,7 +37,7 @@ public class LjsValue<TValueType> : LjsObject
 
     public override int GetHashCode()
     {
-        return EqualityComparer<TValueType>.Default.GetHashCode(Value!);
+        return EqualityComparer<TValueType>.Default.GetHashCode(Value);
     }
 }
 

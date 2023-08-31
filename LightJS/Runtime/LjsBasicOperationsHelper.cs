@@ -9,9 +9,9 @@ internal static class LjsBasicOperationsHelper
 {
     internal static LjsObject ExecuteArithmeticOperation(LjsObject left, LjsObject right, LjsInstructionCode opCode)
     {
-        if (opCode == LjsInstructionCode.Add && (left is LjsValue<string> || right is LjsValue<string>))
+        if (opCode == LjsInstructionCode.Add && (left is LjsString || right is LjsString))
         {
-            return new LjsValue<string>(left.ToString() + right.ToString());
+            return new LjsString(left.ToString() + right.ToString());
         }
 
         var isDouble = left is LjsValue<double> || right is LjsValue<double>;

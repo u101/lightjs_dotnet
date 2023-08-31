@@ -22,14 +22,13 @@ public static class LjsLanguageApi
 
     private static LjsObject ConvertToInt(LjsObject v) => new LjsValue<int>(LjsTypesConverter.ToInt(v));
     private static LjsObject ConvertToNumber(LjsObject v) => new LjsValue<double>(LjsTypesConverter.ToDouble(v));
-    private static LjsObject ConvertToString(LjsObject v) => new LjsValue<string>(v.ToString());
+    private static LjsObject ConvertToString(LjsObject v) => new LjsString(v.ToString());
 
     private static LjsObject ParseInt(LjsObject str)
     {
         switch (str)
         {
-            case LjsValue<string> s:
-                // great!
+            case LjsString s:
 
                 var v = s.Value;
 
@@ -55,7 +54,7 @@ public static class LjsLanguageApi
     {
         switch (str)
         {
-            case LjsValue<string> s:
+            case LjsString s:
                 // great!
 
                 var v = s.Value;

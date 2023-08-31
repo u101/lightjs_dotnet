@@ -1,5 +1,3 @@
-using LightJS.Runtime;
-
 namespace LightJS.Test.Runtime;
 
 [TestFixture]
@@ -11,6 +9,6 @@ public class StringTests
         var runtime = CreateRuntime("'hello_' + 'world'");
         var result = runtime.Execute();
         
-        Assert.That(result, Is.EqualTo(new LjsValue<string>("hello_world")));
+        CheckResult(result, "hello_world");
     }
 }
