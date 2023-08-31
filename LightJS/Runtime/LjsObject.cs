@@ -30,4 +30,11 @@ public class LjsObject : IEquatable<LjsObject>
         public LjsUndefined() {}
         public override string ToString() => "undefined";
     }
+    
+    #region type coercing
+    
+    public static implicit operator LjsObject(string s) => new LjsValue<string>(s);
+    
+    #endregion
+    
 }

@@ -101,18 +101,9 @@ public sealed class LjsRuntime
         return functionContext.FunctionIndex == 0;
     }
     
-    public bool Invoke(string functionName)
-    {
-        if (!CanInvoke(functionName)) return false;
-
-        var functionData = _program.GetFunction(functionName);
-
-        StartFunction(functionData.FunctionIndex, functionData.LocalsCount);
-        
-        ExecuteInternal(1);
-
-        return true;
-    }
+    
+    
+    
     
     private readonly struct FunctionContext
     {
@@ -517,4 +508,123 @@ public sealed class LjsRuntime
 
         _isRunning = false;
     }
+
+    #region Invoke Script Function
+
+    public bool Invoke(string functionName)
+    {
+        if (!CanInvoke(functionName)) return false;
+
+        var functionData = _program.GetFunction(functionName);
+
+        StartFunction(functionData.FunctionIndex, functionData.LocalsCount);
+        
+        ExecuteInternal(1);
+
+        return true;
+    }
+    
+    public bool Invoke(string functionName, LjsObject arg0)
+    {
+        if (!CanInvoke(functionName)) return false;
+
+        var functionData = _program.GetFunction(functionName);
+
+        var ctx = StartFunction(
+            functionData.FunctionIndex, functionData.LocalsCount);
+
+        var argsLn = functionData.Arguments.Length;
+        
+        if (argsLn >= 1) _locals[ctx.LocalsOffset + 0] = arg0;
+        
+        ExecuteInternal(1);
+
+        return true;
+    }
+    
+    public bool Invoke(string functionName, LjsObject arg0, LjsObject arg1)
+    {
+        if (!CanInvoke(functionName)) return false;
+
+        var functionData = _program.GetFunction(functionName);
+
+        var ctx = StartFunction(
+            functionData.FunctionIndex, functionData.LocalsCount);
+
+        var argsLn = functionData.Arguments.Length;
+        
+        if (argsLn >= 1) _locals[ctx.LocalsOffset + 0] = arg0;
+        if (argsLn >= 2) _locals[ctx.LocalsOffset + 1] = arg1;
+        
+        ExecuteInternal(1);
+
+        return true;
+    }
+    
+    public bool Invoke(string functionName, LjsObject arg0, LjsObject arg1, LjsObject arg2)
+    {
+        if (!CanInvoke(functionName)) return false;
+
+        var functionData = _program.GetFunction(functionName);
+
+        var ctx = StartFunction(
+            functionData.FunctionIndex, functionData.LocalsCount);
+
+        var argsLn = functionData.Arguments.Length;
+        
+        if (argsLn >= 1) _locals[ctx.LocalsOffset + 0] = arg0;
+        if (argsLn >= 2) _locals[ctx.LocalsOffset + 1] = arg1;
+        if (argsLn >= 3) _locals[ctx.LocalsOffset + 2] = arg2;
+        
+        ExecuteInternal(1);
+
+        return true;
+    }
+    
+    public bool Invoke(string functionName, 
+        LjsObject arg0, LjsObject arg1, LjsObject arg2, LjsObject arg3)
+    {
+        if (!CanInvoke(functionName)) return false;
+
+        var functionData = _program.GetFunction(functionName);
+
+        var ctx = StartFunction(
+            functionData.FunctionIndex, functionData.LocalsCount);
+
+        var argsLn = functionData.Arguments.Length;
+        
+        if (argsLn >= 1) _locals[ctx.LocalsOffset + 0] = arg0;
+        if (argsLn >= 2) _locals[ctx.LocalsOffset + 1] = arg1;
+        if (argsLn >= 3) _locals[ctx.LocalsOffset + 2] = arg2;
+        if (argsLn >= 4) _locals[ctx.LocalsOffset + 3] = arg3;
+        
+        ExecuteInternal(1);
+
+        return true;
+    }
+    
+    public bool Invoke(string functionName, LjsObject[] args)
+    {
+        if (!CanInvoke(functionName)) return false;
+
+        var functionData = _program.GetFunction(functionName);
+
+        var ctx = StartFunction(
+            functionData.FunctionIndex, functionData.LocalsCount);
+
+        var argsLn = functionData.Arguments.Length;
+        
+        for (var i = 0; i < argsLn && i < args.Length; i++)
+        {
+            _locals[ctx.LocalsOffset + i] = args[i];
+        }
+        
+        ExecuteInternal(1);
+
+        return true;
+    }
+
+    #endregion
+    
+    
 }

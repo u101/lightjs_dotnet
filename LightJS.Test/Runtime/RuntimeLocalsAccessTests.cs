@@ -95,5 +95,49 @@ public class RuntimeLocalsAccessTests
 
     }
     
+    [Test]
+    public void InvokeFunctionWithOneArgumentTest()
+    {
+        var code = """
+        var x = '';
+
+        function foo(a) {
+            x = a;
+        }
+        """;
+        
+        var runtime = CreateRuntime(code);
+        runtime.Execute();
+        
+        var invocationResult = runtime.Invoke("foo", "hi");
+        
+        Assert.That(invocationResult, Is.True);
+        
+        CheckResult(runtime.GetLocal("x"), "hi");
+
+    }
+    
+    [Test]
+    public void InvokeFunctionWithTwoArgumentsTest()
+    {
+        var code = """
+        var x = '';
+
+        function foo(a, b) {
+            x = a + b;
+        }
+        """;
+        
+        var runtime = CreateRuntime(code);
+        runtime.Execute();
+        
+        var invocationResult = runtime.Invoke("foo", "hello_", "world");
+        
+        Assert.That(invocationResult, Is.True);
+        
+        CheckResult(runtime.GetLocal("x"), "hello_world");
+
+    }
+    
     
 }
