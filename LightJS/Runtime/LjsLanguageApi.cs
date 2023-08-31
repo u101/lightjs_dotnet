@@ -6,13 +6,23 @@ public static class LjsLanguageApi
 {
     private static readonly LjsExternalFunction FuncParseInt = LjsExternalFunction.Create(ParseInt);
     private static readonly LjsExternalFunction FuncParseFloat = LjsExternalFunction.Create(ParseFloat);
+    private static readonly LjsExternalFunction FuncInt = LjsExternalFunction.Create(ConvertToInt);
+    private static readonly LjsExternalFunction FuncNumber = LjsExternalFunction.Create(ConvertToNumber);
+    private static readonly LjsExternalFunction FuncString = LjsExternalFunction.Create(ConvertToString);
 
     public static Dictionary<string, LjsObject> CreateApiDictionary() => new()
     {
         {"parseInt", FuncParseInt},
         {"parseFloat", FuncParseFloat},
+        {"int", FuncInt},
+        {"Number", FuncNumber},
+        {"String", FuncString},
     };
 
+
+    private static LjsObject ConvertToInt(LjsObject v) => new LjsValue<int>(LjsTypesConverter.ToInt(v));
+    private static LjsObject ConvertToNumber(LjsObject v) => new LjsValue<double>(LjsTypesConverter.ToDouble(v));
+    private static LjsObject ConvertToString(LjsObject v) => new LjsValue<string>(v.ToString());
 
     private static LjsObject ParseInt(LjsObject str)
     {

@@ -20,15 +20,15 @@
 
 * Global functions
 
-    > int(..)
+    > ~~int(..)~~
 
-    > Number(..)
+    > ~~Number(..)~~
 
     > String(..)
 
-    > parseInt(..)
+    > ~~parseInt(..)~~
 
-    > parseFloat(..)
+    > ~~parseFloat(..)~~
 
 * LjsObject toString()
 

@@ -74,4 +74,49 @@ public class ExternalFunctionsTests
         CheckResult(result, double.NaN);
     }
     
+    [Test]
+    public void ConvertToIntTest()
+    {
+        var code = """
+        var x = int(3.1415);
+        x
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, 3);
+    }
+    
+    [Test]
+    public void ConvertToNumberTest()
+    {
+        var code = """
+        var x = Number(true);
+        x
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, 1.0);
+    }
+    
+    [Test]
+    public void ConvertToStringTest()
+    {
+        var code = """
+        var x = String(true);
+        x
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, "true");
+    }
+    
 }

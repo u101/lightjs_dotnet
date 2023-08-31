@@ -34,7 +34,10 @@ public class LjsObject : IEquatable<LjsObject>
     #region type coercing
     
     public static implicit operator LjsObject(string s) => new LjsValue<string>(s);
-    
+    public static implicit operator LjsObject(int v) => new LjsValue<int>(v);
+    public static implicit operator LjsObject(double v) => new LjsValue<double>(v);
+    public static implicit operator LjsObject(bool v) => v ? LjsValue.True : LjsValue.False;
+
     #endregion
-    
+
 }

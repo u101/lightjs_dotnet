@@ -16,8 +16,7 @@ public static class LjsTypesConverter
         LjsValue<int> i => i.Value,
         LjsValue<double> i => (int)i.Value,
         LjsValue<bool> i => i.Value ? 1 : 0,
-        LjsValue<string> i => i.Value.Length,
-        _ => obj == LjsObject.Null || obj == LjsObject.Undefined ? 0 : 1
+        _ => 0
     };
     
     public static double ToDouble(LjsObject obj) => obj switch
@@ -25,8 +24,7 @@ public static class LjsTypesConverter
         LjsValue<int> i => i.Value,
         LjsValue<double> i => i.Value,
         LjsValue<bool> i => i.Value ? 1 : 0,
-        LjsValue<string> i => i.Value.Length,
-        _ => obj == LjsObject.Null || obj == LjsObject.Undefined ? 0 : 1
+        _ => double.NaN
     };
     
     public static bool IsNumber(LjsObject o) => o is LjsValue<int> or LjsValue<double>;
