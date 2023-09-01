@@ -110,11 +110,8 @@ public class SimpleExpressionsTest
     {
         var rootNode = BuildAstNode("foo.bar(a,b)");
 
-        rootNode.Should().BeEquivalentTo(
-            new LjsAstFunctionCall(
-                new LjsAstGetNamedProperty("bar", new LjsAstGetVar("foo")),
-                new LjsAstGetVar("a"), new LjsAstGetVar("b")
-                ));
+        var expected = "foo".GetProp("bar").FuncCall("a".ToVar(), "b".ToVar());
+        Match(rootNode, expected);
     }
     
     

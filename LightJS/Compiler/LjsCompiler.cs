@@ -266,7 +266,7 @@ public class LjsCompiler
 
                 var specifiedArgumentsCount = functionCall.Arguments.Count;
                 
-                foreach (var n in functionCall.Arguments)
+                foreach (var n in functionCall.Arguments.ChildNodes)
                 {
                     ProcessNode(n, functionData);
                 }

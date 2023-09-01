@@ -43,5 +43,23 @@ public class ToStringCallTests
         
         CheckResult(result, "false");
     }
+
+    [Test]
+    public void CompositeToStringTest()
+    {
+        var code = """
+        var a = 123, b = 456, c = 789;
+        function foo(a,b,c) {
+            return a.toString() + b.toString() + c.toString();
+        }
+        foo(a,b,c)
+        """;
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, "123456789");
+    }
+    
     
 }

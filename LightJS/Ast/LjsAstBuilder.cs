@@ -833,41 +833,45 @@ public class LjsAstBuilder
             {
                 if (IsFunctionCall(prevToken.TokenType))
                 {
+                    var argumentsList = new LjsAstFunctionCallArguments();
+                    
                     if (nextToken.TokenType == LjsTokenType.OpParenthesesClose)
                     {
                         // func call without arguments
-                        var funcCallOp = new Op(token, OpType.FuncCall | OpType.UnaryPostfix,
+                        
+                        var funcCallOp = new Op(token, OpType.FuncCall | OpType.Binary,
                             LjsAstBuilderUtils.FuncCallOperatorPriority);
                         
                         RegisterNodePosition(funcCallOp, token);
                         
                         PushOperatorToStack(funcCallOp, operatorsStackStartingLn);
                         
+                        _postfixExpression.Add(argumentsList);
+                        
                         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
                     }
                     else
                     {
-                        var argumentsCount = 1;
-                        
                         var funcArg = ProcessExpression(
                             StopSymbolType.FuncCall, ProcessExpressionMode.StopAtStopSymbol);
                         
-                        _postfixExpression.Add(funcArg);
+                        argumentsList.AddNode(funcArg);
                         
                         while (_tokensIterator.CurrentToken.TokenType == LjsTokenType.OpComma)
                         {
                             funcArg = ProcessExpression(
                                 StopSymbolType.FuncCall, ProcessExpressionMode.StopAtStopSymbol);
-                            _postfixExpression.Add(funcArg);
-                            ++argumentsCount;
+                            argumentsList.AddNode(funcArg);
                         }
 
-                        var funcCallOp = new Op(token, OpType.FuncCall | OpType.UnaryPostfix, 
-                            LjsAstBuilderUtils.FuncCallOperatorPriority, argumentsCount);
+                        var funcCallOp = new Op(token, OpType.FuncCall | OpType.Binary, 
+                            LjsAstBuilderUtils.FuncCallOperatorPriority);
                         
                         RegisterNodePosition(funcCallOp, token);
                         
                         PushOperatorToStack(funcCallOp, operatorsStackStartingLn);
+                        
+                        _postfixExpression.Add(argumentsList);
                     }
                     
                 }
@@ -972,35 +976,17 @@ public class LjsAstBuilder
                 // function call operation
                 if ((op.OpType & OpType.FuncCall) != 0)
                 {
-                    var argumentsCount = op.InnerMembersCount;
-
-                    if (argumentsCount == 0)
-                    {
-                        var operand = _locals.Pop();
-
-                        var functionCall = new LjsAstFunctionCall(operand);
+                    var argsNode = _locals.Pop();
+                    var funcNode = _locals.Pop();
+                    
+                    if (argsNode is not LjsAstFunctionCallArguments argsSeq)
+                        throw new LjsInternalError($"broken function call");
+                    
+                    var functionCall = new LjsAstFunctionCall(funcNode, argsSeq);
+                    
+                    ReplaceNodePosition(op, functionCall);
                         
-                        ReplaceNodePosition(op, functionCall);
-                        
-                        _locals.Push(functionCall);
-                    }
-                    else
-                    {
-                        var args = new ILjsAstNode[argumentsCount];
-                        
-                        for (var j = 0; j < argumentsCount; j++)
-                        {
-                            args[j] = _locals.Pop();
-                        }
-                        
-                        var operand = _locals.Pop();
-
-                        var functionCall = new LjsAstFunctionCall(operand, args);
-                        
-                        ReplaceNodePosition(op, functionCall);
-                        
-                        _locals.Push(functionCall);
-                    }
+                    _locals.Push(functionCall);
                 }
                 // property access
                 else if ((op.OpType & OpType.PropAccess) != 0)

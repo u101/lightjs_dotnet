@@ -6,6 +6,8 @@ public abstract class LjsAstSequence<TNode> : ILjsAstNode where TNode : ILjsAstN
 
     public IEnumerable<TNode> ChildNodes => _nodes;
     public bool HasChildNodes => _nodes.Count != 0;
+
+    public int Count => _nodes.Count;
     
     public LjsAstSequence() {}
 
@@ -14,6 +16,8 @@ public abstract class LjsAstSequence<TNode> : ILjsAstNode where TNode : ILjsAstN
         _nodes.AddRange(nodes);
     }
 
+    public TNode this[int index] => _nodes[index];
+    
     public LjsAstSequence(params TNode[] nodes)
     {
         _nodes.AddRange(nodes);

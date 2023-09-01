@@ -4,16 +4,11 @@ public sealed class LjsAstFunctionCall : ILjsAstNode
 {
     public ILjsAstNode FunctionGetter { get; }
 
-    public List<ILjsAstNode> Arguments { get; } = new();
+    public LjsAstFunctionCallArguments Arguments { get; }
 
-    public LjsAstFunctionCall(ILjsAstNode functionGetter)
+    public LjsAstFunctionCall(ILjsAstNode functionGetter, LjsAstFunctionCallArguments arguments)
     {
         FunctionGetter = functionGetter;
-    }
-    
-    public LjsAstFunctionCall(ILjsAstNode functionGetter, params ILjsAstNode[] args)
-    {
-        FunctionGetter = functionGetter;
-        Arguments.AddRange(args);
+        Arguments = arguments;
     }
 }

@@ -123,18 +123,10 @@ public static class AstNodesExtensions
     }
 
     public static ILjsAstNode FuncCall(this string funcName, params ILjsAstNode[] args)
-    {
-        var f = new LjsAstFunctionCall(new LjsAstGetVar(funcName));
-        f.Arguments.AddRange(args);
-        return f;
-    }
+        => new LjsAstFunctionCall(new LjsAstGetVar(funcName), new LjsAstFunctionCallArguments(args));
     
     public static ILjsAstNode FuncCall(this ILjsAstNode func, params ILjsAstNode[] args)
-    {
-        var f = new LjsAstFunctionCall(func);
-        f.Arguments.AddRange(args);
-        return f;
-    }
+        => new LjsAstFunctionCall(func, new LjsAstFunctionCallArguments(args));
 
     public static ILjsAstNode TernaryIf(
         this ILjsAstNode condition, ILjsAstNode trueExpression,
