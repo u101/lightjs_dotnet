@@ -12,6 +12,7 @@ public sealed class LjsString : LjsObject
         {
             { "length", new PropLength() },
             { "charAt", new FuncCharAt() },
+            { "indexOf", new FuncIndexOf() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => TypeInfo;
@@ -59,6 +60,23 @@ public sealed class LjsString : LjsObject
             var str = s.Value;
             
             return (i >= 0 && i < str.Length) ? new LjsString(str[i].ToString()) : Empty;
+        }
+    }
+    
+    private sealed class FuncIndexOf  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 3;
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var s = CheckThisArgument(arguments[0]);
+            var searchValue = arguments[1].ToString();
+            var startIndex = LjsTypesConverter.ToInt(arguments[2]);
+            var str = s.Value;
+
+            var index = str.IndexOf(searchValue, startIndex, StringComparison.Ordinal);
+
+            return index;
         }
     }
     

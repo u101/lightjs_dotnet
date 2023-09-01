@@ -23,6 +23,16 @@ public class StringMethodsTests
         
         CheckResult(result, "hello".Length);
     }
+
+    [Test]
+    public void IndexOfTest()
+    {
+        var runtime = CreateRuntime("'hello'.indexOf('ll')");
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, ("hello").IndexOf("ll", StringComparison.Ordinal));
+    }
     
     
 }
