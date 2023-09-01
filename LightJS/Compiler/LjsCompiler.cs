@@ -603,16 +603,27 @@ public class LjsCompiler
             
             case LjsAstObjectLiteral objectLiteral:
                 
-                instructions.Add(new LjsInstruction(LjsInstructionCode.NewDictionary));
-
-                foreach (var setProp in objectLiteral.ChildNodes)
+                foreach (var prop in objectLiteral.ChildNodes)
                 {
-                    ProcessNode(setProp.Value, functionData);
+                    ProcessNode(prop.Value, functionData);
                     instructions.Add(new LjsInstruction(
                         LjsInstructionCode.ConstString, 
-                        _constants.AddStringConstant(setProp.Name)));
-                    instructions.Add(new LjsInstruction(LjsInstructionCode.SetNamedProp));
+                        _constants.AddStringConstant(prop.Name)));
                 }
+                
+                instructions.Add(new LjsInstruction(
+                    LjsInstructionCode.NewDictionary, objectLiteral.Count));
+                
+                break;
+            
+            case LjsAstArrayLiteral arrayLiteral:
+                
+                foreach (var e in arrayLiteral.ChildNodes)
+                {
+                    ProcessNode(e, functionData);
+                }
+                
+                instructions.Add(new LjsInstruction(LjsInstructionCode.NewArray, arrayLiteral.Count));
                 
                 break;
             

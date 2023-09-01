@@ -541,6 +541,33 @@ public sealed class LjsRuntime
                         throw new LjsRuntimeError($"{propSource} has no type member with name {propNameStr}");
                     }
                     break;
+                
+                case LjsInstructionCode.NewDictionary:
+
+                    var propsCount = instruction.Argument;
+                    var newDict = new LjsDictionary();
+
+                    for (var i = 0; i < propsCount; i++)
+                    {
+                        var name = _stack.Pop();
+                        var val = _stack.Pop();
+                        newDict.Set(name.ToString(), val);
+                    }
+                    
+                    _stack.Push(newDict);
+                    
+                    break;
+                
+                case LjsInstructionCode.NewArray:
+                    var elementsCount = instruction.Argument;
+                    var newArr = new LjsArray();
+
+                    for (var i = 0; i < elementsCount; i++)
+                    {
+                        newArr.Add(_stack.Pop());
+                    }
+                    _stack.Push(newArr);
+                    break;
                     
                 default:
                     throw new LjsInternalError($"unsupported op code {instructionCode}");

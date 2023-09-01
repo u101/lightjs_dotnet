@@ -6,5 +6,8 @@ public sealed class LjsArray : LjsObject
 
     public int Count => _list.Count;
 
-    // TODO
+    public void Add(LjsObject o)
+    {
+        _list.Add(o);
+    }
 }

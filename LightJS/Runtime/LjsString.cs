@@ -40,12 +40,12 @@ public sealed class LjsString : LjsObject
         return Value;
     }
     
-    // METHODS
+    // METHODS AND PROPS
 
     private static LjsString CheckThisArgument(LjsObject obj)
     {
         if (obj is not LjsString s)
-            throw new LjsRuntimeError($"'this' value is not LjsString");
+            throw new LjsRuntimeError("'this' value is not LjsString");
         return s;
     }
     
