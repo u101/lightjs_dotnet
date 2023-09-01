@@ -14,12 +14,12 @@ public sealed class LjsObjectPropertiesProviderDefault : ILjsObjectPropertiesPro
     private LjsObjectPropertiesProviderDefault() {}
 
 
-    public bool HasProperty(string propertyName)
+    public bool HasProperty(LjsObject target, string propertyName)
     {
         return _properties.ContainsKey(propertyName);
     }
 
-    public LjsPropertyAccessType GetPropertyAccessType(string propertyName)
+    public LjsPropertyAccessType GetPropertyAccessType(LjsObject target, string propertyName)
     {
         return _properties.ContainsKey(propertyName) ? LjsPropertyAccessType.Read : LjsPropertyAccessType.None;
     }

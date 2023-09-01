@@ -601,6 +601,21 @@ public class LjsCompiler
                 instructions.Add(new LjsInstruction(LjsInstructionCode.GetNamedProp));
                 break;
             
+            case LjsAstObjectLiteral objectLiteral:
+                
+                instructions.Add(new LjsInstruction(LjsInstructionCode.NewDictionary));
+
+                foreach (var setProp in objectLiteral.ChildNodes)
+                {
+                    ProcessNode(setProp.Value, functionData);
+                    instructions.Add(new LjsInstruction(
+                        LjsInstructionCode.ConstString, 
+                        _constants.AddStringConstant(setProp.Name)));
+                    instructions.Add(new LjsInstruction(LjsInstructionCode.SetNamedProp));
+                }
+                
+                break;
+            
             
             default:
                 throw new LjsCompilerError($"unsupported ast node {node.GetType().Name}");

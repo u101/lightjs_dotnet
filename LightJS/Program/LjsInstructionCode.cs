@@ -101,6 +101,10 @@ public enum LjsInstructionCode
     // store last value from the stack in var, argument = string const index
     ExtStore = 0x51,
     
-    GetNamedProp = 0x55
+    NewArray = 0x55,
+    NewDictionary = 0x56,
+    
+    GetNamedProp = 0x60,
+    SetNamedProp = 0x61,
 
 }

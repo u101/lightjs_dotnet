@@ -22,6 +22,11 @@ public sealed class LjsRuntime
 
     private readonly Dictionary<string, LjsObject> _externals;
 
+    private readonly Dictionary<System.Type, ILjsObjectPropertiesProvider> _propertiesProviders = new()
+    {
+        {typeof(LjsDictionary), new LjsDictionaryPropertiesProvider()}
+    };
+
     public LjsRuntime(LjsProgram program)
     {
         _program = program;
@@ -501,8 +506,12 @@ public sealed class LjsRuntime
                     var propName = _stack.Pop();
                     var propSource = _stack.Pop();
 
-                    var prop = 
-                        LjsObjectPropertiesProviderDefault.Instance.GetProperty(propSource, propName);
+                    var propsProvider =
+                        _propertiesProviders.TryGetValue(propSource.GetType(), out var propertiesProvider)
+                            ? propertiesProvider
+                            : LjsObjectPropertiesProviderDefault.Instance;
+                    
+                    var prop = propsProvider.GetProperty(propSource, propName);
                     
                     _stack.Push(prop);
 

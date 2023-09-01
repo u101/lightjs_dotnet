@@ -2,9 +2,9 @@ namespace LightJS.Runtime.PropertyProviders;
 
 public interface ILjsObjectPropertiesProvider
 {
-    bool HasProperty(string propertyName);
+    bool HasProperty(LjsObject target, string propertyName);
 
-    LjsPropertyAccessType GetPropertyAccessType(string propertyName);
+    LjsPropertyAccessType GetPropertyAccessType(LjsObject target, string propertyName);
     
     LjsObject GetProperty(LjsObject target, string propertyName);
     
