@@ -2,7 +2,19 @@ namespace LightJS.Runtime;
 
 public sealed class LjsDictionary : LjsObject
 {
-    private readonly Dictionary<string, LjsObject> _map = new();
+    private readonly Dictionary<string, LjsObject> _map;
+
+    public IReadOnlyDictionary<string, LjsObject> Map => _map;
+
+    public LjsDictionary()
+    {
+        _map = new Dictionary<string, LjsObject>();
+    }
+
+    public LjsDictionary(Dictionary<string, LjsObject> map)
+    {
+        _map = map;
+    }
 
     public bool ContainsKey(string key) => _map.ContainsKey(key);
 

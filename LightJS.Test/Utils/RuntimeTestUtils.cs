@@ -1,3 +1,4 @@
+using FluentAssertions;
 using LightJS.Compiler;
 using LightJS.Runtime;
 
@@ -10,6 +11,13 @@ public static class RuntimeTestUtils
         var compiler = new LjsCompiler(sourceCode);
         var program = compiler.Compile();
         return new LjsRuntime(program);
+    }
+
+    public static void Match(LjsObject result, LjsObject expectedValue)
+    {
+        result.Should().BeEquivalentTo(
+            expectedValue, 
+            options => options.RespectingRuntimeTypes().WithoutStrictOrdering().ComparingByMembers(expectedValue.GetType()));
     }
 
     public static void CheckResult(LjsObject result, LjsObject expectedValue)

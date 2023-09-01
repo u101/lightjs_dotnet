@@ -12,12 +12,8 @@ public class LjsDictionaryTests
         var runtime = CreateRuntime("{}");
 
         var result = runtime.Execute();
-        Assert.That(result, Is.TypeOf<LjsDictionary>());
-
-        if (result is LjsDictionary dict)
-        {
-            Assert.That(dict.Count, Is.EqualTo(0));
-        }
+        
+        Match(result, new LjsDictionary());
     }
 
     [Test]
@@ -27,14 +23,13 @@ public class LjsDictionaryTests
 
         var result = runtime.Execute();
         
-        Assert.That(result, Is.TypeOf<LjsDictionary>());
-
-        if (result is not LjsDictionary dict) return;
-        
-        CheckResult(dict.Get("a"), 1);
-        CheckResult(dict.Get("b"), 2);
-        CheckResult(dict.Get("c"), true);
-        CheckResult(dict.Get("d"), "hello");
+        Match(result, new LjsDictionary(new Dictionary<string, LjsObject>()
+        {
+            {"a", new LjsInteger(1)},
+            {"b", new LjsInteger(2)},
+            {"c", LjsBoolean.True},
+            {"d", new LjsString("hello")},
+        }));
     }
     
 }
