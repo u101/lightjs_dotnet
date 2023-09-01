@@ -808,14 +808,16 @@ public class LjsAstBuilder
                         StopSymbolType.SquareBracketsClose, 
                         ProcessExpressionMode.StopAtStopSymbol);
 
-                    _postfixExpression.Add(propAccessNode);
-
                     var propAccessOp = new Op(
-                        token, OpType.PropAccess | OpType.UnaryPostfix, 
-                        LjsAstBuilderUtils.FuncCallOperatorPriority, 1);
+                        token, OpType.PropAccess | OpType.Binary, 
+                        LjsAstBuilderUtils.PropertyAccessOperatorsPriority, 1);
                     
                     RegisterNodePosition(propAccessNode, token);
-                    _operatorsStack.Push(propAccessOp);
+                    
+                    PushOperatorToStack(propAccessOp, operatorsStackStartingLn);
+                    
+                    
+                    _postfixExpression.Add(propAccessNode);
                 }
                 else
                 {

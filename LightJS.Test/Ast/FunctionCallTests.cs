@@ -63,4 +63,16 @@ public class FunctionCallTests
         ));
         Match(node, expected);
     }
+    
+    [Test]
+    public void FuncCallWithPropertyAccess()
+    {
+        var node = BuildAstNode("x = foo.bar(a.name, b.age, c[0].toString())");
+        var expected = "x".Assign("foo".GetProp("bar").FuncCall(
+            "a".GetProp("name"),
+            "b".GetProp("age"),
+            "c".GetProp(0.ToLit()).GetProp("toString").FuncCall())
+        );
+        Match(node, expected);
+    }
 }

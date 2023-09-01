@@ -6,7 +6,7 @@ public static class LjsAstBuilderUtils
 {
     private const int GroupingOperatorsPriority = 18000;
     public const int FuncCallOperatorPriority = 17000;
-    private const int PropertyAccessOperatorsPriority = 17500;
+    public const int PropertyAccessOperatorsPriority = 17500;
     private const int UnaryOperatorPriority = 14000;
     private const int HighCalculationPriority = 12000;
     private const int MiddleCalculationPriority = 11000;
