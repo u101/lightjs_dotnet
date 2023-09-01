@@ -931,12 +931,15 @@ public class LjsAstBuilder
                 {
                     opType |= OpType.Binary;
                 }
-                
-                // todo check isUnary equals isDefinitelyUnary() method and throw error if needed
+
+                if (isUnaryPrefix && _operatorsStack.Count != 0 && _operatorsStack.Peek().IsUnaryPrefix)
+                {
+                    throw new LjsSyntaxError($"invalid operation {token.TokenType}", token.Position);
+                }
 
                 var opPriority = LjsAstBuilderUtils.GetOperatorPriority(token.TokenType, isUnary);
                 
-                var binaryOp = new Op(token, opType, opPriority);
+                var binaryOp = new Op(token, opType, opPriority); 
                 
                 RegisterNodePosition(binaryOp, token);
                 PushOperatorToStack(binaryOp, operatorsStackStartingLn);

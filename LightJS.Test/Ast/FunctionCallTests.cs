@@ -75,4 +75,13 @@ public class FunctionCallTests
         );
         Match(node, expected);
     }
+    
+    [Test]
+    public void SimpleFunctionCallTest()
+    {
+        var rootNode = BuildAstNode("foo.bar(a,b)");
+
+        var expected = "foo".GetProp("bar").FuncCall("a".ToVar(), "b".ToVar());
+        Match(rootNode, expected);
+    }
 }
