@@ -13,5 +13,16 @@ public class StringMethodsTests
         
         CheckResult(result, "e");
     }
+
+    [Test]
+    public void LengthTest()
+    {
+        var runtime = CreateRuntime("String('hello').length");
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, "hello".Length);
+    }
+    
     
 }

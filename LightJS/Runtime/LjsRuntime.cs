@@ -514,24 +514,32 @@ public sealed class LjsRuntime
                     if (typeInfo.HasMember(propNameStr))
                     {
                         var member = typeInfo.GetMember(propName.ToString());
-                        
-                        // todo get property here
-                        if (member is not LjsFunction memberFunc || memberFunc.MemberType == LjsMemberType.InstanceMember)
+
+                        switch (member)
                         {
-                            _thisPointersStack.Push(propSource);
+                            case LjsFunction memberFunc:
+                                if (memberFunc.MemberType == LjsMemberType.InstanceMember)
+                                {
+                                    _thisPointersStack.Push(propSource);
+                                }
+                                _stack.Push(member);
+                                break;
+                            case LjsProperty prop:
+                                if ((prop.AccessType & LjsPropertyAccessType.Read) != 0)
+                                {
+                                    _stack.Push(prop.Get(propSource));
+                                }
+                                else
+                                {
+                                    throw new LjsRuntimeError($"property {propNameStr} not read enabled");
+                                }
+                                break;
                         }
-                        
-                        _stack.Push(member);
                     }
                     else
                     {
                         throw new LjsRuntimeError($"{propSource} has no type member with name {propNameStr}");
                     }
-                    
-                    
-                    
-                    
-
                     break;
                     
                 default:

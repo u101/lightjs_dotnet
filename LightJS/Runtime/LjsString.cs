@@ -10,7 +10,8 @@ public sealed class LjsString : LjsObject
         LjsObject.TypeInfo,
         new Dictionary<string, LjsObject>()
         {
-            { "charAt", new FuncCharAt() }
+            { "length", new PropLength() },
+            { "charAt", new FuncCharAt() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => TypeInfo;
@@ -59,6 +60,19 @@ public sealed class LjsString : LjsObject
             
             return (i >= 0 && i < str.Length) ? new LjsString(str[i].ToString()) : Empty;
         }
+    }
+    
+    private sealed class PropLength : LjsProperty
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override LjsPropertyAccessType AccessType => LjsPropertyAccessType.Read;
+        public override LjsObject Get(LjsObject instance)
+        {
+            var s = CheckThisArgument(instance);
+            return s.Value.Length;
+        }
+
+        public override void Set(LjsObject instance, LjsObject v) {}
     }
     
 }
