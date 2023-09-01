@@ -4,11 +4,11 @@ namespace LightJS.Runtime;
 
 public static class LjsLanguageApi
 {
-    private static readonly LjsExternalFunction FuncParseInt = LjsExternalFunction.Create(ParseInt);
-    private static readonly LjsExternalFunction FuncParseFloat = LjsExternalFunction.Create(ParseFloat);
-    private static readonly LjsExternalFunction FuncInt = LjsExternalFunction.Create(ConvertToInt);
-    private static readonly LjsExternalFunction FuncNumber = LjsExternalFunction.Create(ConvertToNumber);
-    private static readonly LjsExternalFunction FuncString = LjsExternalFunction.Create(ConvertToString);
+    private static readonly LjsFunction FuncParseInt = new ParseInt();
+    private static readonly LjsFunction FuncParseFloat = new ParseFloat();
+    private static readonly LjsFunction FuncInt = new ConvertToInt();
+    private static readonly LjsFunction FuncNumber = new ConvertToNumber();
+    private static readonly LjsFunction FuncString = new ConvertToString();
 
     public static Dictionary<string, LjsObject> CreateApiDictionary() => new()
     {
@@ -19,62 +19,94 @@ public static class LjsLanguageApi
         {"String", FuncString},
     };
 
-
-    private static LjsObject ConvertToInt(LjsObject v) => new LjsInteger(LjsTypesConverter.ToInt(v));
-    private static LjsObject ConvertToNumber(LjsObject v) => new LjsDouble(LjsTypesConverter.ToDouble(v));
-    private static LjsObject ConvertToString(LjsObject v) => new LjsString(v.ToString());
-
-    private static LjsObject ParseInt(LjsObject str)
+    private sealed class ConvertToInt : LjsFunction
     {
-        switch (str)
-        {
-            case LjsString s:
-
-                var v = s.Value;
-
-                if (int.TryParse(v, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out var result))
-                {
-                    return new LjsInteger(result);
-                }
-
-                return new LjsInteger(0);
-            
-            case LjsInteger i:
-                return new LjsInteger(i.Value);
-            
-            case LjsDouble d:
-                return new LjsInteger((int) d.Value);
-            
-            default:
-                return new LjsInteger(0);
-        }
-    } 
+        public override LjsMemberType MemberType => LjsMemberType.StaticMember;
+        public override int ArgumentsCount => 1;
+        public override LjsObject Invoke(List<LjsObject> arguments) => 
+            new LjsInteger(LjsTypesConverter.ToInt(arguments[0]));
+    }
     
-    private static LjsObject ParseFloat(LjsObject str)
+    private sealed class ConvertToNumber : LjsFunction
     {
-        switch (str)
+        public override LjsMemberType MemberType => LjsMemberType.StaticMember;
+        public override int ArgumentsCount => 1;
+        public override LjsObject Invoke(List<LjsObject> arguments) => 
+            new LjsDouble(LjsTypesConverter.ToDouble(arguments[0]));
+    }
+    
+    private sealed class ConvertToString : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.StaticMember;
+        public override int ArgumentsCount => 1;
+        public override LjsObject Invoke(List<LjsObject> arguments) => 
+            arguments[0] as LjsString ?? new LjsString(arguments[0].ToString());
+    }
+    
+    private sealed class ParseFloat : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.StaticMember;
+        public override int ArgumentsCount => 1;
+
+        public override LjsObject Invoke(List<LjsObject> arguments)
         {
-            case LjsString s:
-                // great!
-
-                var v = s.Value;
-
-                if (double.TryParse(v, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out var result))
-                {
-                    return new LjsDouble(result);
-                }
-
-                return new LjsDouble(double.NaN);
+            var str = arguments[0];
             
-            case LjsInteger i:
-                return new LjsDouble(i.Value);
+            switch (str)
+            {
+                case LjsString s:
+                    // great!
+
+                    var v = s.Value;
+
+                    if (double.TryParse(v, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out var result))
+                    {
+                        return new LjsDouble(result);
+                    }
+
+                    return new LjsDouble(double.NaN);
             
-            case LjsDouble d:
-                return new LjsDouble(d.Value);
+                case LjsInteger i:
+                    return new LjsDouble(i.Value);
             
-            default:
-                return new LjsDouble(double.NaN);
+                case LjsDouble d:
+                    return new LjsDouble(d.Value);
+            
+                default:
+                    return new LjsDouble(double.NaN);
+            }
         }
-    } 
+    }
+    
+    private sealed class ParseInt : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.StaticMember;
+        public override int ArgumentsCount => 1;
+
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var str = arguments[0];
+            
+            switch (str)
+            {
+                case LjsString s:
+
+                    var v = s.Value;
+
+                    return int.TryParse(
+                        v, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out var result) ? 
+                        new LjsInteger(result) : new LjsInteger(0);
+
+                case LjsInteger i:
+                    return new LjsInteger(i.Value);
+            
+                case LjsDouble d:
+                    return new LjsInteger((int) d.Value);
+            
+                default:
+                    return new LjsInteger(0);
+            }
+        }
+    }
     
 }

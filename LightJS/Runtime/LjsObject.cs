@@ -5,13 +5,17 @@ namespace LightJS.Runtime;
 /// </summary>
 public class LjsObject : IEquatable<LjsObject>
 {
+    public static readonly LjsTypeInfo TypeInfo = new(new Dictionary<string, LjsObject>()
+    {
+        { "toString", new ToStringFunction() }
+    });
+    
     public static readonly LjsObject Null = LjsNull.Instance;
     public static readonly LjsObject Undefined = LjsUndefined.Instance;
 
-    public override string ToString()
-    {
-        return "{LjsObject}";
-    }
+    public virtual LjsTypeInfo GetTypeInfo() => TypeInfo;
+
+    public override string ToString() =>  $"{{{GetType().Name}}}";
 
     public virtual bool Equals(LjsObject? other)
     {
@@ -30,8 +34,16 @@ public class LjsObject : IEquatable<LjsObject>
     public static implicit operator LjsObject(double v) => new LjsDouble(v);
     public static implicit operator LjsObject(bool v) => v ? LjsBoolean.True : LjsBoolean.False;
 
-    
-
     #endregion
 
+    private sealed class ToStringFunction : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 1;
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            return arguments[0].ToString();
+        }
+    }
+    
 }

@@ -19,7 +19,7 @@ public class ExternalFunctionsTests
         
         var runtime = CreateRuntime(code);
 
-        runtime.AddExternal("foo",LjsExternalFunction.Create(() =>
+        runtime.AddExternal("foo",LjsFunctionsFactory.CreateStatic(() =>
         {
             c++;
         }));

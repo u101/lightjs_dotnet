@@ -3,7 +3,6 @@ using static LightJS.Runtime.LjsBasicOperationsHelper;
 
 using LightJS.Errors;
 using LightJS.Program;
-using LightJS.Runtime.PropertyProviders;
 
 namespace LightJS.Runtime;
 
@@ -12,7 +11,8 @@ public sealed class LjsRuntime
     private readonly LjsProgram _program;
     private readonly LjsProgramConstants _constants;
     private readonly Stack<LjsObject> _stack = new();
-    
+    private readonly Stack<LjsObject> _thisPointersStack = new();
+
     private readonly List<FunctionContext> _functionCallStack = new();
 
     private readonly List<LjsObject> _locals = new();
@@ -21,11 +21,6 @@ public sealed class LjsRuntime
     private bool _isRunning = false;
 
     private readonly Dictionary<string, LjsObject> _externals;
-
-    private readonly Dictionary<System.Type, ILjsObjectPropertiesProvider> _propertiesProviders = new()
-    {
-        {typeof(LjsDictionary), new LjsDictionaryPropertiesProvider()}
-    };
 
     public LjsRuntime(LjsProgram program)
     {
@@ -298,13 +293,20 @@ public sealed class LjsRuntime
                             }
 
                             var args = LjsRuntimeUtils.GetTemporaryObjectsList();
+                            var argsIndexOffset = 0;
+                            
+                            if (extFunc.MemberType == LjsMemberType.InstanceMember)
+                            {
+                                argsIndexOffset = 1;
+                                args.Add(_thisPointersStack.Pop());
+                            }
 
                             while (args.Count < extFunc.ArgumentsCount)
                             {
                                 args.Add(LjsObject.Undefined);
                             }
                             
-                            for (var j = extFunc.ArgumentsCount - 1; j >= 0; --j)
+                            for (var j = extFunc.ArgumentsCount - 1; j >= argsIndexOffset; --j)
                             {
                                 args[j] = j < argsCount ? _stack.Pop() : LjsObject.Undefined;
                             }
@@ -506,14 +508,29 @@ public sealed class LjsRuntime
                     var propName = _stack.Pop();
                     var propSource = _stack.Pop();
 
-                    var propsProvider =
-                        _propertiesProviders.TryGetValue(propSource.GetType(), out var propertiesProvider)
-                            ? propertiesProvider
-                            : LjsObjectPropertiesProviderDefault.Instance;
+                    var typeInfo = propSource.GetTypeInfo();
+                    var propNameStr = propName.ToString();
+
+                    if (typeInfo.HasMember(propNameStr))
+                    {
+                        var member = typeInfo.GetMember(propName.ToString());
+                        
+                        // todo get property here
+                        if (member is not LjsFunction memberFunc || memberFunc.MemberType == LjsMemberType.InstanceMember)
+                        {
+                            _thisPointersStack.Push(propSource);
+                        }
+                        
+                        _stack.Push(member);
+                    }
+                    else
+                    {
+                        throw new LjsRuntimeError($"{propSource} has no type member with name {propNameStr}");
+                    }
                     
-                    var prop = propsProvider.GetProperty(propSource, propName);
                     
-                    _stack.Push(prop);
+                    
+                    
 
                     break;
                     
