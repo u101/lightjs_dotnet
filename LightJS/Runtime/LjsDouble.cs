@@ -4,6 +4,9 @@ namespace LightJS.Runtime;
 
 public sealed class LjsDouble : LjsNumber
 {
+    public static readonly LjsDouble Zero = new(0.0);
+    public static readonly LjsDouble NaN = new(double.NaN);
+    
     public double Value { get; }
 
     public override double NumericValue => Value;

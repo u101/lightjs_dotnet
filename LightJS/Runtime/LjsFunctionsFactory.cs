@@ -11,6 +11,8 @@ public static class LjsFunctionsFactory
     public static LjsFunction CreateStatic(Func<LjsObject, LjsObject, LjsObject> f) => new LjsExternalFunction2(f);
     public static LjsFunction CreateStatic(Action<LjsObject, LjsObject> f) => new LjsExternalAction2(f);
 
+    public static LjsProperty CreateStaticProp(LjsObject value) => new StaticGetProp(value);
+
     private abstract class LjsStaticFunction : LjsFunction
     {
         public override LjsMemberType MemberType => LjsMemberType.StaticMember;
@@ -120,4 +122,26 @@ public static class LjsFunctionsFactory
             return _func.Invoke(arguments[0], arguments[1]);
         }
     }
+
+    private sealed class StaticGetProp : LjsProperty
+    {
+        private readonly LjsObject _value;
+        public override LjsMemberType MemberType => LjsMemberType.StaticMember;
+        public override LjsPropertyAccessType AccessType => LjsPropertyAccessType.Read;
+
+        public StaticGetProp(LjsObject value)
+        {
+            _value = value;
+        }
+        
+        public override LjsObject Get(LjsObject instance)
+        {
+            return _value;
+        }
+
+        public override void Set(LjsObject instance, LjsObject v)
+        {
+        }
+    }
+    
 }

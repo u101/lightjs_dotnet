@@ -6,7 +6,7 @@ public sealed class LjsString : LjsObject
 {
     public static readonly LjsString Empty = new("");
 
-    public static readonly LjsTypeInfo TypeInfo = new(
+    private static readonly LjsTypeInfo _TypeInfo = new(
         LjsObject.TypeInfo,
         new Dictionary<string, LjsObject>()
         {
@@ -15,7 +15,7 @@ public sealed class LjsString : LjsObject
             { "indexOf", new FuncIndexOf() },
         });
 
-    public override LjsTypeInfo GetTypeInfo() => TypeInfo;
+    public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
 
     public string Value { get; }
 

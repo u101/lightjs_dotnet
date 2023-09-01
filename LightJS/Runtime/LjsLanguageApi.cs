@@ -17,6 +17,7 @@ public static class LjsLanguageApi
         {"int", FuncInt},
         {"Number", FuncNumber},
         {"String", FuncString},
+        {"Math", LjsMath.Instance},
     };
 
     private sealed class ConvertToInt : LjsFunction
