@@ -308,7 +308,7 @@ public sealed class LjsRuntime
                             
                             for (var j = extFunc.ArgumentsCount - 1; j >= argsIndexOffset; --j)
                             {
-                                args[j] = j < argsCount ? _stack.Pop() : LjsObject.Undefined;
+                                args[j] = j < argsCount + argsIndexOffset ? _stack.Pop() : LjsObject.Undefined;
                             }
                             
                             var extFuncResult = extFunc.Invoke(args);

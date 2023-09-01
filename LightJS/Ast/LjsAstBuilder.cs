@@ -100,14 +100,12 @@ public class LjsAstBuilder
         public bool IsUnaryPostfix => (this.OpType & OpType.UnaryPostfix) != 0;
         public bool IsBinary => (this.OpType & OpType.Binary) != 0;
         public int Priority { get; }
-        public int InnerMembersCount { get; }
 
-        public Op(LjsToken token, OpType opType, int priority, int innerMembersCount = 0)
+        public Op(LjsToken token, OpType opType, int priority)
         {
             Token = token;
             OpType = opType;
             Priority = priority;
-            InnerMembersCount = innerMembersCount;
         }
     }
     
@@ -810,7 +808,7 @@ public class LjsAstBuilder
 
                     var propAccessOp = new Op(
                         token, OpType.PropAccess | OpType.Binary, 
-                        LjsAstBuilderUtils.PropertyAccessOperatorsPriority, 1);
+                        LjsAstBuilderUtils.PropertyAccessOperatorsPriority);
                     
                     RegisterNodePosition(propAccessNode, token);
                     
