@@ -422,13 +422,8 @@ public class SimpleExpressionsTest
         var rootNode = BuildAstNode("a + b != c + d");
         
         rootNode.Should().BeOfType<LjsAstBinaryOperation>();
-        
-        var expectedResult = new LjsAstBinaryOperation(
-            new LjsAstBinaryOperation(new LjsAstGetVar("a"), new LjsAstGetVar("b"), LjsAstBinaryOperationType.Plus),
-            new LjsAstBinaryOperation(new LjsAstGetVar("c"), new LjsAstGetVar("d"), LjsAstBinaryOperationType.Plus),
-            LjsAstBinaryOperationType.NotEqual);
 
-        Match(rootNode, expectedResult);
+        Match(rootNode, ("a".Plus("b")).NotEq("c".Plus("d")));
     }
     
     [Test]

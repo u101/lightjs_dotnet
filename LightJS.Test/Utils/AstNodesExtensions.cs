@@ -42,6 +42,9 @@ public static class AstNodesExtensions
     
     public static LjsAstUnaryOperation WithUnaryPlus(this string x) =>
         UnaryOp(x, LjsAstUnaryOperationType.Plus);
+    
+    public static LjsAstBinaryOperation NotEq(this ILjsAstNode x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.NotEqual);
+    public static LjsAstBinaryOperation Eq(this ILjsAstNode x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Equals);
 
     public static LjsAstBinaryOperation Plus(this ILjsAstNode x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Plus);
     
