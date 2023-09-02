@@ -528,12 +528,14 @@ public sealed class LjsRuntime
                     break;
                 
                 case LjsInstructionCode.NewArray:
+                    
                     var elementsCount = instruction.Argument;
-                    var newArr = new LjsArray();
+                    
+                    var newArr = new LjsArray(elementsCount);
 
-                    for (var i = 0; i < elementsCount; i++)
+                    for (var i = elementsCount - 1; i >= 0; --i)
                     {
-                        newArr.Add(_stack.Pop());
+                        newArr[i] = _stack.Pop();
                     }
                     _stack.Push(newArr);
                     break;

@@ -33,6 +33,7 @@ public class LjsObject : IEquatable<LjsObject>
     public static implicit operator LjsObject(int v) => new LjsInteger(v);
     public static implicit operator LjsObject(double v) => new LjsDouble(v);
     public static implicit operator LjsObject(bool v) => v ? LjsBoolean.True : LjsBoolean.False;
+    public static implicit operator LjsObject(int[] v) => new LjsArray(v.Select(i => new LjsInteger(i)));
 
     #endregion
 

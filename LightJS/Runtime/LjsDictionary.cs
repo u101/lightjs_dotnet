@@ -4,8 +4,6 @@ public sealed class LjsDictionary : LjsObject, ILjsCollection
 {
     private readonly Dictionary<string, LjsObject> _map;
 
-    public IReadOnlyDictionary<string, LjsObject> Map => _map;
-
     public LjsDictionary()
     {
         _map = new Dictionary<string, LjsObject>();
@@ -21,7 +19,15 @@ public sealed class LjsDictionary : LjsObject, ILjsCollection
         _map = new Dictionary<string, LjsObject>(elements);
     }
 
+    public string[] Keys => _map.Keys.ToArray();
+
     public bool ContainsKey(string key) => _map.ContainsKey(key);
+    
+    public LjsObject this[string key]
+    {
+        get => _map[key];
+        set => _map[key] = value;
+    }
 
     public LjsObject Get(string key) => _map.TryGetValue(key, out var v) ? v : Undefined;
 

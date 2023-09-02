@@ -23,6 +23,16 @@ public sealed class LjsArray : LjsObject, ILjsCollection
     {
         _list = new List<LjsObject>();
     }
+    
+    public LjsArray(int size)
+    {
+        _list = new List<LjsObject>(size);
+        
+        for (var i = 0; i < size; i++)
+        {
+            _list.Add(Undefined);
+        }
+    }
 
     public LjsArray(IEnumerable<LjsObject> values)
     {
@@ -37,6 +47,20 @@ public sealed class LjsArray : LjsObject, ILjsCollection
     public void Add(LjsObject o)
     {
         _list.Add(o);
+    }
+
+    public void Fill(int newSize, LjsObject v)
+    {
+        while (_list.Count < newSize)
+        {
+            _list.Add(v);
+        }
+    }
+
+    public LjsObject this[int index]
+    {
+        get => _list[index];
+        set => _list[index] = value;
     }
 
     public LjsObject Get(LjsObject elementId)

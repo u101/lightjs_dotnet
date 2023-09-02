@@ -1,3 +1,5 @@
+using LightJS.Runtime;
+
 namespace LightJS.Test.Runtime;
 
 [TestFixture]
@@ -10,7 +12,7 @@ public class LjsArrayTests
 
         var result = runtime.Execute();
         
-        Match(result, Arr());
+        CheckResult(result, Arr());
     }
     
     [Test]
@@ -20,7 +22,7 @@ public class LjsArrayTests
 
         var result = runtime.Execute();
         
-        Match(result, Arr(
+        CheckResult(result, Arr(
             "a", "b", "c", 1, 2, 3, true, false
         ));
     }
@@ -37,7 +39,7 @@ public class LjsArrayTests
 
         var result = runtime.Execute();
         
-        Match(result, "hi!");
+        CheckResult(result, "hi!");
     }
     
     [Test]
@@ -52,7 +54,7 @@ public class LjsArrayTests
 
         var result = runtime.Execute();
         
-        Match(result, "hi!");
+        CheckResult(result, "hi!");
     }
     
     [Test]
@@ -67,6 +69,6 @@ public class LjsArrayTests
 
         var result = runtime.Execute();
         
-        Match(result, 3);
+        CheckResult(result, 3);
     }
 }

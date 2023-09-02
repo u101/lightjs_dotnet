@@ -13,7 +13,7 @@ public class LjsDictionaryTests
 
         var result = runtime.Execute();
         
-        Match(result, Dict());
+        CheckResult(result, Dict());
     }
 
     [Test]
@@ -23,7 +23,7 @@ public class LjsDictionaryTests
 
         var result = runtime.Execute();
         
-        Match(result, Dict()
+        CheckResult(result, Dict()
             .With("a", 1)
             .With("b",2)
             .With("c", true)
