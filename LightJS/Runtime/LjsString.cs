@@ -13,6 +13,7 @@ public sealed class LjsString : LjsObject
             { "length", new PropLength() },
             { "charAt", new FuncCharAt() },
             { "indexOf", new FuncIndexOf() },
+            { "substring", new FuncSubstring() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
@@ -60,6 +61,33 @@ public sealed class LjsString : LjsObject
             var str = s.Value;
             
             return (i >= 0 && i < str.Length) ? new LjsString(str[i].ToString()) : Empty;
+        }
+    }
+    
+    private sealed class FuncSubstring : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 3;
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var arg1 = arguments[1];
+            var arg2 = arguments[2];
+            
+            var s = CheckThisArgument(arguments[0]);
+            var str = s.Value;
+            var strLength = str.Length;
+            
+            if (strLength == 0) return Empty;
+            
+            
+            var i = LjsRuntimeUtils.Clamp(LjsTypesConverter.ToInt(arg1), 0, strLength - 1);
+            var j = LjsRuntimeUtils.Clamp(arg2 is LjsNumber n ? (int) n.NumericValue : strLength, i, strLength);
+
+            if (i == j) return Empty;
+
+            var result = str.Substring(i, j - i);
+
+            return new LjsString(result);
         }
     }
     
