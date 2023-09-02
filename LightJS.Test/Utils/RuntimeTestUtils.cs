@@ -6,6 +6,17 @@ namespace LightJS.Test.Utils;
 
 public static class RuntimeTestUtils
 {
+    public static LjsArray Arr(params LjsObject[] values) => new(values);
+    public static LjsDictionary Dict(params KeyValuePair<string,LjsObject>[] values) => new(values);
+    public static LjsDictionary Dict() => new();
+
+    public static LjsDictionary With(this LjsDictionary d, string propName, LjsObject propValue)
+    {
+        d.Set(propName, propValue);
+        return d;
+    }
+    
+    
     public static LjsRuntime CreateRuntime(string sourceCode)
     {
         var compiler = new LjsCompiler(sourceCode);

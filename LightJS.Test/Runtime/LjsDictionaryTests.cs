@@ -13,7 +13,7 @@ public class LjsDictionaryTests
 
         var result = runtime.Execute();
         
-        Match(result, new LjsDictionary());
+        Match(result, Dict());
     }
 
     [Test]
@@ -23,13 +23,11 @@ public class LjsDictionaryTests
 
         var result = runtime.Execute();
         
-        Match(result, new LjsDictionary(new Dictionary<string, LjsObject>()
-        {
-            {"a", new LjsInteger(1)},
-            {"b", new LjsInteger(2)},
-            {"c", LjsBoolean.True},
-            {"d", new LjsString("hello")},
-        }));
+        Match(result, Dict()
+            .With("a", 1)
+            .With("b",2)
+            .With("c", true)
+            .With("d","hello"));
     }
     
 }

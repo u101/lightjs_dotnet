@@ -23,6 +23,11 @@ public sealed class LjsArray : LjsObject
     {
         _list = new List<LjsObject>();
     }
+
+    public LjsArray(IEnumerable<LjsObject> values)
+    {
+        _list = new List<LjsObject>(values);
+    }
     
     public LjsArray(List<LjsObject> list)
     {

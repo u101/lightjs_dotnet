@@ -16,6 +16,11 @@ public sealed class LjsDictionary : LjsObject
         _map = map;
     }
 
+    public LjsDictionary(IEnumerable<KeyValuePair<string, LjsObject>> elements)
+    {
+        _map = new Dictionary<string, LjsObject>(elements);
+    }
+
     public bool ContainsKey(string key) => _map.ContainsKey(key);
 
     public LjsObject Get(string key) => _map.TryGetValue(key, out var v) ? v : Undefined;
