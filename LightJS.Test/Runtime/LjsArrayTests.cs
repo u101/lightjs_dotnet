@@ -46,7 +46,6 @@ public class LjsArrayTests
         var code = """
         var a = ['a','b','c'];
         a[1] = "hi!";
-        a[1];
         """;
         
         var runtime = CreateRuntime(code);
@@ -54,5 +53,20 @@ public class LjsArrayTests
         var result = runtime.Execute();
         
         Match(result, "hi!");
+    }
+    
+    [Test]
+    public void LengthTest()
+    {
+        var code = """
+        var a = ['a','b','c'];
+        a.length
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        Match(result, 3);
     }
 }
