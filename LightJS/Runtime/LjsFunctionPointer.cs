@@ -16,24 +16,11 @@ public sealed class LjsFunctionPointer : LjsObject
 
     public override bool Equals(LjsObject? other)
     {
-        return other is LjsFunctionPointer b && FunctionIndex== b.FunctionIndex;
-    }
-
-    private bool Equals(LjsFunctionPointer other)
-    {
-        return FunctionIndex == other.FunctionIndex;
-    }
-
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
-        return Equals((LjsFunctionPointer)obj);
+        return other is LjsFunctionPointer b && FunctionIndex == b.FunctionIndex;
     }
 
     public override int GetHashCode()
     {
-        return FunctionIndex;
+        return HashCode.Combine(FunctionIndex);
     }
 }

@@ -325,9 +325,7 @@ public class LjsCompiler
                 break;
             
             case LjsAstLiteral<string> lit:
-                instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.ConstString, 
-                    _constants.AddStringConstant(lit.Value)));
+                instructions.Add(GetStringConstInstruction(lit.Value));
                 break;
             
             case LjsAstNull _:
@@ -594,11 +592,67 @@ public class LjsCompiler
 
                 ProcessNode(astGetNamedProperty.PropertySource, functionData);
                 
-                instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.ConstString, 
-                    _constants.AddStringConstant(astGetNamedProperty.PropertyName)));
+                instructions.Add(GetStringConstInstruction(astGetNamedProperty.PropertyName));
 
-                instructions.Add(new LjsInstruction(LjsInstructionCode.GetNamedProp));
+                instructions.Add(new LjsInstruction(LjsInstructionCode.GetProp));
+                break;
+            
+            case LjsAstGetProperty astGetProperty:
+
+                ProcessNode(astGetProperty.PropertySource, functionData);
+                ProcessNode(astGetProperty.PropertyName, functionData);
+
+                instructions.Add(new LjsInstruction(LjsInstructionCode.GetProp));
+                break;
+            
+            case LjsAstSetNamedProperty astSetNamedProperty:
+                
+                if (astSetNamedProperty.AssignMode == LjsAstAssignMode.Normal)
+                {
+                    ProcessNode(astSetNamedProperty.AssignmentExpression, functionData);
+                }
+                else
+                {
+                    ProcessNode(astSetNamedProperty.PropertySource, functionData);
+                    instructions.Add(GetStringConstInstruction(astSetNamedProperty.PropertyName));
+                    instructions.Add(new LjsInstruction(LjsInstructionCode.GetProp));
+                    
+                    ProcessNode(astSetNamedProperty.AssignmentExpression, functionData);
+                    
+                    instructions.Add(new LjsInstruction(
+                        LjsCompileUtils.GetComplexAssignmentOpCode(astSetNamedProperty.AssignMode)));
+                }
+                
+                ProcessNode(astSetNamedProperty.PropertySource, functionData);
+                instructions.Add(GetStringConstInstruction(astSetNamedProperty.PropertyName));
+                
+                instructions.Add(new LjsInstruction(LjsInstructionCode.SetProp));
+                
+                break;
+            
+            case LjsAstSetProperty astSetProperty:
+
+                if (astSetProperty.AssignMode == LjsAstAssignMode.Normal)
+                {
+                    ProcessNode(astSetProperty.AssignmentExpression, functionData);
+                }
+                else
+                {
+                    ProcessNode(astSetProperty.PropertySource, functionData);
+                    ProcessNode(astSetProperty.PropertyName, functionData);
+                    instructions.Add(new LjsInstruction(LjsInstructionCode.GetProp));
+                    
+                    ProcessNode(astSetProperty.AssignmentExpression, functionData);
+                    
+                    instructions.Add(new LjsInstruction(
+                        LjsCompileUtils.GetComplexAssignmentOpCode(astSetProperty.AssignMode)));
+                }
+                
+                ProcessNode(astSetProperty.PropertySource, functionData);
+                ProcessNode(astSetProperty.PropertyName, functionData);
+                
+                instructions.Add(new LjsInstruction(LjsInstructionCode.SetProp));
+                
                 break;
             
             case LjsAstObjectLiteral objectLiteral:
@@ -606,9 +660,7 @@ public class LjsCompiler
                 foreach (var prop in objectLiteral.ChildNodes)
                 {
                     ProcessNode(prop.Value, functionData);
-                    instructions.Add(new LjsInstruction(
-                        LjsInstructionCode.ConstString, 
-                        _constants.AddStringConstant(prop.Name)));
+                    instructions.Add(GetStringConstInstruction(prop.Name));
                 }
                 
                 instructions.Add(new LjsInstruction(
@@ -632,6 +684,11 @@ public class LjsCompiler
                 throw new LjsCompilerError($"unsupported ast node {node.GetType().Name}");
         }
     }
+
+    private LjsInstruction GetStringConstInstruction(string s) => new(
+        LjsInstructionCode.ConstString,
+        _constants.AddStringConstant(s));
+    
     
     /////////// vars init/load/store
     

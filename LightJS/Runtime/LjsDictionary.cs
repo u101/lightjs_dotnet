@@ -1,6 +1,6 @@
 namespace LightJS.Runtime;
 
-public sealed class LjsDictionary : LjsObject
+public sealed class LjsDictionary : LjsObject, ILjsCollection
 {
     private readonly Dictionary<string, LjsObject> _map;
 
@@ -32,4 +32,15 @@ public sealed class LjsDictionary : LjsObject
 
     public int Count => _map.Count;
 
+    public LjsObject Get(LjsObject elementId)
+    {
+        var key = elementId.ToString();
+        return _map.TryGetValue(key, out var result) ? result : LjsObject.Undefined;
+    }
+
+    public void Set(LjsObject elementId, LjsObject value)
+    {
+        var key = elementId.ToString();
+        _map[key] = value;
+    }
 }

@@ -2,7 +2,7 @@ using LightJS.Errors;
 
 namespace LightJS.Runtime;
 
-public sealed class LjsArray : LjsObject
+public sealed class LjsArray : LjsObject, ILjsCollection
 {
     private static readonly LjsTypeInfo _TypeInfo = new(
         LjsObject.TypeInfo,
@@ -38,7 +38,33 @@ public sealed class LjsArray : LjsObject
     {
         _list.Add(o);
     }
-    
+
+    public LjsObject Get(LjsObject elementId)
+    {
+        var index = LjsTypesConverter.ToInt(elementId);
+
+        return (index >= 0 && index < _list.Count) ? 
+            _list[index] : LjsObject.Undefined;
+    }
+
+    public void Set(LjsObject elementId, LjsObject value)
+    {
+        var index = LjsTypesConverter.ToInt(elementId);
+
+        if (index >= 0)
+        {
+            if (index < _list.Count)
+            {
+                _list[index] = value;
+            }
+            else if (index == _list.Count)
+            {
+                _list.Add(value);
+            }
+        }
+        // TODO throw exception ??
+    }
+
     // METHODS AND PROPS
 
     private static LjsArray CheckThisArgument(LjsObject obj)
@@ -51,7 +77,7 @@ public sealed class LjsArray : LjsObject
     private sealed class PropLength : LjsProperty
     {
         public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
-        public override LjsPropertyAccessType AccessType => LjsPropertyAccessType.Write;
+        public override LjsPropertyAccessType AccessType => LjsPropertyAccessType.Read;
         public override LjsObject Get(LjsObject instance)
         {
             var s = CheckThisArgument(instance);

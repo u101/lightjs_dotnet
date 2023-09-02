@@ -24,4 +24,35 @@ public class LjsArrayTests
             "a", "b", "c", 1, 2, 3, true, false
         ));
     }
+    
+    [Test]
+    public void GetElementTest()
+    {
+        var code = """
+        var a = ['a','hi!','c'];
+        a[1];
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        Match(result, "hi!");
+    }
+    
+    [Test]
+    public void SetElementTest()
+    {
+        var code = """
+        var a = ['a','b','c'];
+        a[1] = "hi!";
+        a[1];
+        """;
+        
+        var runtime = CreateRuntime(code);
+
+        var result = runtime.Execute();
+        
+        Match(result, "hi!");
+    }
 }

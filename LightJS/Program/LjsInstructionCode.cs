@@ -104,7 +104,7 @@ public enum LjsInstructionCode
     NewArray = 0x55,
     NewDictionary = 0x56,
     
-    GetNamedProp = 0x60,
-    SetNamedProp = 0x61,
+    GetProp = 0x60,
+    SetProp = 0x61,
 
 }

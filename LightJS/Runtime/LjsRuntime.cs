@@ -503,43 +503,12 @@ public sealed class LjsRuntime
                     _locals[parentFc2.LocalsOffset + varIndex] = v;
                     break;
                 
-                case LjsInstructionCode.GetNamedProp:
-
-                    var propName = _stack.Pop();
-                    var propSource = _stack.Pop();
-
-                    var typeInfo = propSource.GetTypeInfo();
-                    var propNameStr = propName.ToString();
-
-                    if (typeInfo.HasMember(propNameStr))
-                    {
-                        var member = typeInfo.GetMember(propName.ToString());
-
-                        switch (member)
-                        {
-                            case LjsFunction memberFunc:
-                                if (memberFunc.MemberType == LjsMemberType.InstanceMember)
-                                {
-                                    _thisPointersStack.Push(propSource);
-                                }
-                                _stack.Push(member);
-                                break;
-                            case LjsProperty prop:
-                                if ((prop.AccessType & LjsPropertyAccessType.Read) != 0)
-                                {
-                                    _stack.Push(prop.Get(propSource));
-                                }
-                                else
-                                {
-                                    throw new LjsRuntimeError($"property {propNameStr} not read enabled");
-                                }
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        throw new LjsRuntimeError($"{propSource} has no type member with name {propNameStr}");
-                    }
+                case LjsInstructionCode.SetProp:
+                    ExecuteSetPropertyInstruction();
+                    break;
+                
+                case LjsInstructionCode.GetProp:
+                    ExecuteGetPropertyInstruction();
                     break;
                 
                 case LjsInstructionCode.NewDictionary:
@@ -581,6 +550,100 @@ public sealed class LjsRuntime
         }
 
         _isRunning = false;
+    }
+
+    private void ExecuteSetPropertyInstruction()
+    {
+        var propName = _stack.Pop();
+        var propSource = _stack.Pop();
+        var propValue = _stack.Pop();
+        
+        var typeInfo = propSource.GetTypeInfo();
+
+        var propNameStr = propName is LjsString ? propName.ToString() : string.Empty;
+        
+        if (!string.IsNullOrEmpty(propNameStr) && typeInfo.HasMember(propNameStr))
+        {
+            var member = typeInfo.GetMember(propName.ToString());
+
+            if (member is LjsProperty prop && (prop.AccessType & LjsPropertyAccessType.Write) != 0)
+            {
+                prop.Set(propSource, propValue);
+            }
+            else
+            {
+                throw new LjsRuntimeError($"property {propNameStr} not write enabled");
+            }
+        }
+        else if (propSource is ILjsCollection ljsCollection)
+        {
+            ljsCollection.Set(propName, propValue);
+            
+            if (propValue is LjsFunctionPointer)
+            {
+                _thisPointersStack.Push(propSource);
+            }
+        }
+
+        else
+        {
+            throw new LjsRuntimeError($"{propSource} has no property with name {propName}");
+        }
+        
+        _stack.Push(propValue);
+    }
+
+    private void ExecuteGetPropertyInstruction()
+    {
+        var propName = _stack.Pop();
+        var propSource = _stack.Pop();
+
+        var typeInfo = propSource.GetTypeInfo();
+
+        var propNameStr = propName is LjsString ? propName.ToString() : string.Empty;
+
+        if (!string.IsNullOrEmpty(propNameStr) && typeInfo.HasMember(propNameStr))
+        {
+            var member = typeInfo.GetMember(propName.ToString());
+
+            switch (member)
+            {
+                case LjsFunction memberFunc:
+                    if (memberFunc.MemberType == LjsMemberType.InstanceMember)
+                    {
+                        _thisPointersStack.Push(propSource);
+                    }
+
+                    _stack.Push(member);
+                    break;
+                case LjsProperty prop:
+                    if ((prop.AccessType & LjsPropertyAccessType.Read) != 0)
+                    {
+                        _stack.Push(prop.Get(propSource));
+                    }
+                    else
+                    {
+                        throw new LjsRuntimeError($"property {propNameStr} not read enabled");
+                    }
+
+                    break;
+            }
+        }
+        else if (propSource is ILjsCollection ljsCollection)
+        {
+            var propValue = ljsCollection.Get(propName);
+            if (propValue is LjsFunctionPointer)
+            {
+                _thisPointersStack.Push(propSource);
+            }
+
+            _stack.Push(propValue);
+        }
+
+        else
+        {
+            throw new LjsRuntimeError($"{propSource} has no property with name {propName}");
+        }
     }
 
     #region Invoke Script Function
