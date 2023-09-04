@@ -10,6 +10,7 @@ public sealed class LjsDouble : LjsNumber
     public double Value { get; }
 
     public override double NumericValue => Value;
+    public override int IntegerValue => (int)Value;
 
     public LjsDouble(double value)
     {

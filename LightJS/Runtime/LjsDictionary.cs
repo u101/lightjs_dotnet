@@ -1,6 +1,6 @@
 namespace LightJS.Runtime;
 
-public sealed class LjsDictionary : LjsObject, ILjsCollection
+public sealed class LjsDictionary : LjsObject, ILjsDictionary
 {
     private readonly Dictionary<string, LjsObject> _map;
 

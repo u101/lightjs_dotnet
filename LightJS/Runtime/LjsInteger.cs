@@ -6,6 +6,8 @@ public sealed class LjsInteger : LjsNumber
 
     public override double NumericValue => Value;
 
+    public override int IntegerValue => Value;
+
     public LjsInteger(int value)
     {
         Value = value;

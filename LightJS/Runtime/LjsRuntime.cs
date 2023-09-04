@@ -556,17 +556,17 @@ public sealed class LjsRuntime
 
     private void ExecuteSetPropertyInstruction()
     {
-        var propName = _stack.Pop();
+        var propId = _stack.Pop();
         var propSource = _stack.Pop();
         var propValue = _stack.Pop();
         
         var typeInfo = propSource.GetTypeInfo();
 
-        var propNameStr = propName is LjsString ? propName.ToString() : string.Empty;
+        var propNameStr = propId is LjsString ? propId.ToString() : string.Empty;
         
         if (!string.IsNullOrEmpty(propNameStr) && typeInfo.HasMember(propNameStr))
         {
-            var member = typeInfo.GetMember(propName.ToString());
+            var member = typeInfo.GetMember(propId.ToString());
 
             if (member is LjsProperty prop && (prop.AccessType & LjsPropertyAccessType.Write) != 0)
             {
@@ -577,19 +577,19 @@ public sealed class LjsRuntime
                 throw new LjsRuntimeError($"property {propNameStr} not write enabled");
             }
         }
-        else if (propSource is ILjsCollection ljsCollection)
+        else if (propSource is LjsDictionary d)
         {
-            ljsCollection.Set(propName, propValue);
-            
-            if (propValue is LjsFunctionPointer)
-            {
-                _thisPointersStack.Push(propSource);
-            }
+            d.Set(propId, propValue);
+        }
+        
+        else if (propSource is ILjsArray a && propId is LjsNumber n)
+        {
+            a.Set(n.IntegerValue, propValue);
         }
 
         else
         {
-            throw new LjsRuntimeError($"{propSource} has no property with name {propName}");
+            throw new LjsRuntimeError($"{propSource} has no property with name {propId}");
         }
         
         _stack.Push(propValue);
@@ -631,9 +631,20 @@ public sealed class LjsRuntime
                     break;
             }
         }
-        else if (propSource is ILjsCollection ljsCollection)
+        else if (propSource is ILjsDictionary d)
         {
-            var propValue = ljsCollection.Get(propName);
+            var propValue = d.Get(propName);
+            if (propValue is LjsFunctionPointer)
+            {
+                _thisPointersStack.Push(propSource);
+            }
+
+            _stack.Push(propValue);
+        }
+        
+        else if (propSource is ILjsArray a && propName is LjsNumber n)
+        {
+            var propValue = a.Get(n.IntegerValue);
             if (propValue is LjsFunctionPointer)
             {
                 _thisPointersStack.Push(propSource);

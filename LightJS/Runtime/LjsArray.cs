@@ -2,7 +2,7 @@ using LightJS.Errors;
 
 namespace LightJS.Runtime;
 
-public sealed class LjsArray : LjsObject, ILjsCollection
+public sealed class LjsArray : LjsObject, ILjsArray
 {
     private static readonly LjsTypeInfo _TypeInfo = new(
         LjsObject.TypeInfo,
@@ -10,10 +10,13 @@ public sealed class LjsArray : LjsObject, ILjsCollection
         {
             { "length", new PropLength() },
             { "indexOf", new FuncIndexOf() },
+            { "concat", new FuncConcat() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
-    
+
+    public IEnumerable<LjsObject> Elements => _list;
+
     private readonly List<LjsObject> _list;
 
     public int Count => _list.Count;
@@ -72,30 +75,24 @@ public sealed class LjsArray : LjsObject, ILjsCollection
         set => _list[index] = value;
     }
 
-    public LjsObject Get(LjsObject elementId)
+    public LjsObject Get(int index)
     {
-        var index = LjsTypesConverter.ToInt(elementId);
-
         return (index >= 0 && index < _list.Count) ? 
             _list[index] : LjsObject.Undefined;
     }
 
-    public void Set(LjsObject elementId, LjsObject value)
+    public void Set(int index, LjsObject value)
     {
-        var index = LjsTypesConverter.ToInt(elementId);
-
-        if (index >= 0)
+        if (index < 0 || index > _list.Count) return;
+        
+        if (index < _list.Count)
         {
-            if (index < _list.Count)
-            {
-                _list[index] = value;
-            }
-            else if (index == _list.Count)
-            {
-                _list.Add(value);
-            }
+            _list[index] = value;
         }
-        // TODO throw exception ??
+        else if (index == _list.Count)
+        {
+            _list.Add(value);
+        }
     }
 
     // METHODS AND PROPS
@@ -142,6 +139,36 @@ public sealed class LjsArray : LjsObject, ILjsCollection
             }
 
             return -1;
+        }
+    }
+    
+    private sealed class FuncConcat  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 5; // concat(this, a1, a2(opt), a3(opt), a4(opt))
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var a = CheckThisArgument(arguments[0]);
+
+            var result = new LjsArray(a.Elements);
+
+            for (var argumentIndex = 1; argumentIndex < arguments.Count; argumentIndex++)
+            {
+                var other = arguments[argumentIndex];
+                if (other is LjsArray otherArray)
+                {
+                    for (var i = 0; i < otherArray.Count; i++)
+                    {
+                        result.Add(otherArray[i]);
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return result;
         }
     }
     

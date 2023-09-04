@@ -107,4 +107,49 @@ public class LjsArrayTests
         
         CheckResult(result, -1);
     }
+
+    [Test]
+    public void ConcatTwoArrays()
+    {
+        var code = """
+        var a1 = [1,2,3]
+        var a2 = [4,5,6]
+        a1.concat(a2)
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(1,2,3,4,5,6));
+    }
+    
+    [Test]
+    public void ConcatThreeArrays()
+    {
+        var code = """
+        var a1 = [1,2,3]
+        var a2 = [4,5,6]
+        var a3 = [7,8,9]
+        a1.concat(a2, a3)
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(1,2,3,4,5,6,7,8,9));
+    }
+    
+    [Test]
+    public void ConcatFourArrays()
+    {
+        var code = """
+        var a1 = [1,2,3]
+        var a2 = [4,5,6]
+        var a3 = [7,8,9]
+        var a4 = ["hi","there"]
+        a1.concat(a2, a3, a4)
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(1,2,3,4,5,6,7,8,9, "hi", "there"));
+    }
 }
