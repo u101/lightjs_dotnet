@@ -211,7 +211,7 @@ public class LjsArrayTests
     }
     
     [Test]
-    public void Shift()
+    public void ShiftTest()
     {
         var code = """
         var a = [111,222,333];
@@ -221,6 +221,19 @@ public class LjsArrayTests
         var result = runtime.Execute();
         
         CheckResult(result, 111);
+    }
+    
+    [Test]
+    public void PopTest()
+    {
+        var code = """
+        var a = [111,222,333];
+        a.pop()
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, 333);
     }
     
 }
