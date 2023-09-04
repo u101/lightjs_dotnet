@@ -210,4 +210,17 @@ public class LjsArrayTests
         CheckResult(result, Arr(1,2,3,8,9,123,-555));
     }
     
+    [Test]
+    public void Shift()
+    {
+        var code = """
+        var a = [111,222,333];
+        a.shift()
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, 111);
+    }
+    
 }

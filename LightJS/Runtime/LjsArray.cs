@@ -12,6 +12,7 @@ public sealed class LjsArray : LjsObject, ILjsArray
             { "indexOf", new FuncIndexOf() },
             { "concat", new FuncConcat() },
             { "push", new FuncPush() },
+            { "shift", new FuncShift() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
@@ -50,6 +51,18 @@ public sealed class LjsArray : LjsObject, ILjsArray
     public void Add(LjsObject o)
     {
         _list.Add(o);
+    }
+
+    public LjsObject RemoveFirst()
+    {
+        if (_list.Count == 0)
+            throw new Exception("list is empty");
+        
+        var result = _list[0];
+        
+        _list.RemoveAt(0);
+
+        return result;
     }
 
     public void Fill(int newSize, LjsObject v)
@@ -195,6 +208,18 @@ public sealed class LjsArray : LjsObject, ILjsArray
             }
 
             return a.Count;
+        }
+    }
+    
+    private sealed class FuncShift  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 1;
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var a = CheckThisArgument(arguments[0]);
+
+            return a.Count == 0 ? Undefined : a.RemoveFirst();
         }
     }
     
