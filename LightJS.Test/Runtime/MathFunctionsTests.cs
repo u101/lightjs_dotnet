@@ -23,4 +23,44 @@ public class MathFunctionsTests
         
         CheckResult(result, 121.0);
     }
+
+    [Test]
+    public void SinTest()
+    {
+        var runtime = CreateRuntime("Math.sin(Math.PI/2)");
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, 1.0);
+    }
+    
+    [Test]
+    public void CosTest()
+    {
+        var runtime = CreateRuntime("Math.cos(Math.PI)");
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, -1.0);
+    }
+
+    [Test]
+    public void FloorTest()
+    {
+        var runtime = CreateRuntime("Math.floor(Math.PI)");
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, 3);
+    }
+    
+    [Test]
+    public void CeilTest()
+    {
+        var runtime = CreateRuntime("Math.ceil(Math.PI)");
+
+        var result = runtime.Execute();
+        
+        CheckResult(result, 4);
+    }
 }
