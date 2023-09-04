@@ -8,14 +8,13 @@ public sealed class LjsArray : LjsObject, ILjsCollection
         LjsObject.TypeInfo,
         new Dictionary<string, LjsObject>
         {
-            { "length", new PropLength() }
+            { "length", new PropLength() },
+            { "indexOf", new FuncIndexOf() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
     
     private readonly List<LjsObject> _list;
-
-    public IReadOnlyList<LjsObject> List => _list;
 
     public int Count => _list.Count;
 
@@ -56,6 +55,16 @@ public sealed class LjsArray : LjsObject, ILjsCollection
             _list.Add(v);
         }
     }
+    
+    public void Fill(LjsObject v)
+    {
+        for (var i = 0; i < _list.Count; i++)
+        {
+            _list[i] = v;
+        }
+    }
+
+    public int IndexOf(LjsObject v, int startIndex = 0) => _list.IndexOf(v, startIndex);
 
     public LjsObject this[int index]
     {
@@ -111,6 +120,28 @@ public sealed class LjsArray : LjsObject, ILjsCollection
         public override void Set(LjsObject instance, LjsObject v)
         {
             throw new NotImplementedException();
+        }
+    }
+    
+    private sealed class FuncIndexOf  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 3;
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var a = CheckThisArgument(arguments[0]);
+            var searchValue = arguments[1];
+            var startIndex = Math.Max(LjsTypesConverter.ToInt(arguments[2]), 0);
+
+            if (a.Count == 0 || startIndex >= a.Count) return -1;
+
+            for (var i = startIndex; i < a.Count; i++)
+            {
+                var e = a[i];
+                if (e.Equals(searchValue)) return i;
+            }
+
+            return -1;
         }
     }
     
