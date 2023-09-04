@@ -6,15 +6,15 @@
  
     > ~~LjsRuntime.SetVar(string varName, LjsObject value)~~
 
-* LjsRuntime function invokation
+* ~~LjsRuntime function invokation~~
 
     > ~~LjsRuntime.Invoke(string functionName)~~
 
-    > LjsRuntime.Invoke(string functionName) with overloads for different arguments count
+    > ~~LjsRuntime.Invoke(string functionName) with overloads for different arguments count~~
 
 * LjsString methods and operations
 
-    > substring(..)
+    > ~~substring(..)~~
 
     > str[] character access
 
@@ -30,7 +30,7 @@
 
     > ~~parseFloat(..)~~
 
-* LjsObject toString()
+* ~~LjsObject toString()~~
 
 * LjsArray with methods and length property
 
@@ -50,10 +50,10 @@
 * Add extended info in exception (pointer to the token that caused an Exception) 
 
 ### Ast features
+* 'let' variable definition
 * Try catch block
 * 'new' operator
 * for (x in y) loop
 * switch(x) {case y:...} branching
 * Exponentiation operator **
-* 'let' variable definition
 
