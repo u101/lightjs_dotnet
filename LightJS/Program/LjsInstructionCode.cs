@@ -107,4 +107,5 @@ public enum LjsInstructionCode
     GetProp = 0x60,
     SetProp = 0x61,
 
+    GetThis = 0x62
 }

@@ -14,7 +14,7 @@ internal static class LjsBasicOperationsHelper
             return new LjsString(left.ToString() + right.ToString());
         }
 
-        var isDouble = left is LjsDouble || right is LjsDouble;
+        var isDouble = left is LjsDouble || right is LjsDouble || opCode == LjsInstructionCode.Div;
 
         return isDouble ?
             ExecuteArithmeticOperation(ToDouble(left), ToDouble(right), opCode):

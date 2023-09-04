@@ -14,11 +14,14 @@ public sealed class LjsRuntime
     private readonly LjsPointersStack _thisPointersStack = new();
 
     private readonly List<FunctionContext> _functionCallStack = new();
+    private readonly List<LjsObject> _functionThisPointers = new();
 
     private readonly List<LjsObject> _locals = new();
 
     private bool _isExecutionCalled = false;
     private bool _isRunning = false;
+
+    private readonly LjsObject _globalObject = new();
 
     private readonly Dictionary<string, LjsObject> _externals;
 
@@ -103,9 +106,6 @@ public sealed class LjsRuntime
     }
     
     
-    
-    
-    
     private readonly struct FunctionContext
     {
         public int FunctionIndex { get; }
@@ -135,7 +135,7 @@ public sealed class LjsRuntime
         public int GetNextFunctionLocalsOffset() => LocalsOffset + LocalsCount;
     }
     
-    private FunctionContext StartFunction(int index, int localsCount)
+    private FunctionContext StartFunction(int index, int localsCount, LjsObject thisObject)
     {
         var localsOffset = _functionCallStack.Count != 0 ? 
             _functionCallStack[^1].GetNextFunctionLocalsOffset() : 0;
@@ -145,7 +145,8 @@ public sealed class LjsRuntime
             index,0, localsCount, localsOffset);
         
         _functionCallStack.Add(context);
-        
+        _functionThisPointers.Add(thisObject);
+
         for (var i = 0; i < localsCount; i++)
         {
             _locals.Add(LjsObject.Undefined);
@@ -159,6 +160,7 @@ public sealed class LjsRuntime
         var fc = _functionCallStack[^1];
         _locals.RemoveRange(fc.LocalsOffset, fc.LocalsCount);
         _functionCallStack.RemoveAt(_functionCallStack.Count - 1);
+        _functionThisPointers.RemoveAt(_functionThisPointers.Count - 1);
     }
 
     private FunctionContext GetParentFunctionContext(int functionIndex)
@@ -197,7 +199,7 @@ public sealed class LjsRuntime
         // start main function at instruction 0
         var mainFunc = _program.GetFunction(0);
 
-        StartFunction(0, mainFunc.LocalsCount);
+        StartFunction(0, mainFunc.LocalsCount, _globalObject);
 
         ExecuteInternal();
         
@@ -224,6 +226,7 @@ public sealed class LjsRuntime
         {
             var fCtx = _functionCallStack[^1];
             var ff = _program.GetFunction(fCtx.FunctionIndex);
+            var functionThisObj = _functionThisPointers[^1];
             
             var jump = false;
             var instruction = ff.Instructions[fCtx.InstructionIndex];
@@ -264,8 +267,11 @@ public sealed class LjsRuntime
                             _functionCallStack[^1] = fCtx.NextInstruction;
                             
                             var f = _program.GetFunction(functionPointer.FunctionIndex);
-
-                            var fc = StartFunction(functionPointer.FunctionIndex, f.LocalsCount);
+                            
+                            var fc = StartFunction(
+                                functionPointer.FunctionIndex, f.LocalsCount, 
+                                _thisPointersStack.TryGetPointer(funcRefStackIndex, out var funcThisPointer) ? 
+                                    funcThisPointer : functionThisObj);
 
                             // remove arguments from stack that can not be used by specified function
                             while (argsCount > f.Arguments.Length)
@@ -518,6 +524,10 @@ public sealed class LjsRuntime
                     ExecuteGetPropertyInstruction();
                     break;
                 
+                case LjsInstructionCode.GetThis:
+                    _stack.Push(functionThisObj);
+                    break;
+                
                 case LjsInstructionCode.NewDictionary:
 
                     var propsCount = instruction.Argument;
@@ -699,7 +709,7 @@ public sealed class LjsRuntime
 
         var functionData = _program.GetFunction(functionName);
 
-        StartFunction(functionData.FunctionIndex, functionData.LocalsCount);
+        StartFunction(functionData.FunctionIndex, functionData.LocalsCount, _globalObject);
 
         return ExecuteFunctionAndGetResult();
     }
@@ -712,7 +722,7 @@ public sealed class LjsRuntime
         var functionData = _program.GetFunction(functionName);
 
         var ctx = StartFunction(
-            functionData.FunctionIndex, functionData.LocalsCount);
+            functionData.FunctionIndex, functionData.LocalsCount, _globalObject);
 
         var argsLn = functionData.Arguments.Length;
         
@@ -729,7 +739,7 @@ public sealed class LjsRuntime
         var functionData = _program.GetFunction(functionName);
 
         var ctx = StartFunction(
-            functionData.FunctionIndex, functionData.LocalsCount);
+            functionData.FunctionIndex, functionData.LocalsCount, _globalObject);
 
         var argsLn = functionData.Arguments.Length;
         
@@ -747,7 +757,7 @@ public sealed class LjsRuntime
         var functionData = _program.GetFunction(functionName);
 
         var ctx = StartFunction(
-            functionData.FunctionIndex, functionData.LocalsCount);
+            functionData.FunctionIndex, functionData.LocalsCount, _globalObject);
 
         var argsLn = functionData.Arguments.Length;
         
@@ -767,7 +777,7 @@ public sealed class LjsRuntime
         var functionData = _program.GetFunction(functionName);
 
         var ctx = StartFunction(
-            functionData.FunctionIndex, functionData.LocalsCount);
+            functionData.FunctionIndex, functionData.LocalsCount, _globalObject);
 
         var argsLn = functionData.Arguments.Length;
         
@@ -787,7 +797,7 @@ public sealed class LjsRuntime
         var functionData = _program.GetFunction(functionName);
 
         var ctx = StartFunction(
-            functionData.FunctionIndex, functionData.LocalsCount);
+            functionData.FunctionIndex, functionData.LocalsCount, _globalObject);
 
         var argsLn = functionData.Arguments.Length;
         

@@ -679,6 +679,12 @@ public class LjsCompiler
                 
                 break;
             
+            case LjsAstGetThis _:
+                
+                instructions.Add(new LjsInstruction(LjsInstructionCode.GetThis));
+                
+                break;
+            
             
             default:
                 throw new LjsCompilerError($"unsupported ast node {node.GetType().Name}");
