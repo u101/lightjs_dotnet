@@ -14,6 +14,7 @@ public sealed class LjsString : LjsObject, ILjsCollection
             { "charAt", new FuncCharAt() },
             { "indexOf", new FuncIndexOf() },
             { "substring", new FuncSubstring() },
+            { "split", new FuncSplit() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
@@ -118,6 +119,36 @@ public sealed class LjsString : LjsObject, ILjsCollection
             var index = str.IndexOf(searchValue, startIndex, StringComparison.Ordinal);
 
             return index;
+        }
+    }
+    
+    private sealed class FuncSplit  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 3;
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var s = CheckThisArgument(arguments[0]);
+            var separator = arguments[1].ToString();
+            var limit = arguments[2] is LjsNumber ? 
+                LjsTypesConverter.ToInt(arguments[2]) : int.MaxValue;
+
+            if (limit <= 0) return new LjsArray();
+            
+            var str = s.Value;
+            
+
+            var strings = str.Split(separator);
+            var ln = Math.Min(limit, strings.Length);
+
+            var list = new List<LjsObject>(ln);
+
+            for (var i = 0; i < ln; i++)
+            {
+                list.Add(strings[i]);
+            }
+
+            return new LjsArray(list);
         }
     }
     

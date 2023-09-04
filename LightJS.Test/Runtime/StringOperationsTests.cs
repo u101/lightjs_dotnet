@@ -20,6 +20,25 @@ public class StringOperationsTests
         
         CheckResult(result, "_");
     }
+
+    [Test]
+    public void StringSplitTest()
+    {
+        var runtime = CreateRuntime("'he,ll,ow,or,ld'.split(',')");
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr("he", "ll", "ow", "or", "ld"));
+    }
+    
+    [Test]
+    public void StringSplitWithLimitTest()
+    {
+        var runtime = CreateRuntime("'he,ll,ow,or,ld'.split(',',2)");
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr("he", "ll"));
+    }
+    
     
 
     [Test]
