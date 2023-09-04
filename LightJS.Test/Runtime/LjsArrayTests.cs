@@ -1,5 +1,3 @@
-using LightJS.Runtime;
-
 namespace LightJS.Test.Runtime;
 
 [TestFixture]
@@ -30,7 +28,7 @@ public class LjsArrayTests
     [Test]
     public void GetElementTest()
     {
-        var code = """
+        const string code = """
         var a = ['a','hi!','c'];
         a[1];
         """;
@@ -45,7 +43,7 @@ public class LjsArrayTests
     [Test]
     public void SetElementTest()
     {
-        var code = """
+        const string code = """
         var a = ['a','b','c'];
         a[1] = "hi!";
         """;
@@ -60,7 +58,7 @@ public class LjsArrayTests
     [Test]
     public void LengthTest()
     {
-        var code = """
+        const string code = """
         var a = ['a','b','c'];
         a.length
         """;
@@ -111,7 +109,7 @@ public class LjsArrayTests
     [Test]
     public void ConcatTwoArrays()
     {
-        var code = """
+        const string code = """
         var a1 = [1,2,3]
         var a2 = [4,5,6]
         a1.concat(a2)
@@ -125,7 +123,7 @@ public class LjsArrayTests
     [Test]
     public void ConcatThreeArrays()
     {
-        var code = """
+        const string code = """
         var a1 = [1,2,3]
         var a2 = [4,5,6]
         var a3 = [7,8,9]
@@ -140,7 +138,7 @@ public class LjsArrayTests
     [Test]
     public void ConcatFourArrays()
     {
-        var code = """
+        const string code = """
         var a1 = [1,2,3]
         var a2 = [4,5,6]
         var a3 = [7,8,9]
@@ -157,7 +155,7 @@ public class LjsArrayTests
     [Test]
     public void PushOneValue()
     {
-        var code = """
+        const string code = """
         var a = [1,2,3]
         a.push(8);
         a
@@ -171,7 +169,7 @@ public class LjsArrayTests
     [Test]
     public void PushTwoValues()
     {
-        var code = """
+        const string code = """
         var a = [1,2,3]
         a.push(8,9);
         a
@@ -185,7 +183,7 @@ public class LjsArrayTests
     [Test]
     public void PushThreeValues()
     {
-        var code = """
+        const string code = """
         var a = [1,2,3]
         a.push(8,9,123);
         a
@@ -199,7 +197,7 @@ public class LjsArrayTests
     [Test]
     public void PushFourValues()
     {
-        var code = """
+        const string code = """
         var a = [1,2,3]
         a.push(8,9,123,-555);
         a
@@ -213,7 +211,7 @@ public class LjsArrayTests
     [Test]
     public void ShiftTest()
     {
-        var code = """
+        const string code = """
         var a = [111,222,333];
         a.shift()
         """;
@@ -226,7 +224,7 @@ public class LjsArrayTests
     [Test]
     public void PopTest()
     {
-        var code = """
+        const string code = """
         var a = [111,222,333];
         a.pop()
         """;
@@ -239,7 +237,7 @@ public class LjsArrayTests
     [Test]
     public void UnshiftOneElementInEmptyArray()
     {
-        var code = """
+        const string code = """
         var a = [];
         a.unshift(111);
         a
@@ -253,7 +251,7 @@ public class LjsArrayTests
     [Test]
     public void UnshiftTwoElementsInEmptyArray()
     {
-        var code = """
+        const string code = """
         var a = [];
         a.unshift(111, 222);
         a
@@ -267,7 +265,7 @@ public class LjsArrayTests
     [Test]
     public void UnshiftThreeElementsInEmptyArray()
     {
-        var code = """
+        const string code = """
         var a = [];
         a.unshift(111, 222, 333);
         a
@@ -282,7 +280,7 @@ public class LjsArrayTests
     [Test]
     public void UnshiftOneElement()
     {
-        var code = """
+        const string code = """
         var a = [7,8,9];
         a.unshift(111);
         a
@@ -296,7 +294,7 @@ public class LjsArrayTests
     [Test]
     public void UnshiftTwoElements()
     {
-        var code = """
+        const string code = """
         var a = [7,8,9];
         a.unshift(111,222);
         a
@@ -310,7 +308,7 @@ public class LjsArrayTests
     [Test]
     public void SliceTest_WithStartIndex()
     {
-        var code = """
+        const string code = """
         var animals = ['ant', 'bison', 'camel', 'duck', 'elephant'];
         animals.slice(2)
         """;
@@ -323,7 +321,7 @@ public class LjsArrayTests
     [Test]
     public void SliceTest_WithStartIndexAndEndIndex()
     {
-        var code = """
+        const string code = """
         var animals = ['ant', 'bison', 'camel', 'duck', 'elephant'];
         animals.slice(2, 4)
         """;
@@ -336,7 +334,7 @@ public class LjsArrayTests
     [Test]
     public void SliceTest_WithoutParameters()
     {
-        var code = """
+        const string code = """
         var animals = ['ant', 'bison', 'camel', 'duck', 'elephant'];
         animals.slice()
         """;
