@@ -4,8 +4,8 @@ public static class LjsTypesConverter
 {
     public static bool ToBool(LjsObject obj) => obj switch
     {
-        LjsInteger i => i.Value == 0,
-        LjsDouble i => i.Value == 0,
+        LjsInteger i => i.Value != 0,
+        LjsDouble i => i.Value != 0,
         LjsBoolean i => i.Value,
         LjsString i => !string.IsNullOrEmpty(i.Value),
         LjsNull _ => false,

@@ -11,7 +11,7 @@ public sealed class LjsRuntime
     private readonly LjsProgram _program;
     private readonly LjsProgramConstants _constants;
     private readonly Stack<LjsObject> _stack = new();
-    private readonly Stack<LjsObject> _thisPointersStack = new();
+    private readonly LjsPointersStack _thisPointersStack = new();
 
     private readonly List<FunctionContext> _functionCallStack = new();
 
@@ -251,8 +251,9 @@ public sealed class LjsRuntime
                     break;
 
                 case LjsInstructionCode.FuncCall:
-
+                    
                     var funcRef = _stack.Pop();
+                    var funcRefStackIndex = _stack.Count;
                     
                     var argsCount = instruction.Argument;
                     
@@ -298,7 +299,13 @@ public sealed class LjsRuntime
                             if (extFunc.MemberType == LjsMemberType.InstanceMember)
                             {
                                 argsIndexOffset = 1;
-                                args.Add(_thisPointersStack.Pop());
+
+                                if (!_thisPointersStack.TryGetPointer(funcRefStackIndex, out var thisPointer))
+                                {
+                                    throw new LjsInternalError("filed to get this pointer from stack");
+                                }
+                                
+                                args.Add(thisPointer);
                             }
 
                             while (args.Count < extFunc.ArgumentsCount)
@@ -544,6 +551,8 @@ public sealed class LjsRuntime
                     throw new LjsInternalError($"unsupported op code {instructionCode}");
                     
             }
+            
+            _thisPointersStack.Clear(_stack.Count);
 
             if (execute && !jump)
             {
@@ -597,23 +606,24 @@ public sealed class LjsRuntime
 
     private void ExecuteGetPropertyInstruction()
     {
-        var propName = _stack.Pop();
+        var propId = _stack.Pop();
         var propSource = _stack.Pop();
 
         var typeInfo = propSource.GetTypeInfo();
 
-        var propNameStr = propName is LjsString ? propName.ToString() : string.Empty;
+        var propNameStr = propId is LjsString ? propId.ToString() : string.Empty;
 
         if (!string.IsNullOrEmpty(propNameStr) && typeInfo.HasMember(propNameStr))
         {
-            var member = typeInfo.GetMember(propName.ToString());
+            var member = typeInfo.GetMember(propId.ToString());
 
             switch (member)
             {
                 case LjsFunction memberFunc:
+                    
                     if (memberFunc.MemberType == LjsMemberType.InstanceMember)
                     {
-                        _thisPointersStack.Push(propSource);
+                        _thisPointersStack.PushPointer(_stack.Count, propSource);
                     }
 
                     _stack.Push(member);
@@ -633,29 +643,25 @@ public sealed class LjsRuntime
         }
         else if (propSource is ILjsDictionary d)
         {
-            var propValue = d.Get(propName);
+            var propValue = d.Get(propId);
             if (propValue is LjsFunctionPointer)
             {
-                _thisPointersStack.Push(propSource);
+                _thisPointersStack.PushPointer(_stack.Count, propSource);
             }
 
             _stack.Push(propValue);
         }
         
-        else if (propSource is ILjsArray a && propName is LjsNumber n)
+        else if (propSource is ILjsArray a && propId is LjsNumber n)
         {
             var propValue = a.Get(n.IntegerValue);
-            if (propValue is LjsFunctionPointer)
-            {
-                _thisPointersStack.Push(propSource);
-            }
 
             _stack.Push(propValue);
         }
 
         else
         {
-            throw new LjsRuntimeError($"{propSource} has no property with name {propName}");
+            throw new LjsRuntimeError($"{propSource} has no property with name {propId}");
         }
     }
 
