@@ -1,7 +1,8 @@
 ### Runtime/Compiler features
 
+* external api, attributes, reflection 
 * 'let' variables support
-* 'this' reference support
+* ~~'this' reference support~~
 * Named functions inside functions
 
 * ~~LjsRuntime variables access~~
