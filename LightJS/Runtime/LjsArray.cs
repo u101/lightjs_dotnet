@@ -14,6 +14,7 @@ public sealed class LjsArray : LjsObject, ILjsArray
             { "push", new FuncPush() },
             { "shift", new FuncShift() },
             { "pop", new FuncPop() },
+            { "unshift", new FuncUnshift() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
@@ -52,6 +53,13 @@ public sealed class LjsArray : LjsObject, ILjsArray
     public void Add(LjsObject o)
     {
         _list.Add(o);
+    }
+
+    public void Insert(int index, LjsObject value)
+    {
+        if (index < 0 || index > _list.Count)
+            throw new IndexOutOfRangeException($"index {index} out of range [0..{_list.Count}]");
+        _list.Insert(index, value);
     }
 
     public LjsObject RemoveFirst()
@@ -246,6 +254,31 @@ public sealed class LjsArray : LjsObject, ILjsArray
             var a = CheckThisArgument(arguments[0]);
 
             return a.Count == 0 ? Undefined : a.RemoveLast();
+        }
+    }
+    
+    private sealed class FuncUnshift  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 5; // unshift(this, v1, v2(opt), v3(opt), v4(opt))
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var a = CheckThisArgument(arguments[0]);
+            
+            for (var argumentIndex = 1; argumentIndex < arguments.Count; argumentIndex++)
+            {
+                var v = arguments[argumentIndex];
+                if (v is not LjsUndefined)
+                {
+                    a.Insert( argumentIndex - 1, v);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return a.Count;
         }
     }
     

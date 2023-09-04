@@ -236,4 +236,75 @@ public class LjsArrayTests
         CheckResult(result, 333);
     }
     
+    [Test]
+    public void UnshiftOneElementInEmptyArray()
+    {
+        var code = """
+        var a = [];
+        a.unshift(111);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(111));
+    }
+    
+    [Test]
+    public void UnshiftTwoElementsInEmptyArray()
+    {
+        var code = """
+        var a = [];
+        a.unshift(111, 222);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(111, 222));
+    }
+    
+    [Test]
+    public void UnshiftThreeElementsInEmptyArray()
+    {
+        var code = """
+        var a = [];
+        a.unshift(111, 222, 333);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(111, 222, 333));
+    }
+    
+    
+    [Test]
+    public void UnshiftOneElement()
+    {
+        var code = """
+        var a = [7,8,9];
+        a.unshift(111);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(111,7,8,9));
+    }
+    
+    [Test]
+    public void UnshiftTwoElements()
+    {
+        var code = """
+        var a = [7,8,9];
+        a.unshift(111,222);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(111,222,7,8,9));
+    }
+    
 }
