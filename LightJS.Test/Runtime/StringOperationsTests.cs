@@ -11,6 +11,15 @@ public class StringOperationsTests
         
         CheckResult(result, "hello_world");
     }
+
+    [Test]
+    public void SquareBracketsCharAccess()
+    {
+        var runtime = CreateRuntime("('hello_world')[5]");
+        var result = runtime.Execute();
+        
+        CheckResult(result, "_");
+    }
     
 
     [Test]

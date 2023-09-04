@@ -2,7 +2,7 @@ using LightJS.Errors;
 
 namespace LightJS.Runtime;
 
-public sealed class LjsString : LjsObject
+public sealed class LjsString : LjsObject, ILjsCollection
 {
     public static readonly LjsString Empty = new("");
 
@@ -40,7 +40,20 @@ public sealed class LjsString : LjsObject
     {
         return Value;
     }
-    
+
+    public LjsObject Get(LjsObject elementId)
+    {
+        var index = LjsTypesConverter.ToInt(elementId);
+
+        return (index >= 0 && index < Value.Length) ? 
+            Value[index].ToString() : LjsObject.Undefined;
+    }
+
+    public void Set(LjsObject elementId, LjsObject value)
+    {
+        // TODO throw exception ??
+    }
+
     // METHODS AND PROPS
 
     private static LjsString CheckThisArgument(LjsObject obj)
