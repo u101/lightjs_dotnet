@@ -1,5 +1,9 @@
 ### Runtime/Compiler features
 
+* 'let' variables support
+* 'this' reference support
+* Named functions inside functions
+
 * ~~LjsRuntime variables access~~
 
     > ~~LjsRuntime.GetVar(string varName)~~
@@ -32,15 +36,11 @@
 
 * ~~LjsObject toString()~~
 
-* LjsArray with methods and length property
+* ~~LjsArray with methods and length property~~
 
-* LjsDict
+* ~~LjsDict~~
 
-* 'this' reference support
-
-* Math package
-
-* Named functions inside functions
+* ~~Math package~~
 
 ### Compiler features
 * Save token positions in compiled code
@@ -52,9 +52,9 @@
 ### Ast features
 * 'let' variable definition
 * arrow functions () => {}
+* switch(x) {case y:...} branching
 * Try catch block
 * 'new' operator
 * for (x in y) loop
-* switch(x) {case y:...} branching
 * Exponentiation operator **
 
