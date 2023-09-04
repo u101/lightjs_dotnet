@@ -152,4 +152,62 @@ public class LjsArrayTests
         
         CheckResult(result, Arr(1,2,3,4,5,6,7,8,9, "hi", "there"));
     }
+    
+    
+    [Test]
+    public void PushOneValue()
+    {
+        var code = """
+        var a = [1,2,3]
+        a.push(8);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(1,2,3,8));
+    }
+    
+    [Test]
+    public void PushTwoValues()
+    {
+        var code = """
+        var a = [1,2,3]
+        a.push(8,9);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(1,2,3,8,9));
+    }
+    
+    [Test]
+    public void PushThreeValues()
+    {
+        var code = """
+        var a = [1,2,3]
+        a.push(8,9,123);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(1,2,3,8,9,123));
+    }
+    
+    [Test]
+    public void PushFourValues()
+    {
+        var code = """
+        var a = [1,2,3]
+        a.push(8,9,123,-555);
+        a
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr(1,2,3,8,9,123,-555));
+    }
+    
 }

@@ -11,6 +11,7 @@ public sealed class LjsArray : LjsObject, ILjsArray
             { "length", new PropLength() },
             { "indexOf", new FuncIndexOf() },
             { "concat", new FuncConcat() },
+            { "push", new FuncPush() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
@@ -169,6 +170,31 @@ public sealed class LjsArray : LjsObject, ILjsArray
             }
 
             return result;
+        }
+    }
+    
+    private sealed class FuncPush  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 5; // push(this, v1, v2(opt), v3(opt), v4(opt))
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var a = CheckThisArgument(arguments[0]);
+
+            for (var argumentIndex = 1; argumentIndex < arguments.Count; argumentIndex++)
+            {
+                var other = arguments[argumentIndex];
+                if (other is not LjsUndefined)
+                {
+                    a.Add(other);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return a.Count;
         }
     }
     
