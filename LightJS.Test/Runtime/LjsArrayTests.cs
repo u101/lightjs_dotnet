@@ -306,5 +306,44 @@ public class LjsArrayTests
         
         CheckResult(result, Arr(111,222,7,8,9));
     }
+
+    [Test]
+    public void SliceTest_WithStartIndex()
+    {
+        var code = """
+        var animals = ['ant', 'bison', 'camel', 'duck', 'elephant'];
+        animals.slice(2)
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr("camel", "duck", "elephant"));
+    }
+    
+    [Test]
+    public void SliceTest_WithStartIndexAndEndIndex()
+    {
+        var code = """
+        var animals = ['ant', 'bison', 'camel', 'duck', 'elephant'];
+        animals.slice(2, 4)
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr("camel", "duck"));
+    }
+    
+    [Test]
+    public void SliceTest_WithoutParameters()
+    {
+        var code = """
+        var animals = ['ant', 'bison', 'camel', 'duck', 'elephant'];
+        animals.slice()
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, Arr("ant", "bison", "camel", "duck", "elephant"));
+    }
     
 }

@@ -15,6 +15,7 @@ public sealed class LjsArray : LjsObject, ILjsArray
             { "shift", new FuncShift() },
             { "pop", new FuncPop() },
             { "unshift", new FuncUnshift() },
+            { "slice", new FuncSlice() },
         });
 
     public override LjsTypeInfo GetTypeInfo() => _TypeInfo;
@@ -45,7 +46,7 @@ public sealed class LjsArray : LjsObject, ILjsArray
         _list = new List<LjsObject>(values);
     }
     
-    public LjsArray(List<LjsObject> list)
+    internal LjsArray(List<LjsObject> list)
     {
         _list = list ?? throw new ArgumentNullException(nameof(list));
     }
@@ -279,6 +280,36 @@ public sealed class LjsArray : LjsObject, ILjsArray
             }
 
             return a.Count;
+        }
+    }
+    
+    private sealed class FuncSlice  : LjsFunction
+    {
+        public override LjsMemberType MemberType => LjsMemberType.InstanceMember;
+        public override int ArgumentsCount => 3;
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var a = CheckThisArgument(arguments[0]);
+
+            if (a.Count == 0) return new LjsArray();
+
+            var startIndex = Math.Clamp(arguments[1] is LjsNumber nStart ? nStart.IntegerValue : 0, 0, a.Count - 1);
+            var endIndex = Math.Clamp(
+                arguments[2] is LjsNumber nEnd ? nEnd.IntegerValue : a.Count, 
+                startIndex, a.Count);
+
+            var ln = endIndex - startIndex;
+            
+            if (ln <= 0) return new LjsArray();
+
+            var resultList = new List<LjsObject>(ln);
+
+            for (var i = 0; i < ln; i++)
+            {
+                resultList.Add(a[startIndex + i]);
+            }
+
+            return new LjsArray(resultList);
         }
     }
     
