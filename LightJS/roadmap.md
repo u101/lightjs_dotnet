@@ -1,6 +1,6 @@
 ### Runtime/Compiler features
 
-* LjsRuntime variables access
+* ~~LjsRuntime variables access~~
 
     > ~~LjsRuntime.GetVar(string varName)~~
  
@@ -12,11 +12,11 @@
 
     > ~~LjsRuntime.Invoke(string functionName) with overloads for different arguments count~~
 
-* LjsString methods and operations
+* ~~LjsString methods and operations~~
 
     > ~~substring(..)~~
 
-    > str[] character access
+    > ~~str[] character access~~
 
 * ~~Global functions~~
 
@@ -51,6 +51,7 @@
 
 ### Ast features
 * 'let' variable definition
+* arrow functions () => {}
 * Try catch block
 * 'new' operator
 * for (x in y) loop
