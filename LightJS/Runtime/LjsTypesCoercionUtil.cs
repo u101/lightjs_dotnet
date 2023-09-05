@@ -1,6 +1,6 @@
 namespace LightJS.Runtime;
 
-public static class LjsTypesConverter
+public static class LjsTypesCoercionUtil
 {
     public static bool ToBool(LjsObject obj) => obj switch
     {

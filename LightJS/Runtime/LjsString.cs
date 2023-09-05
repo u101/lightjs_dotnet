@@ -69,7 +69,7 @@ public sealed class LjsString : LjsObject, ILjsArray
         public override LjsObject Invoke(List<LjsObject> arguments)
         {
             var s = CheckThisArgument(arguments[0]);
-            var i = LjsTypesConverter.ToInt(arguments[1]);
+            var i = LjsTypesCoercionUtil.ToInt(arguments[1]);
             var str = s.Value;
             
             return (i >= 0 && i < str.Length) ? new LjsString(str[i].ToString()) : Empty;
@@ -92,7 +92,7 @@ public sealed class LjsString : LjsObject, ILjsArray
             if (strLength == 0) return Empty;
             
             
-            var i = LjsRuntimeUtils.Clamp(LjsTypesConverter.ToInt(arg1), 0, strLength - 1);
+            var i = LjsRuntimeUtils.Clamp(LjsTypesCoercionUtil.ToInt(arg1), 0, strLength - 1);
             var j = LjsRuntimeUtils.Clamp(arg2 is LjsNumber n ? (int) n.NumericValue : strLength, i, strLength);
 
             if (i == j) return Empty;
@@ -111,7 +111,7 @@ public sealed class LjsString : LjsObject, ILjsArray
         {
             var s = CheckThisArgument(arguments[0]);
             var searchValue = arguments[1].ToString();
-            var startIndex = LjsTypesConverter.ToInt(arguments[2]);
+            var startIndex = LjsTypesCoercionUtil.ToInt(arguments[2]);
             var str = s.Value;
 
             var index = str.IndexOf(searchValue, startIndex, StringComparison.Ordinal);
@@ -129,7 +129,7 @@ public sealed class LjsString : LjsObject, ILjsArray
             var s = CheckThisArgument(arguments[0]);
             var separator = arguments[1].ToString();
             var limit = arguments[2] is LjsNumber ? 
-                LjsTypesConverter.ToInt(arguments[2]) : int.MaxValue;
+                LjsTypesCoercionUtil.ToInt(arguments[2]) : int.MaxValue;
 
             if (limit <= 0) return new LjsArray();
             

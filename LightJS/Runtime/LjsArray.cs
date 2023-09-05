@@ -165,7 +165,7 @@ public sealed class LjsArray : LjsObject, ILjsArray
         {
             var a = CheckThisArgument(arguments[0]);
             var searchValue = arguments[1];
-            var startIndex = Math.Max(LjsTypesConverter.ToInt(arguments[2]), 0);
+            var startIndex = Math.Max(LjsTypesCoercionUtil.ToInt(arguments[2]), 0);
 
             if (a.Count == 0 || startIndex >= a.Count) return -1;
 

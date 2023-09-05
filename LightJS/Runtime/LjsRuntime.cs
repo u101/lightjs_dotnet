@@ -1,4 +1,4 @@
-using static LightJS.Runtime.LjsTypesConverter;
+using static LightJS.Runtime.LjsTypesCoercionUtil;
 using static LightJS.Runtime.LjsBasicOperationsHelper;
 
 using LightJS.Errors;

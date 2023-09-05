@@ -25,7 +25,7 @@ public static class LjsLanguageApi
         public override LjsMemberType MemberType => LjsMemberType.StaticMember;
         public override int ArgumentsCount => 1;
         public override LjsObject Invoke(List<LjsObject> arguments) => 
-            new LjsInteger(LjsTypesConverter.ToInt(arguments[0]));
+            new LjsInteger(LjsTypesCoercionUtil.ToInt(arguments[0]));
     }
     
     private sealed class ConvertToNumber : LjsFunction
@@ -33,7 +33,7 @@ public static class LjsLanguageApi
         public override LjsMemberType MemberType => LjsMemberType.StaticMember;
         public override int ArgumentsCount => 1;
         public override LjsObject Invoke(List<LjsObject> arguments) => 
-            new LjsDouble(LjsTypesConverter.ToDouble(arguments[0]));
+            new LjsDouble(LjsTypesCoercionUtil.ToDouble(arguments[0]));
     }
     
     private sealed class ConvertToString : LjsFunction
