@@ -10,7 +10,6 @@ public class LjsCompiler
 {
     private readonly LjsAstModel _astModel;
     private readonly LjsProgramConstants _constants = new();
-    private readonly Dictionary<string, int> _namedFunctionsMap = new();
     private readonly List<FunctionData> _functionsList = new();
 
     public LjsCompiler(string sourceCodeString)
@@ -50,7 +49,7 @@ public class LjsCompiler
 
     public LjsProgram Compile()
     {
-        var context = new FunctionData(0);
+        var context = new FunctionData(0, _functionsList);
         
         _functionsList.Add(context);
         
@@ -67,7 +66,7 @@ public class LjsCompiler
         )).ToArray();
         
         return new LjsProgram(
-            _constants, functions, _namedFunctionsMap);
+            _constants, functions, context.NamedFunctionsMap);
     }
 
     private sealed class InstructionsList
@@ -94,6 +93,7 @@ public class LjsCompiler
     
     private sealed class FunctionData
     {
+        private readonly List<FunctionData> _functionsList;
         private readonly FunctionData? _parentData;
         public InstructionsList Instructions { get; } = new();
         public int FunctionIndex { get; }
@@ -103,16 +103,21 @@ public class LjsCompiler
 
         private readonly Dictionary<string, int> _localVarIndices = new();
         private readonly List<LjsLocalVarPointer> _localVars = new();
+        private readonly Dictionary<string, int> _namedFunctionsMap = new();
 
-        public FunctionData(int functionIndex)
+        public Dictionary<string, int> NamedFunctionsMap => _namedFunctionsMap;
+
+        public FunctionData(int functionIndex, List<FunctionData> functionsList)
         {
             FunctionIndex = functionIndex;
+            _functionsList = functionsList;
             _parentData = null;
         }
 
-        private FunctionData(int functionIndex, FunctionData parentData)
+        private FunctionData(int functionIndex, List<FunctionData> functionsList, FunctionData parentData)
         {
             FunctionIndex = functionIndex;
+            _functionsList = functionsList;
             _parentData = parentData;
         }
 
@@ -146,7 +151,56 @@ public class LjsCompiler
         }
 
         public FunctionData CreateChild(int functionIndex) => 
-            new(functionIndex, this);
+            new(functionIndex, _functionsList, this);
+        
+        public FunctionData CreateNamedFunction(
+            LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
+        {
+            var funcName = namedFunctionDeclaration.Name;
+
+            if (_namedFunctionsMap.ContainsKey(funcName))
+                throw new LjsCompilerError($"duplicate function names {funcName}");
+        
+            var namedFunctionIndex = _functionsList.Count;
+            var namedFunc = CreateChild(namedFunctionIndex);
+
+            _functionsList.Add(namedFunc);
+            _namedFunctionsMap[funcName] = namedFunctionIndex;
+            return namedFunc;
+        }
+
+        public bool HasFunctionWithName(string name) => _namedFunctionsMap.ContainsKey(name) ||
+                                                        (_parentData != null && _parentData.HasFunctionWithName(name));
+
+        public int GetFunctionIndex(string name)
+        {
+            if (_namedFunctionsMap.ContainsKey(name))
+            {
+                return _namedFunctionsMap[name];
+            }
+
+            if (_parentData != null) 
+                return _parentData.GetFunctionIndex(name);
+
+            throw new LjsCompilerError($"function with name {name} not found");
+        }
+        
+        public (FunctionData, int) GetOrCreateNamedFunctionData(
+            LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
+        {
+            if (HasFunctionWithName(namedFunctionDeclaration.Name))
+            {
+                var functionIndex = GetFunctionIndex(namedFunctionDeclaration.Name);
+                var functionData = _functionsList[functionIndex];
+                return (functionData, functionIndex);
+            }
+            else
+            {
+                var functionIndex = _functionsList.Count;
+                var functionData = CreateNamedFunction(namedFunctionDeclaration);
+                return (functionData, functionIndex);
+            }
+        }
     }
 
     private void ProcessFunction(
@@ -187,22 +241,7 @@ public class LjsCompiler
         _ => LjsObject.Undefined
     };
 
-    private FunctionData CreateNamedFunction(
-        LjsAstNamedFunctionDeclaration namedFunctionDeclaration, 
-        FunctionData parentFunction)
-    {
-        var funcName = namedFunctionDeclaration.Name;
-
-        if (_namedFunctionsMap.ContainsKey(funcName))
-            throw new LjsCompilerError($"duplicate function names {funcName}");
-        
-        var namedFunctionIndex = _functionsList.Count;
-        var namedFunc = parentFunction.CreateChild(namedFunctionIndex);
-
-        _functionsList.Add(namedFunc);
-        _namedFunctionsMap[funcName] = namedFunctionIndex;
-        return namedFunc;
-    }
+    
     
     private FunctionData CreateAnonFunction(FunctionData parentFunction)
     {
@@ -213,26 +252,7 @@ public class LjsCompiler
         return func;
     }
 
-    private FunctionData GetNamedFunction(LjsAstNamedFunctionDeclaration namedFunctionDeclaration) =>
-        _functionsList[_namedFunctionsMap[namedFunctionDeclaration.Name]];
-
-    private (FunctionData, int) GetOrCreateNamedFunctionData(
-        LjsAstNamedFunctionDeclaration namedFunctionDeclaration,
-        FunctionData parentFunction)
-    {
-        if (_namedFunctionsMap.ContainsKey(namedFunctionDeclaration.Name))
-        {
-            var functionIndex = _namedFunctionsMap[namedFunctionDeclaration.Name];
-            var functionData = _functionsList[functionIndex];
-            return (functionData, functionIndex);
-        }
-        else
-        {
-            var functionIndex = _functionsList.Count;
-            var functionData = CreateNamedFunction(namedFunctionDeclaration, parentFunction);
-            return (functionData, functionIndex);
-        }
-    }
+    
 
     private void ProcessNode(
         ILjsAstNode node, 
@@ -256,13 +276,8 @@ public class LjsCompiler
             
             case LjsAstNamedFunctionDeclaration namedFunctionDeclaration:
                 
-                var (namedFunc, namedFuncIndex) = 
-                    GetOrCreateNamedFunctionData(namedFunctionDeclaration, functionData);
-
-                if (namedFunc != GetNamedFunction(namedFunctionDeclaration))
-                {
-                    throw new LjsCompilerError($"duplicate function names {namedFunctionDeclaration.Name}");
-                }
+                var (namedFunc, namedFuncIndex) = functionData.
+                    GetOrCreateNamedFunctionData(namedFunctionDeclaration);
                 
                 ProcessFunction(namedFunctionDeclaration, namedFunc);
                 break;
@@ -582,7 +597,7 @@ public class LjsCompiler
                 foreach (var n in 
                          sequence.ChildNodes.OfType<LjsAstNamedFunctionDeclaration>())
                 {
-                    CreateNamedFunction(n, functionData);
+                    functionData.CreateNamedFunction(n);
                 }
                 
                 foreach (var n in sequence.ChildNodes)
@@ -712,9 +727,9 @@ public class LjsCompiler
             instructions.Add(new LjsInstruction(
                 LjsInstructionCode.VarLoad, data.GetLocal(getVar.VarName)));
         }
-        else if (_namedFunctionsMap.ContainsKey(getVar.VarName))
+        else if (data.HasFunctionWithName(getVar.VarName))
         {
-            instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, _namedFunctionsMap[getVar.VarName]));
+            instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, data.GetFunctionIndex(getVar.VarName)));
         }
         else if (data.HasLocalInHierarchy(getVar.VarName))
         {
@@ -828,7 +843,7 @@ public class LjsCompiler
         var localVarIndex = data.GetLocal(setVar.VarName);
         var isLocal = localVarIndex != -1;
                 
-        if (!isLocal && _namedFunctionsMap.ContainsKey(setVar.VarName))
+        if (!isLocal && data.HasFunctionWithName(setVar.VarName))
         {
             throw new LjsCompilerError($"named function assign {setVar.VarName}");
         }
