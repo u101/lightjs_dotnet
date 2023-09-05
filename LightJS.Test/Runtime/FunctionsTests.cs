@@ -68,4 +68,22 @@ public class FunctionsTests
         
         CheckResult(result, 40320);
     }
+    
+    [Test]
+    public void NestedFunctionsTest()
+    {
+        var code = """
+        function bar(y) { return 12345; }
+        function foo(n) {
+            return bar(n + 1);
+            function bar(x) { return x * 2; }
+        }
+        foo(1)
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, 4);
+    }
 }

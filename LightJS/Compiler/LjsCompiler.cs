@@ -191,11 +191,16 @@ public class LjsCompiler
         LjsAstNamedFunctionDeclaration namedFunctionDeclaration, 
         FunctionData parentFunction)
     {
+        var funcName = namedFunctionDeclaration.Name;
+
+        if (_namedFunctionsMap.ContainsKey(funcName))
+            throw new LjsCompilerError($"duplicate function names {funcName}");
+        
         var namedFunctionIndex = _functionsList.Count;
         var namedFunc = parentFunction.CreateChild(namedFunctionIndex);
 
         _functionsList.Add(namedFunc);
-        _namedFunctionsMap[namedFunctionDeclaration.Name] = namedFunctionIndex;
+        _namedFunctionsMap[funcName] = namedFunctionIndex;
         return namedFunc;
     }
     
