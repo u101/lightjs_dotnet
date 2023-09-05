@@ -217,7 +217,7 @@ public static class LjsTypesConverter
         public override LjsPropertyAccessType AccessType { get; }
         public override LjsObject Get(LjsObject instance)
         {
-            if ((AccessType & LjsPropertyAccessType.Read) != 0)
+            if ((AccessType & LjsPropertyAccessType.Read) == 0)
                 throw new Exception("property not readable");
             
             switch (MemberType)
@@ -247,7 +247,7 @@ public static class LjsTypesConverter
 
         public override void Set(LjsObject instance, LjsObject v)
         {
-            if ((AccessType & LjsPropertyAccessType.Write) != 0)
+            if ((AccessType & LjsPropertyAccessType.Write) == 0)
                 throw new Exception("property not writable");
             
             switch (MemberType)
