@@ -129,4 +129,27 @@ public class FunctionDeclarationTests
             
         Match(node, expected);
     }
+    
+    [Test]
+    public void NestedFunctionDeclarationTest()
+    {
+        var code = """
+        function foo() {
+            return nested(123);
+
+            function nested(x) {
+                return x + 1;
+            }
+        }
+        """;
+        
+        var node = BuildAstNode(code);
+
+        var expected = NamedFunc("foo", Sequence(
+            Return("nested".FuncCall(123.ToLit())),
+            NamedFunc("nested", "x", Return("x".Plus(1)))
+        ));
+            
+        Match(node, expected);
+    }
 }
