@@ -95,7 +95,7 @@ public class AlgorithmsTests
     [Test]
     public void MergeSortTest()
     {
-        var code = """
+        const string code = """
         function mergeSort(arr) {
 
             // Base case
