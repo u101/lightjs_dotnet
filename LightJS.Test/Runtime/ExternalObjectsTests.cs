@@ -1,4 +1,3 @@
-using LightJS.ExternalApi;
 using LightJS.Runtime;
 
 namespace LightJS.Test.Runtime;
@@ -20,8 +19,7 @@ public class ExternalObjectsTests
         
         var runtime = CreateRuntime(code);
         
-        runtime.AddExternal("point", 
-            ExternalObjectAdapterFactory.CreateObjectAdapter(p));
+        runtime.AddExternal("point", LjsTypesConverter.ToLjsObject(p));
         
         runtime.Execute();
         
