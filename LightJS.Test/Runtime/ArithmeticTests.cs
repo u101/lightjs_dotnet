@@ -120,7 +120,7 @@ public class ArithmeticTests
         var runtime = CreateRuntime("4/2");
         var result = runtime.Execute();
         
-        CheckResult(result, 2);
+        CheckResult(result, 2.0);
     }
 
     [Test]
