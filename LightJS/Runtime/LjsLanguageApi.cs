@@ -18,7 +18,25 @@ public static class LjsLanguageApi
         {"Number", FuncNumber},
         {"String", FuncString},
         {"Math", LjsMath.Instance},
+        {"console", new LjsConsole()},
     };
+    
+    private sealed class LjsConsole : LjsObject
+    {
+        private static readonly LjsTypeInfo typeInfo = new(
+            LjsObject.TypeInfo,
+            new Dictionary<string, LjsObject>()
+            {
+                { "log", LjsFunctionsFactory.CreateStatic((x) =>
+                {
+                    System.Console.WriteLine(x.ToString());
+                }) }
+            });
+
+        public override LjsTypeInfo GetTypeInfo() => typeInfo;
+        
+        public LjsConsole() {}
+    }
 
     private sealed class ConvertToInt : LjsFunction
     {
