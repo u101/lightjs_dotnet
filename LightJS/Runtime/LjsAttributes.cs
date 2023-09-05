@@ -1,6 +1,6 @@
 namespace LightJS.Runtime;
 
-[AttributeUsage(AttributeTargets.Field)]
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class LjsField : Attribute {}
 
 [AttributeUsage(AttributeTargets.Method)]

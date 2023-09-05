@@ -41,7 +41,32 @@ public static class LjsTypesConverter
             if (ljsFieldAttr == null) continue;
             
             typeInfo.AddMember(fieldInfo.Name,
-                new FieldAdapter(fieldInfo, fieldInfo.IsStatic ? LjsMemberType.StaticMember : LjsMemberType.InstanceMember));;
+                new FieldAdapter(fieldInfo, fieldInfo.IsStatic ? LjsMemberType.StaticMember : LjsMemberType.InstanceMember));
+            
+        }
+
+        var propertyInfos = systemType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var propertyInfo in propertyInfos)
+        {
+            var ljsFieldAttr = propertyInfo.GetCustomAttribute<LjsField>();
+            if (ljsFieldAttr == null) continue;
+
+            var accessType = LjsPropertyAccessType.None;
+            if (propertyInfo.CanRead) accessType |= LjsPropertyAccessType.Read;
+            if (propertyInfo.CanWrite) accessType |= LjsPropertyAccessType.Write;
+            
+            typeInfo.AddMember(propertyInfo.Name,
+                new PropertyAdapter(propertyInfo, LjsMemberType.InstanceMember, accessType));
+        }
+
+        var methodInfos = systemType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var methodInfo in methodInfos)
+        {
+            var ljsMethod = methodInfo.GetCustomAttribute<LjsMethod>();
+            if (ljsMethod == null) continue;
+            
             
         }
 
@@ -151,11 +176,99 @@ public static class LjsTypesConverter
 
         public override void Set(LjsObject instance, LjsObject v)
         {
-            if (instance is not ObjectAdapter obj)
-                throw new ArgumentException(
-                    $"instance of type {instance.GetType().Name} is not {nameof(ObjectAdapter)}");
+            switch (MemberType)
+            {
+                case LjsMemberType.InstanceMember:
+                    
+                    if (instance is not ObjectAdapter obj)
+                        throw new ArgumentException(
+                            $"instance of type {instance.GetType().Name} is not {nameof(ObjectAdapter)}");
             
-            _fieldInfo.SetValue(obj.Target, ToSystemObject(_fieldInfo.FieldType, v));
+                    _fieldInfo.SetValue(obj.Target, ToSystemObject(_fieldInfo.FieldType, v));
+                    break;
+
+                case LjsMemberType.StaticMember:
+                    
+                    _fieldInfo.SetValue(null, ToSystemObject(_fieldInfo.FieldType, v));
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException(MemberType.ToString());
+            }
+        }
+    }
+    
+    private class PropertyAdapter : LjsProperty
+    {
+        private readonly PropertyInfo _propertyInfo;
+
+        public PropertyAdapter(
+            PropertyInfo propertyInfo, 
+            LjsMemberType memberType,
+            LjsPropertyAccessType accessType)
+        {
+            _propertyInfo = propertyInfo;
+            MemberType = memberType;
+            AccessType = accessType;
+        }
+        
+        public override LjsMemberType MemberType { get; }
+
+        public override LjsPropertyAccessType AccessType { get; }
+        public override LjsObject Get(LjsObject instance)
+        {
+            if ((AccessType & LjsPropertyAccessType.Read) != 0)
+                throw new Exception("property not readable");
+            
+            switch (MemberType)
+            {
+                case LjsMemberType.InstanceMember:
+                    
+                    if (instance is not ObjectAdapter obj)
+                        throw new ArgumentException(
+                            $"instance of type {instance.GetType().Name} is not {nameof(ObjectAdapter)}");
+
+                    var value = _propertyInfo.GetValue(obj.Target);
+
+                    return value == null ? Null : ToLjsObject(value);
+
+                case LjsMemberType.StaticMember:
+                    var staticValue = _propertyInfo.GetValue(null);
+                    
+                    
+                    return staticValue == null ? Null : ToLjsObject(staticValue);
+                
+                default:
+                    throw new ArgumentOutOfRangeException(MemberType.ToString());
+            }
+            
+            
+        }
+
+        public override void Set(LjsObject instance, LjsObject v)
+        {
+            if ((AccessType & LjsPropertyAccessType.Write) != 0)
+                throw new Exception("property not writable");
+            
+            switch (MemberType)
+            {
+                case LjsMemberType.InstanceMember:
+                    
+                    if (instance is not ObjectAdapter obj)
+                        throw new ArgumentException(
+                            $"instance of type {instance.GetType().Name} is not {nameof(ObjectAdapter)}");
+            
+                    _propertyInfo.SetValue(obj.Target, ToSystemObject(_propertyInfo.PropertyType, v));
+                    break;
+
+                case LjsMemberType.StaticMember:
+                    
+                    _propertyInfo.SetValue(null, ToSystemObject(_propertyInfo.PropertyType, v));
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException(MemberType.ToString());
+            }
         }
     }
     
