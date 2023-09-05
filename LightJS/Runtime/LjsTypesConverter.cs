@@ -7,7 +7,7 @@ public static class LjsTypesConverter
     private static readonly Dictionary<System.Type, LjsTypeInfo> TypesMap = new();
     
     
-    public static LjsObject ToLjsObject(object obj) 
+    public static LjsObject ToLjsObject(object? obj) 
     {
         if (obj == null) 
             return LjsObject.Null;
@@ -67,7 +67,8 @@ public static class LjsTypesConverter
             var ljsMethod = methodInfo.GetCustomAttribute<LjsMethod>();
             if (ljsMethod == null) continue;
             
-            
+            typeInfo.AddMember(methodInfo.Name,
+                new MethodAdapter(methodInfo, LjsMemberType.InstanceMember));
         }
 
         TypesMap[systemType] = typeInfo;
@@ -132,7 +133,64 @@ public static class LjsTypesConverter
         }
     }
     
-    private class FieldAdapter : LjsProperty
+    private sealed class MethodAdapter : LjsFunction
+    {
+        private readonly MethodInfo _methodInfo;
+        public override LjsMemberType MemberType { get; }
+        public override int ArgumentsCount => 
+            _parameterInfos.Length + (MemberType == LjsMemberType.InstanceMember ? 1 : 0);
+
+        private readonly ParameterInfo[] _parameterInfos;
+        private readonly object[] _parametersCache;
+        
+        public MethodAdapter(
+            MethodInfo methodInfo, 
+            LjsMemberType memberType)
+        {
+            _methodInfo = methodInfo;
+            MemberType = memberType;
+            _parameterInfos = _methodInfo.GetParameters();
+            _parametersCache = new object[_parameterInfos.Length];
+        }
+        
+        public override LjsObject Invoke(List<LjsObject> arguments)
+        {
+            var instance = 
+                MemberType == LjsMemberType.InstanceMember ? arguments[0] : Null;
+
+            var argumentsOffset = MemberType == LjsMemberType.InstanceMember ? 1 : 0;
+
+            for (var i = 0; i < _parameterInfos.Length; i++)
+            {
+                var parameterInfo = _parameterInfos[i];
+                _parametersCache[i] = ToSystemObject(
+                    parameterInfo.ParameterType, arguments[i + argumentsOffset]);
+            }
+
+            switch (MemberType)
+            {
+                case LjsMemberType.InstanceMember:
+                    
+                    if (instance is not ObjectAdapter adapter)
+                        throw new Exception($"instance {instance.GetType().Name} instance is not ObjectAdapter");
+                    
+                    var result = _methodInfo.Invoke(adapter.Target, _parametersCache);
+                    
+                    return ToLjsObject(result);
+                
+                case LjsMemberType.StaticMember:
+                    
+                    return ToLjsObject(_methodInfo.Invoke(null, _parametersCache));
+                
+                default:
+                    throw new ArgumentOutOfRangeException(MemberType.ToString());
+            }
+            
+            return Undefined;
+        }
+    }
+    
+    private sealed class FieldAdapter : LjsProperty
     {
         private readonly FieldInfo _fieldInfo;
 
@@ -198,7 +256,7 @@ public static class LjsTypesConverter
         }
     }
     
-    private class PropertyAdapter : LjsProperty
+    private sealed class PropertyAdapter : LjsProperty
     {
         private readonly PropertyInfo _propertyInfo;
 
