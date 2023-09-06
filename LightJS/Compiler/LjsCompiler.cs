@@ -107,17 +107,7 @@ public class LjsCompiler
         LjsAstLiteral<bool> i => i.Value ? LjsBoolean.True : LjsBoolean.False,
         _ => LjsObject.Undefined
     };
-
     
-    
-    private LjsCompilerContext CreateAnonFunction(LjsCompilerContext parentFunction)
-    {
-        var functionIndex = _functionsList.Count;
-        var func = parentFunction.CreateChildFunctionContext(functionIndex);
-
-        _functionsList.Add(func);
-        return func;
-    }
 
     private void ProcessNode(
         ILjsAstNode node, 
@@ -131,7 +121,7 @@ public class LjsCompiler
         {
             case LjsAstAnonymousFunctionDeclaration funcDeclaration:
                 
-                var anonFunc = CreateAnonFunction(context);
+                var anonFunc = context.CreateAnonFunction();
                 
                 ProcessFunction(funcDeclaration, anonFunc);
                 

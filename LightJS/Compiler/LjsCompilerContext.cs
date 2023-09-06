@@ -103,4 +103,13 @@ internal sealed class LjsCompilerContext
             return (functionContext, functionIndex);
         }
     }
+    
+    public LjsCompilerContext CreateAnonFunction()
+    {
+        var functionIndex = _functionsContextList.Count;
+        var func = CreateChildFunctionContext(functionIndex);
+
+        _functionsContextList.Add(func);
+        return func;
+    }
 }
