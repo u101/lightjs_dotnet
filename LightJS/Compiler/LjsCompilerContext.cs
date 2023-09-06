@@ -6,32 +6,34 @@ namespace LightJS.Compiler;
 
 internal sealed class LjsCompilerContext
 {
+   
     private readonly List<LjsCompilerContext> _functionsContextList;
     private readonly LjsCompilerContext? _parentContext;
-    internal LjsInstructionsList Instructions { get; } = new();
-    internal int FunctionIndex { get; }
 
-    internal List<LjsFunctionArgument> FunctionArgs { get; } = new();
-
+    public LjsCompilerFunctionContext FunctionContext { get; }
+    
     internal LjsCompilerLocals Locals { get; } = new();
     
     private readonly Dictionary<string, int> _namedFunctionsMap = new();
 
     internal Dictionary<string, int> NamedFunctionsMap => _namedFunctionsMap;
 
-    internal LjsCompilerContext(int functionIndex, List<LjsCompilerContext> functionsList)
+    internal LjsCompilerContext(
+        LjsCompilerFunctionContext functionContext, 
+        List<LjsCompilerContext> functionsContextList)
     {
-        FunctionIndex = functionIndex;
-        _functionsContextList = functionsList;
+        FunctionContext = functionContext;
+        _functionsContextList = functionsContextList;
         _parentContext = null;
     }
 
     private LjsCompilerContext(
-        int functionIndex, List<LjsCompilerContext> functionsList,
+        LjsCompilerFunctionContext functionContext,
+        List<LjsCompilerContext> functionsContextList,
         LjsCompilerContext parentContext)
     {
-        FunctionIndex = functionIndex;
-        _functionsContextList = functionsList;
+        FunctionContext = functionContext;
+        _functionsContextList = functionsContextList;
         _parentContext = parentContext;
     }
 
@@ -44,15 +46,15 @@ internal sealed class LjsCompilerContext
         if (Locals.Has(name))
         {
             var pointer = Locals.GetPointer(name);
-            return (pointer, FunctionIndex);
+            return (pointer, FunctionContext.FunctionIndex);
         }
 
         return _parentContext?.GetLocalInHierarchy(name) ?? 
                throw new Exception($"local with name:{name} not found in hierarchy");
     }
 
-    internal LjsCompilerContext CreateChildFunctionContext(int functionIndex) =>
-        new(functionIndex, _functionsContextList, this);
+    private LjsCompilerContext CreateChildFunctionContext(int functionIndex) =>
+        new(new LjsCompilerFunctionContext(functionIndex), _functionsContextList, this);
 
     internal LjsCompilerContext CreateNamedFunctionContext(
         LjsAstNamedFunctionDeclaration namedFunctionDeclaration)

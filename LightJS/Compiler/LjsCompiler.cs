@@ -49,20 +49,22 @@ public class LjsCompiler
 
     public LjsProgram Compile()
     {
-        var context = new LjsCompilerContext(0, _functionsList);
+        var mainFunc = new LjsCompilerFunctionContext(0);
+        
+        var context = new LjsCompilerContext(mainFunc, _functionsList);
         
         _functionsList.Add(context);
         
         ProcessNode(_astModel.RootNode, context);
 
-        context.Instructions.Add(
+        mainFunc.Instructions.Add(
             new LjsInstruction(LjsInstructionCode.Halt));
 
-        var functions = _functionsList.Select(fd => new LjsFunctionData(
-            fd.FunctionIndex,
-            fd.Instructions.Instructions.ToArray(), 
-            fd.FunctionArgs.ToArray(), 
-            fd.Locals.Pointers.ToArray()
+        var functions = _functionsList.Select(ctx => new LjsFunctionData(
+            ctx.FunctionContext.FunctionIndex,
+            ctx.FunctionContext.Instructions.Instructions.ToArray(), 
+            ctx.FunctionContext.FunctionArgs.ToArray(), 
+            ctx.Locals.Pointers.ToArray()
         )).ToArray();
         
         return new LjsProgram(
@@ -74,6 +76,7 @@ public class LjsCompiler
     {
 
         var parameters = functionDeclaration.Parameters;
+        var functionContext = context.FunctionContext;
 
         for (var i = 0; i < parameters.Length; i++)
         {
@@ -81,19 +84,22 @@ public class LjsCompiler
             var defaultValue = GetFunctionParameterDefaultValue(p.DefaultValue);
 
             AssertArgumentNameIsUniq(p.Name, functionDeclaration, context);
+
             
-            context.FunctionArgs.Add(new LjsFunctionArgument(p.Name, defaultValue));
+            functionContext.FunctionArgs.Add(new LjsFunctionArgument(p.Name, defaultValue));
 
             context.Locals.Add(p.Name, LjsLocalVarKind.Argument);
         }
         
         ProcessNode(functionDeclaration.FunctionBody, context);
 
-        if (context.Instructions.Count == 0 ||
-            context.Instructions.LastInstruction.Code != LjsInstructionCode.Return)
+        
+        
+        if (functionContext.Instructions.Count == 0 ||
+            functionContext.Instructions.LastInstruction.Code != LjsInstructionCode.Return)
         {
-            context.Instructions.Add(new LjsInstruction(LjsInstructionCode.ConstUndef));
-            context.Instructions.Add(new LjsInstruction(LjsInstructionCode.Return));
+            functionContext.Instructions.Add(new LjsInstruction(LjsInstructionCode.ConstUndef));
+            functionContext.Instructions.Add(new LjsInstruction(LjsInstructionCode.Return));
         }
     }
 
@@ -115,7 +121,7 @@ public class LjsCompiler
         ICollection<int>? jumpToTheStartPlaceholdersIndices = null, 
         ICollection<int>? jumpToTheEndPlaceholdersIndices = null)
     {
-        var instructions = context.Instructions;
+        var instructions = context.FunctionContext.Instructions;
 
         switch (node)
         {
@@ -125,7 +131,7 @@ public class LjsCompiler
                 
                 ProcessFunction(funcDeclaration, anonFunc);
                 
-                instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, anonFunc.FunctionIndex));
+                instructions.Add(new LjsInstruction(LjsInstructionCode.FuncRef, anonFunc.FunctionContext.FunctionIndex));
                 
                 break;
             
@@ -586,7 +592,7 @@ public class LjsCompiler
     
     private void AddVarLoadInstruction(LjsCompilerContext data, LjsAstGetVar getVar)
     {
-        var instructions = data.Instructions;
+        var instructions = data.FunctionContext.Instructions;
 
         if (data.Locals.Has(getVar.VarName))
         {
@@ -702,7 +708,7 @@ public class LjsCompiler
     
     private void AddVarIncrementInstruction(LjsCompilerContext data, LjsAstIncrementVar incrementVar)
     {
-        var instructions = data.Instructions;
+        var instructions = data.FunctionContext.Instructions;
 
         var varLoadInstruction = CreateVarLoadInstruction(incrementVar.VarName, data);
                 
@@ -732,7 +738,7 @@ public class LjsCompiler
 
     private void AddVarStoreInstructions(LjsCompilerContext data, LjsAstSetVar setVar)
     {
-        var instructions = data.Instructions;
+        var instructions = data.FunctionContext.Instructions;
 
         var isLocal = data.Locals.Has(setVar.VarName);
                 
