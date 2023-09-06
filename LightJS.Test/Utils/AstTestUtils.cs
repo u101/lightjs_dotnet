@@ -28,7 +28,10 @@ public static class AstTestUtils
         return new LjsAstForLoop(init, cond, iter, body);
     }
 
-    public static LjsAstSwitchBlock Switch(ILjsAstNode expression) => new(expression);
+    public static LjsAstSwitchBlock Switch(ILjsAstNode expression, LjsAstSequence body) => new(expression, body);
+    public static LjsAstSwitchCase Case(ILjsAstNode value) => new(value);
+    public static LjsAstSwitchCase Case(int value) => new(value.ToLit());
+    public static LjsAstSwitchCase Case(string value) => new(value.ToLit());
     
     public static LjsAstIfBlock IfBlock(ILjsAstNode condition, ILjsAstNode expression)
     {
@@ -163,6 +166,7 @@ public static class AstTestUtils
     public static LjsAstGetThis This => new();
     
     public static ILjsAstNode Nothing => LjsAstEmptyNode.Instance;
+    public static LjsAstSwitchDefault Default => new();
     public static ILjsAstNode NaN => new LjsAstLiteral<double>(double.NaN);
 
     public static ILjsAstNode Break => new LjsAstBreak();

@@ -543,14 +543,48 @@ public class LjsAstBuilder
         
         CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketOpen);
 
-        var isEmpty = _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketClose;
+        var seq = new LjsAstSequence();
 
-        if (isEmpty)
+        while (_tokensIterator.NextToken.TokenType != LjsTokenType.OpBracketClose)
         {
-            CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
-        }
+            CheckEarlyEof();
+            
+            var nextTokenType = _tokensIterator.NextToken.TokenType;
 
-        return new LjsAstSwitchBlock(condition);
+            switch (nextTokenType)
+            {
+                case LjsTokenType.Case:
+                    
+                    CheckExpectedNextAndMoveForward(LjsTokenType.Case);
+                    
+                    var e = ProcessExpression(
+                        StopSymbolType.Colon, ProcessExpressionMode.StopAtStopSymbol);
+                    
+                    seq.AddNode(new LjsAstSwitchCase(e));
+                    
+                    break;
+                
+                case LjsTokenType.Default:
+                    CheckExpectedNextAndMoveForward(LjsTokenType.OpColon);
+                    seq.AddNode(new LjsAstSwitchDefault());
+                    break;
+                case LjsTokenType.Break:
+                    CheckExpectedNextAndMoveForward(LjsTokenType.Break);
+                    SkipRedundantSemicolons();
+                    seq.AddNode(new LjsAstBreak());
+                    break;
+                
+                default:
+                    var c = ProcessCodeLine(StopSymbolType.Semicolon);
+                    SkipRedundantSemicolons();
+                    seq.AddNode(c);
+                    break;
+            }
+        }
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
+
+        return new LjsAstSwitchBlock(condition, seq);
     }
 
     private ILjsAstNode ProcessWhileBlock(StopSymbolType terminationType)

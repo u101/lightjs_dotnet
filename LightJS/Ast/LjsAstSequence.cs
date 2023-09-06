@@ -8,6 +8,8 @@ public abstract class LjsAstSequence<TNode> : ILjsAstNode where TNode : ILjsAstN
     public bool HasChildNodes => _nodes.Count != 0;
 
     public int Count => _nodes.Count;
+
+    public bool IsEmpty => _nodes.Count == 0;
     
     public LjsAstSequence() {}
 
