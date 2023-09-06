@@ -53,7 +53,7 @@ public sealed class LjsRuntime
 
         foreach (var p in locals)
         {
-            if (p.Name == name) return p.Index;
+            if (p.VarKind == LjsLocalVarKind.Var && p.Name == name) return p.Index;
         }
 
         return -1;

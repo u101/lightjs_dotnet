@@ -35,13 +35,13 @@ internal sealed class LjsCompilerFunctionData
         _parentData = parentData;
     }
 
-    internal int AddLocal(string name)
+    internal int AddLocal(string name, LjsLocalVarKind varKind)
     {
         if (_localVarIndices.ContainsKey(name))
             throw new LjsCompilerError($"duplicate var name {name}");
 
         var index = _localVars.Count;
-        _localVars.Add(new LjsLocalVarPointer(index, name));
+        _localVars.Add(new LjsLocalVarPointer(index, name, varKind));
         _localVarIndices[name] = index;
         return index;
     }

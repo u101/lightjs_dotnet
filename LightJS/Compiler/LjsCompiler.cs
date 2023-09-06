@@ -82,7 +82,7 @@ public class LjsCompiler
             
             functionData.Args.Add(new LjsFunctionArgument(p.Name, defaultValue));
 
-            functionData.AddLocal(p.Name);
+            functionData.AddLocal(p.Name, LjsLocalVarKind.Argument);
         }
         
         ProcessNode(functionDeclaration.FunctionBody, functionData);
@@ -268,13 +268,27 @@ public class LjsCompiler
             
             case LjsAstVariableDeclaration variableDeclaration:
 
-                var varIndex = functionData.AddLocal(variableDeclaration.Name);
+                var localVarKind = LjsCompileUtils.GetVarKind(variableDeclaration.VariableKind);
+
+                if (functionData.HasLocal(variableDeclaration.Name))
+                {
+                    throw new LjsCompilerError($"duplicate var name {variableDeclaration.Name}");
+                }
+                
+                var varIndex = functionData.AddLocal(
+                    variableDeclaration.Name, 
+                    localVarKind);
 
                 if (variableDeclaration.Value != LjsAstEmptyNode.Instance)
                 {
                     ProcessNode(variableDeclaration.Value, functionData);
                     
                     instructions.Add(new LjsInstruction(LjsInstructionCode.VarInit, varIndex));
+                }
+                else
+                {
+                    if (localVarKind == LjsLocalVarKind.Const)
+                        throw new LjsCompilerError($"const {variableDeclaration.Name} must be initialized");
                 }
                 
                 break;

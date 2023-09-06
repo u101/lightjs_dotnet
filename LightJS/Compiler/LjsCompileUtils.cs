@@ -103,6 +103,14 @@ internal static class LjsCompileUtils
         _ => throw new LjsInternalError($"invalid increment sign {incrementSign}")
     };
 
+    internal static LjsLocalVarKind GetVarKind(LjsAstVariableKind varKind) => varKind switch
+    {
+        LjsAstVariableKind.Var => LjsLocalVarKind.Var,
+        LjsAstVariableKind.Const => LjsLocalVarKind.Const,
+        LjsAstVariableKind.Let => LjsLocalVarKind.Let,
+        _ => throw new Exception($"unknown var kind {varKind}")
+    };
+
     private static readonly List<List<int>> IntListsPool = new();
 
     public static List<int> GetTemporaryIntList()
