@@ -4,14 +4,14 @@ using LightJS.Program;
 
 namespace LightJS.Compiler;
 
-internal sealed class LjsCompilerFunctionData
+internal sealed class LjsCompilerContext
 {
-    private readonly List<LjsCompilerFunctionData> _functionsList;
-    private readonly LjsCompilerFunctionData? _parentData;
+    private readonly List<LjsCompilerContext> _functionsContextList;
+    private readonly LjsCompilerContext? _parentContext;
     internal LjsInstructionsList Instructions { get; } = new();
     internal int FunctionIndex { get; }
 
-    internal List<LjsFunctionArgument> Args { get; } = new();
+    internal List<LjsFunctionArgument> FunctionArgs { get; } = new();
 
     internal LjsCompilerLocals Locals { get; } = new();
     
@@ -19,24 +19,24 @@ internal sealed class LjsCompilerFunctionData
 
     internal Dictionary<string, int> NamedFunctionsMap => _namedFunctionsMap;
 
-    internal LjsCompilerFunctionData(int functionIndex, List<LjsCompilerFunctionData> functionsList)
+    internal LjsCompilerContext(int functionIndex, List<LjsCompilerContext> functionsList)
     {
         FunctionIndex = functionIndex;
-        _functionsList = functionsList;
-        _parentData = null;
+        _functionsContextList = functionsList;
+        _parentContext = null;
     }
 
-    private LjsCompilerFunctionData(int functionIndex, List<LjsCompilerFunctionData> functionsList,
-        LjsCompilerFunctionData parentData)
+    private LjsCompilerContext(int functionIndex, List<LjsCompilerContext> functionsList,
+        LjsCompilerContext parentData)
     {
         FunctionIndex = functionIndex;
-        _functionsList = functionsList;
-        _parentData = parentData;
+        _functionsContextList = functionsList;
+        _parentContext = parentData;
     }
 
     internal bool HasLocalInHierarchy(string name) => Locals.Has(name) ||
-                                                      (_parentData != null &&
-                                                       _parentData.HasLocalInHierarchy(name));
+                                                      (_parentContext != null &&
+                                                       _parentContext.HasLocalInHierarchy(name));
 
     internal (LjsLocalVarPointer, int) GetLocalInHierarchy(string name)
     {
@@ -47,14 +47,14 @@ internal sealed class LjsCompilerFunctionData
             return (pointer, FunctionIndex);
         }
 
-        return _parentData?.GetLocalInHierarchy(name) ?? 
+        return _parentContext?.GetLocalInHierarchy(name) ?? 
                throw new Exception($"local with name:{name} not found in hierarchy");
     }
 
-    internal LjsCompilerFunctionData CreateChild(int functionIndex) =>
-        new(functionIndex, _functionsList, this);
+    internal LjsCompilerContext CreateChild(int functionIndex) =>
+        new(functionIndex, _functionsContextList, this);
 
-    internal LjsCompilerFunctionData CreateNamedFunction(
+    internal LjsCompilerContext CreateNamedFunctionContext(
         LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
     {
         var funcName = namedFunctionDeclaration.Name;
@@ -62,16 +62,16 @@ internal sealed class LjsCompilerFunctionData
         if (_namedFunctionsMap.ContainsKey(funcName))
             throw new LjsCompilerError($"duplicate function names {funcName}");
 
-        var namedFunctionIndex = _functionsList.Count;
+        var namedFunctionIndex = _functionsContextList.Count;
         var namedFunc = CreateChild(namedFunctionIndex);
 
-        _functionsList.Add(namedFunc);
+        _functionsContextList.Add(namedFunc);
         _namedFunctionsMap[funcName] = namedFunctionIndex;
         return namedFunc;
     }
 
     internal bool HasFunctionWithName(string name) => _namedFunctionsMap.ContainsKey(name) ||
-                                                      (_parentData != null && _parentData.HasFunctionWithName(name));
+                                                      (_parentContext != null && _parentContext.HasFunctionWithName(name));
 
     internal int GetFunctionIndex(string name)
     {
@@ -80,26 +80,26 @@ internal sealed class LjsCompilerFunctionData
             return _namedFunctionsMap[name];
         }
 
-        if (_parentData != null)
-            return _parentData.GetFunctionIndex(name);
+        if (_parentContext != null)
+            return _parentContext.GetFunctionIndex(name);
 
         throw new LjsCompilerError($"function with name {name} not found");
     }
 
-    internal (LjsCompilerFunctionData, int) GetOrCreateNamedFunctionData(
+    internal (LjsCompilerContext, int) GetOrCreateNamedFunctionContext(
         LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
     {
         if (HasFunctionWithName(namedFunctionDeclaration.Name))
         {
             var functionIndex = GetFunctionIndex(namedFunctionDeclaration.Name);
-            var functionData = _functionsList[functionIndex];
-            return (functionData, functionIndex);
+            var functionContext = _functionsContextList[functionIndex];
+            return (functionContext, functionIndex);
         }
         else
         {
-            var functionIndex = _functionsList.Count;
-            var functionData = CreateNamedFunction(namedFunctionDeclaration);
-            return (functionData, functionIndex);
+            var functionIndex = _functionsContextList.Count;
+            var functionContext = CreateNamedFunctionContext(namedFunctionDeclaration);
+            return (functionContext, functionIndex);
         }
     }
 }

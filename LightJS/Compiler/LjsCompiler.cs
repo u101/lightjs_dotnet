@@ -10,7 +10,7 @@ public class LjsCompiler
 {
     private readonly LjsAstModel _astModel;
     private readonly LjsProgramConstants _constants = new();
-    private readonly List<LjsCompilerFunctionData> _functionsList = new();
+    private readonly List<LjsCompilerContext> _functionsList = new();
 
     public LjsCompiler(string sourceCodeString)
     {
@@ -49,7 +49,7 @@ public class LjsCompiler
 
     public LjsProgram Compile()
     {
-        var context = new LjsCompilerFunctionData(0, _functionsList);
+        var context = new LjsCompilerContext(0, _functionsList);
         
         _functionsList.Add(context);
         
@@ -61,7 +61,7 @@ public class LjsCompiler
         var functions = _functionsList.Select(fd => new LjsFunctionData(
             fd.FunctionIndex,
             fd.Instructions.Instructions.ToArray(), 
-            fd.Args.ToArray(), 
+            fd.FunctionArgs.ToArray(), 
             fd.Locals.Pointers.ToArray()
         )).ToArray();
         
@@ -70,7 +70,7 @@ public class LjsCompiler
     }
     private void ProcessFunction(
         LjsAstFunctionDeclaration functionDeclaration, 
-        LjsCompilerFunctionData functionData)
+        LjsCompilerContext context)
     {
 
         var parameters = functionDeclaration.Parameters;
@@ -80,23 +80,23 @@ public class LjsCompiler
             var p = parameters[i];
             var defaultValue = GetFunctionParameterDefaultValue(p.DefaultValue);
 
-            if (functionData.Locals.Has(p.Name))
+            if (context.Locals.Has(p.Name))
             {
                 throw new LjsCompilerError($"duplicate argument name {p.Name}");
             }
             
-            functionData.Args.Add(new LjsFunctionArgument(p.Name, defaultValue));
+            context.FunctionArgs.Add(new LjsFunctionArgument(p.Name, defaultValue));
 
-            functionData.Locals.Add(p.Name, LjsLocalVarKind.Argument);
+            context.Locals.Add(p.Name, LjsLocalVarKind.Argument);
         }
         
-        ProcessNode(functionDeclaration.FunctionBody, functionData);
+        ProcessNode(functionDeclaration.FunctionBody, context);
 
-        if (functionData.Instructions.Count == 0 ||
-            functionData.Instructions.LastInstruction.Code != LjsInstructionCode.Return)
+        if (context.Instructions.Count == 0 ||
+            context.Instructions.LastInstruction.Code != LjsInstructionCode.Return)
         {
-            functionData.Instructions.Add(new LjsInstruction(LjsInstructionCode.ConstUndef));
-            functionData.Instructions.Add(new LjsInstruction(LjsInstructionCode.Return));
+            context.Instructions.Add(new LjsInstruction(LjsInstructionCode.ConstUndef));
+            context.Instructions.Add(new LjsInstruction(LjsInstructionCode.Return));
         }
     }
 
@@ -113,7 +113,7 @@ public class LjsCompiler
 
     
     
-    private LjsCompilerFunctionData CreateAnonFunction(LjsCompilerFunctionData parentFunction)
+    private LjsCompilerContext CreateAnonFunction(LjsCompilerContext parentFunction)
     {
         var functionIndex = _functionsList.Count;
         var func = parentFunction.CreateChild(functionIndex);
@@ -122,21 +122,19 @@ public class LjsCompiler
         return func;
     }
 
-    
-
     private void ProcessNode(
         ILjsAstNode node, 
-        LjsCompilerFunctionData functionData,
+        LjsCompilerContext context,
         ICollection<int>? jumpToTheStartPlaceholdersIndices = null, 
         ICollection<int>? jumpToTheEndPlaceholdersIndices = null)
     {
-        var instructions = functionData.Instructions;
+        var instructions = context.Instructions;
 
         switch (node)
         {
             case LjsAstAnonymousFunctionDeclaration funcDeclaration:
                 
-                var anonFunc = CreateAnonFunction(functionData);
+                var anonFunc = CreateAnonFunction(context);
                 
                 ProcessFunction(funcDeclaration, anonFunc);
                 
@@ -146,8 +144,8 @@ public class LjsCompiler
             
             case LjsAstNamedFunctionDeclaration namedFunctionDeclaration:
                 
-                var (namedFunc, namedFuncIndex) = functionData.
-                    GetOrCreateNamedFunctionData(namedFunctionDeclaration);
+                var (namedFunc, namedFuncIndex) = context.
+                    GetOrCreateNamedFunctionContext(namedFunctionDeclaration);
                 
                 ProcessFunction(namedFunctionDeclaration, namedFunc);
                 break;
@@ -158,10 +156,10 @@ public class LjsCompiler
                 
                 foreach (var n in functionCall.Arguments.ChildNodes)
                 {
-                    ProcessNode(n, functionData);
+                    ProcessNode(n, context);
                 }
                 
-                ProcessNode(functionCall.FunctionGetter, functionData);
+                ProcessNode(functionCall.FunctionGetter, context);
                 
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.FuncCall, specifiedArgumentsCount));
@@ -172,7 +170,7 @@ public class LjsCompiler
 
                 if (astReturn.ReturnValue != LjsAstEmptyNode.Instance)
                 {
-                    ProcessNode(astReturn.ReturnValue, functionData);
+                    ProcessNode(astReturn.ReturnValue, context);
                 }
                 else
                 {
@@ -234,8 +232,8 @@ public class LjsCompiler
             
             case LjsAstBinaryOperation binaryOperation:
                 
-                ProcessNode(binaryOperation.LeftOperand, functionData);
-                ProcessNode(binaryOperation.RightOperand, functionData);
+                ProcessNode(binaryOperation.LeftOperand, context);
+                ProcessNode(binaryOperation.RightOperand, context);
 
                 instructions.Add(new LjsInstruction(LjsCompileUtils.GetBinaryOpCode(binaryOperation.OperatorType)));
                 
@@ -247,20 +245,20 @@ public class LjsCompiler
                 {
                     case LjsAstUnaryOperationType.Plus:
                         // just skip, because unary plus does nothing
-                        ProcessNode(unaryOperation.Operand, functionData);
+                        ProcessNode(unaryOperation.Operand, context);
                         break;
                     
                     case LjsAstUnaryOperationType.Minus:
-                        ProcessNode(unaryOperation.Operand, functionData);
+                        ProcessNode(unaryOperation.Operand, context);
                         instructions.Add(new LjsInstruction(LjsInstructionCode.Minus));
                         break;
                     case LjsAstUnaryOperationType.LogicalNot:
-                        ProcessNode(unaryOperation.Operand, functionData);
+                        ProcessNode(unaryOperation.Operand, context);
                         instructions.Add(new LjsInstruction(LjsInstructionCode.Not));
                         break;
                     
                     case LjsAstUnaryOperationType.BitNot:
-                        ProcessNode(unaryOperation.Operand, functionData);
+                        ProcessNode(unaryOperation.Operand, context);
                         instructions.Add(new LjsInstruction(LjsInstructionCode.BitNot));
                         break;
                     
@@ -275,18 +273,18 @@ public class LjsCompiler
 
                 var localVarKind = LjsCompileUtils.GetVarKind(variableDeclaration.VariableKind);
 
-                if (functionData.Locals.Has(variableDeclaration.Name))
+                if (context.Locals.Has(variableDeclaration.Name))
                 {
                     throw new LjsCompilerError($"duplicate var name {variableDeclaration.Name}");
                 }
                 
-                var varIndex = functionData.Locals.Add(
+                var varIndex = context.Locals.Add(
                     variableDeclaration.Name, 
                     localVarKind);
 
                 if (variableDeclaration.Value != LjsAstEmptyNode.Instance)
                 {
-                    ProcessNode(variableDeclaration.Value, functionData);
+                    ProcessNode(variableDeclaration.Value, context);
                     
                     instructions.Add(new LjsInstruction(LjsInstructionCode.VarInit, varIndex));
                 }
@@ -299,20 +297,20 @@ public class LjsCompiler
                 break;
             
             case LjsAstGetVar getVar:
-                AddVarLoadInstruction(functionData, getVar);
+                AddVarLoadInstruction(context, getVar);
                 break;
             
             case LjsAstSetVar setVar:
-                AddVarStoreInstructions(functionData, setVar);
+                AddVarStoreInstructions(context, setVar);
                 break;
             
             case LjsAstIncrementVar incrementVar:
-                AddVarIncrementInstruction(functionData, incrementVar);
+                AddVarIncrementInstruction(context, incrementVar);
                 break;
             
             case LjsAstIfBlock ifBlock:
                 
-                ProcessNode(ifBlock.MainBlock.Condition, functionData);
+                ProcessNode(ifBlock.MainBlock.Condition, context);
                 
                 // indices of empty placeholder instructions to be replaced with actual jump instructions 
                 var ifEndIndices = LjsCompileUtils.GetTemporaryIntList();
@@ -322,7 +320,7 @@ public class LjsCompiler
                 // if false jump to next condition or to the else block or to the end
                 instructions.Add(default);
                 
-                ProcessNode(ifBlock.MainBlock.Expression, functionData, 
+                ProcessNode(ifBlock.MainBlock.Expression, context, 
                     jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 
                 ifEndIndices.Add(instructions.Count);
@@ -337,12 +335,12 @@ public class LjsCompiler
                             LjsInstructionCode.JumpIfFalse, instructions.Count), 
                             ifConditionalJumpIndex);
                         
-                        ProcessNode(alternative.Condition, functionData);
+                        ProcessNode(alternative.Condition, context);
                         
                         ifConditionalJumpIndex = instructions.Count;
                         instructions.Add(default);
                         
-                        ProcessNode(alternative.Expression, functionData,
+                        ProcessNode(alternative.Expression, context,
                             jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                         
                         ifEndIndices.Add(instructions.Count);
@@ -358,7 +356,7 @@ public class LjsCompiler
 
                     ifConditionalJumpIndex = -1;
                     
-                    ProcessNode(ifBlock.ElseBlock, functionData,
+                    ProcessNode(ifBlock.ElseBlock, context,
                         jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 }
                 
@@ -383,14 +381,14 @@ public class LjsCompiler
             
             case LjsAstForLoop forLoop:
                 
-                ProcessNode(forLoop.InitExpression, functionData);
+                ProcessNode(forLoop.InitExpression, context);
                 
                 var loopStartIndex = instructions.Count;
                 var loopConditionalJumpIndex = -1;
                 
                 if (forLoop.Condition != LjsAstEmptyNode.Instance)
                 {
-                    ProcessNode(forLoop.Condition, functionData);
+                    ProcessNode(forLoop.Condition, context);
                 
                     loopConditionalJumpIndex = instructions.Count;
                     instructions.Add(default);
@@ -400,12 +398,12 @@ public class LjsCompiler
                 var loopEndIndices = LjsCompileUtils.GetTemporaryIntList();
                 var loopContinueIndices = LjsCompileUtils.GetTemporaryIntList();
 
-                ProcessNode(forLoop.Body, functionData,
+                ProcessNode(forLoop.Body, context,
                     loopContinueIndices, loopEndIndices);
 
                 var loopIteratorIndex = instructions.Count;
                 
-                ProcessNode(forLoop.IterationExpression, functionData);
+                ProcessNode(forLoop.IterationExpression, context);
                 
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.Jump, loopStartIndex));
@@ -439,7 +437,7 @@ public class LjsCompiler
                 
                 var whileStartIndex = instructions.Count;
                 
-                ProcessNode(whileLoop.Condition, functionData);
+                ProcessNode(whileLoop.Condition, context);
 
                 var whileConditionalJumpIndex = instructions.Count;
                 instructions.Add(default);
@@ -448,7 +446,7 @@ public class LjsCompiler
                 var whileEndIndices = LjsCompileUtils.GetTemporaryIntList();
                 var whileContinueIndices = LjsCompileUtils.GetTemporaryIntList();
                 
-                ProcessNode(whileLoop.Body, functionData, 
+                ProcessNode(whileLoop.Body, context, 
                     whileContinueIndices, whileEndIndices);
                 
                 instructions.Add(new LjsInstruction(
@@ -481,12 +479,12 @@ public class LjsCompiler
                 foreach (var n in 
                          sequence.ChildNodes.OfType<LjsAstNamedFunctionDeclaration>())
                 {
-                    functionData.CreateNamedFunction(n);
+                    context.CreateNamedFunctionContext(n);
                 }
                 
                 foreach (var n in sequence.ChildNodes)
                 {
-                    ProcessNode(n, functionData, 
+                    ProcessNode(n, context, 
                         jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 }
                 
@@ -494,7 +492,7 @@ public class LjsCompiler
             
             case LjsAstGetNamedProperty astGetNamedProperty:
 
-                ProcessNode(astGetNamedProperty.PropertySource, functionData);
+                ProcessNode(astGetNamedProperty.PropertySource, context);
                 
                 instructions.Add(GetStringConstInstruction(astGetNamedProperty.PropertyName));
 
@@ -503,8 +501,8 @@ public class LjsCompiler
             
             case LjsAstGetProperty astGetProperty:
 
-                ProcessNode(astGetProperty.PropertySource, functionData);
-                ProcessNode(astGetProperty.PropertyName, functionData);
+                ProcessNode(astGetProperty.PropertySource, context);
+                ProcessNode(astGetProperty.PropertyName, context);
 
                 instructions.Add(new LjsInstruction(LjsInstructionCode.GetProp));
                 break;
@@ -513,21 +511,21 @@ public class LjsCompiler
                 
                 if (astSetNamedProperty.AssignMode == LjsAstAssignMode.Normal)
                 {
-                    ProcessNode(astSetNamedProperty.AssignmentExpression, functionData);
+                    ProcessNode(astSetNamedProperty.AssignmentExpression, context);
                 }
                 else
                 {
-                    ProcessNode(astSetNamedProperty.PropertySource, functionData);
+                    ProcessNode(astSetNamedProperty.PropertySource, context);
                     instructions.Add(GetStringConstInstruction(astSetNamedProperty.PropertyName));
                     instructions.Add(new LjsInstruction(LjsInstructionCode.GetProp));
                     
-                    ProcessNode(astSetNamedProperty.AssignmentExpression, functionData);
+                    ProcessNode(astSetNamedProperty.AssignmentExpression, context);
                     
                     instructions.Add(new LjsInstruction(
                         LjsCompileUtils.GetComplexAssignmentOpCode(astSetNamedProperty.AssignMode)));
                 }
                 
-                ProcessNode(astSetNamedProperty.PropertySource, functionData);
+                ProcessNode(astSetNamedProperty.PropertySource, context);
                 instructions.Add(GetStringConstInstruction(astSetNamedProperty.PropertyName));
                 
                 instructions.Add(new LjsInstruction(LjsInstructionCode.SetProp));
@@ -538,22 +536,22 @@ public class LjsCompiler
 
                 if (astSetProperty.AssignMode == LjsAstAssignMode.Normal)
                 {
-                    ProcessNode(astSetProperty.AssignmentExpression, functionData);
+                    ProcessNode(astSetProperty.AssignmentExpression, context);
                 }
                 else
                 {
-                    ProcessNode(astSetProperty.PropertySource, functionData);
-                    ProcessNode(astSetProperty.PropertyName, functionData);
+                    ProcessNode(astSetProperty.PropertySource, context);
+                    ProcessNode(astSetProperty.PropertyName, context);
                     instructions.Add(new LjsInstruction(LjsInstructionCode.GetProp));
                     
-                    ProcessNode(astSetProperty.AssignmentExpression, functionData);
+                    ProcessNode(astSetProperty.AssignmentExpression, context);
                     
                     instructions.Add(new LjsInstruction(
                         LjsCompileUtils.GetComplexAssignmentOpCode(astSetProperty.AssignMode)));
                 }
                 
-                ProcessNode(astSetProperty.PropertySource, functionData);
-                ProcessNode(astSetProperty.PropertyName, functionData);
+                ProcessNode(astSetProperty.PropertySource, context);
+                ProcessNode(astSetProperty.PropertyName, context);
                 
                 instructions.Add(new LjsInstruction(LjsInstructionCode.SetProp));
                 
@@ -563,7 +561,7 @@ public class LjsCompiler
                 
                 foreach (var prop in objectLiteral.ChildNodes)
                 {
-                    ProcessNode(prop.Value, functionData);
+                    ProcessNode(prop.Value, context);
                     instructions.Add(GetStringConstInstruction(prop.Name));
                 }
                 
@@ -576,7 +574,7 @@ public class LjsCompiler
                 
                 foreach (var e in arrayLiteral.ChildNodes)
                 {
-                    ProcessNode(e, functionData);
+                    ProcessNode(e, context);
                 }
                 
                 instructions.Add(new LjsInstruction(LjsInstructionCode.NewArray, arrayLiteral.Count));
@@ -602,7 +600,7 @@ public class LjsCompiler
     
     /////////// vars init/load/store
     
-    private void AddVarLoadInstruction(LjsCompilerFunctionData data, LjsAstGetVar getVar)
+    private void AddVarLoadInstruction(LjsCompilerContext data, LjsAstGetVar getVar)
     {
         var instructions = data.Instructions;
 
@@ -630,7 +628,7 @@ public class LjsCompiler
         }
     }
 
-    private LjsInstruction CreateVarLoadInstruction(string varName, LjsCompilerFunctionData data)
+    private LjsInstruction CreateVarLoadInstruction(string varName, LjsCompilerContext data)
     {
         var localVarIndex = data.Locals.GetIndex(varName);
         var isLocal = localVarIndex != -1;
@@ -653,7 +651,7 @@ public class LjsCompiler
     }
     
     private LjsInstruction CreateVarStoreInstruction(
-        string varName, LjsCompilerFunctionData data, ILjsAstNode node)
+        string varName, LjsCompilerContext data, ILjsAstNode node)
     {
         
         if (data.Locals.Has(varName))
@@ -693,7 +691,7 @@ public class LjsCompiler
     }
     
     private LjsInstruction CreateVarInitInstruction(
-        string varName, LjsCompilerFunctionData data, ILjsAstNode node)
+        string varName, LjsCompilerContext data, ILjsAstNode node)
     {
 
         if (data.Locals.Has(varName))
@@ -722,7 +720,7 @@ public class LjsCompiler
                 LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
     }
     
-    private void AddVarIncrementInstruction(LjsCompilerFunctionData data, LjsAstIncrementVar incrementVar)
+    private void AddVarIncrementInstruction(LjsCompilerContext data, LjsAstIncrementVar incrementVar)
     {
         var instructions = data.Instructions;
 
@@ -752,7 +750,7 @@ public class LjsCompiler
         }
     }
 
-    private void AddVarStoreInstructions(LjsCompilerFunctionData data, LjsAstSetVar setVar)
+    private void AddVarStoreInstructions(LjsCompilerContext data, LjsAstSetVar setVar)
     {
         var instructions = data.Instructions;
 
