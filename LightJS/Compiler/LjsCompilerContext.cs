@@ -43,8 +43,7 @@ internal sealed class LjsCompilerContext
     {
         if (Locals.Has(name))
         {
-            var localIndex = Locals.GetIndex(name);
-            var pointer = Locals.GetPointer(localIndex);
+            var pointer = Locals.GetPointer(name);
             return (pointer, FunctionIndex);
         }
 

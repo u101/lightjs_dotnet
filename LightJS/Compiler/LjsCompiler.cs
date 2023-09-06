@@ -591,7 +591,7 @@ public class LjsCompiler
         if (data.Locals.Has(getVar.VarName))
         {
             instructions.Add(new LjsInstruction(
-                LjsInstructionCode.VarLoad, data.Locals.GetIndex(getVar.VarName)));
+                LjsInstructionCode.VarLoad, data.Locals.GetPointer(getVar.VarName).Index));
         }
         else if (data.HasFunctionWithName(getVar.VarName))
         {
@@ -614,11 +614,10 @@ public class LjsCompiler
 
     private LjsInstruction CreateVarLoadInstruction(string varName, LjsCompilerContext data)
     {
-        var localVarIndex = data.Locals.GetIndex(varName);
-        var isLocal = localVarIndex != -1;
 
-        if (isLocal) 
-            return new LjsInstruction(LjsInstructionCode.VarLoad, localVarIndex);
+        if (data.Locals.Has(varName)) 
+            return new LjsInstruction(
+                LjsInstructionCode.VarLoad, data.Locals.GetPointer(varName).Index);
 
         if (data.HasLocalInHierarchy(varName))
         {
@@ -640,9 +639,7 @@ public class LjsCompiler
         
         if (data.Locals.Has(varName))
         {
-            var index = data.Locals.GetIndex(varName);
-            
-            var localVarPointer = data.Locals.GetPointer(index);
+            var localVarPointer = data.Locals.GetPointer(varName);
             
             AssertPointerIsWritable(localVarPointer, node);
 
@@ -680,8 +677,7 @@ public class LjsCompiler
 
         if (data.Locals.Has(varName))
         {
-            var varIndex = data.Locals.GetIndex(varName);
-            var varPointer = data.Locals.GetPointer(varIndex);
+            var varPointer = data.Locals.GetPointer(varName);
 
             AssertPointerIsWritable(varPointer, node);
             

@@ -5,11 +5,23 @@ namespace LightJS.Compiler;
 
 internal sealed class LjsCompilerLocals
 {
+
+    private readonly LjsCompilerLocals? _parent;
     
     private readonly Dictionary<string, int> _indices = new();
     private readonly List<LjsLocalVarPointer> _pointers = new();
     
     internal List<LjsLocalVarPointer> Pointers => _pointers;
+
+    internal LjsCompilerLocals()
+    {
+        _parent = null;
+    }
+
+    private LjsCompilerLocals(LjsCompilerLocals parent)
+    {
+        _parent = parent;
+    }
     
     internal int Add(string name, LjsLocalVarKind varKind)
     {
@@ -22,9 +34,20 @@ internal sealed class LjsCompilerLocals
         return index;
     }
 
-    internal bool Has(string name) => _indices.ContainsKey(name);
+    internal bool Has(string name) => _indices.ContainsKey(name) || (_parent != null && _parent.Has(name));
 
-    internal int GetIndex(string name) => _indices.TryGetValue(name, out var i) ? i : -1;
+    internal LjsLocalVarPointer GetPointer(string name)
+    {
+        if (_indices.TryGetValue(name, out var localIndex))
+        {
+            return _pointers[localIndex];
+        }
+        
+        if (_parent != null)
+        {
+            return _parent.GetPointer(name);
+        }
 
-    internal LjsLocalVarPointer GetPointer(int localIndex) => _pointers[localIndex];
+        throw new Exception($"var {name} not found");
+    }
 }
