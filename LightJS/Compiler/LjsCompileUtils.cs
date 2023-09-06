@@ -4,7 +4,7 @@ using LightJS.Program;
 
 namespace LightJS.Compiler;
 
-public static class LjsCompileUtils
+internal static class LjsCompileUtils
 {
     
     

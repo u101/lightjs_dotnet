@@ -10,7 +10,7 @@ public class LjsCompiler
 {
     private readonly LjsAstModel _astModel;
     private readonly LjsProgramConstants _constants = new();
-    private readonly List<FunctionData> _functionsList = new();
+    private readonly List<LjsCompilerFunctionData> _functionsList = new();
 
     public LjsCompiler(string sourceCodeString)
     {
@@ -49,7 +49,7 @@ public class LjsCompiler
 
     public LjsProgram Compile()
     {
-        var context = new FunctionData(0, _functionsList);
+        var context = new LjsCompilerFunctionData(0, _functionsList);
         
         _functionsList.Add(context);
         
@@ -68,144 +68,9 @@ public class LjsCompiler
         return new LjsProgram(
             _constants, functions, context.NamedFunctionsMap);
     }
-
-    private sealed class InstructionsList
-    {
-        private readonly List<LjsInstruction> _instructions = new();
-    
-        public IReadOnlyList<LjsInstruction> Instructions => _instructions;
-    
-        public int Count => _instructions.Count;
-
-        public void Add(LjsInstruction instruction)
-        {
-            _instructions.Add(instruction);
-        }
-
-        public void SetAt(LjsInstruction instruction, int index)
-        {
-            _instructions[index] = instruction;
-        }
-
-        public LjsInstruction LastInstruction => 
-            _instructions.Count > 0 ? _instructions[^1] : default;
-    }
-    
-    private sealed class FunctionData
-    {
-        private readonly List<FunctionData> _functionsList;
-        private readonly FunctionData? _parentData;
-        public InstructionsList Instructions { get; } = new();
-        public int FunctionIndex { get; }
-        
-        public List<LjsFunctionArgument> Args { get; } = new();
-        public List<LjsLocalVarPointer> LocalVars => _localVars;
-
-        private readonly Dictionary<string, int> _localVarIndices = new();
-        private readonly List<LjsLocalVarPointer> _localVars = new();
-        private readonly Dictionary<string, int> _namedFunctionsMap = new();
-
-        public Dictionary<string, int> NamedFunctionsMap => _namedFunctionsMap;
-
-        public FunctionData(int functionIndex, List<FunctionData> functionsList)
-        {
-            FunctionIndex = functionIndex;
-            _functionsList = functionsList;
-            _parentData = null;
-        }
-
-        private FunctionData(int functionIndex, List<FunctionData> functionsList, FunctionData parentData)
-        {
-            FunctionIndex = functionIndex;
-            _functionsList = functionsList;
-            _parentData = parentData;
-        }
-
-        public int AddLocal(string name)
-        {
-            if (_localVarIndices.ContainsKey(name))
-                throw new LjsCompilerError($"duplicate var name {name}");
-            
-            var index = _localVars.Count;
-            _localVars.Add(new LjsLocalVarPointer(index, name));
-            _localVarIndices[name] = index;
-            return index;
-        }
-
-        public bool HasLocal(string name) => _localVarIndices.ContainsKey(name);
-
-        public int GetLocal(string name) => _localVarIndices.TryGetValue(name, out var i) ? i : -1;
-
-        public bool HasLocalInHierarchy(string name) => _localVarIndices.ContainsKey(name) ||
-                                                        (_parentData != null &&
-                                                         _parentData.HasLocalInHierarchy(name));
-
-        public (int, int) GetLocalInHierarchy(string name)
-        {
-            if (_localVarIndices.TryGetValue(name, out var i))
-            {
-                return (i, FunctionIndex);
-            }
-
-            return _parentData?.GetLocalInHierarchy(name) ?? (-1, -1);
-        }
-
-        public FunctionData CreateChild(int functionIndex) => 
-            new(functionIndex, _functionsList, this);
-        
-        public FunctionData CreateNamedFunction(
-            LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
-        {
-            var funcName = namedFunctionDeclaration.Name;
-
-            if (_namedFunctionsMap.ContainsKey(funcName))
-                throw new LjsCompilerError($"duplicate function names {funcName}");
-        
-            var namedFunctionIndex = _functionsList.Count;
-            var namedFunc = CreateChild(namedFunctionIndex);
-
-            _functionsList.Add(namedFunc);
-            _namedFunctionsMap[funcName] = namedFunctionIndex;
-            return namedFunc;
-        }
-
-        public bool HasFunctionWithName(string name) => _namedFunctionsMap.ContainsKey(name) ||
-                                                        (_parentData != null && _parentData.HasFunctionWithName(name));
-
-        public int GetFunctionIndex(string name)
-        {
-            if (_namedFunctionsMap.ContainsKey(name))
-            {
-                return _namedFunctionsMap[name];
-            }
-
-            if (_parentData != null) 
-                return _parentData.GetFunctionIndex(name);
-
-            throw new LjsCompilerError($"function with name {name} not found");
-        }
-        
-        public (FunctionData, int) GetOrCreateNamedFunctionData(
-            LjsAstNamedFunctionDeclaration namedFunctionDeclaration)
-        {
-            if (HasFunctionWithName(namedFunctionDeclaration.Name))
-            {
-                var functionIndex = GetFunctionIndex(namedFunctionDeclaration.Name);
-                var functionData = _functionsList[functionIndex];
-                return (functionData, functionIndex);
-            }
-            else
-            {
-                var functionIndex = _functionsList.Count;
-                var functionData = CreateNamedFunction(namedFunctionDeclaration);
-                return (functionData, functionIndex);
-            }
-        }
-    }
-
     private void ProcessFunction(
         LjsAstFunctionDeclaration functionDeclaration, 
-        FunctionData functionData)
+        LjsCompilerFunctionData functionData)
     {
 
         var parameters = functionDeclaration.Parameters;
@@ -243,7 +108,7 @@ public class LjsCompiler
 
     
     
-    private FunctionData CreateAnonFunction(FunctionData parentFunction)
+    private LjsCompilerFunctionData CreateAnonFunction(LjsCompilerFunctionData parentFunction)
     {
         var functionIndex = _functionsList.Count;
         var func = parentFunction.CreateChild(functionIndex);
@@ -256,7 +121,7 @@ public class LjsCompiler
 
     private void ProcessNode(
         ILjsAstNode node, 
-        FunctionData functionData,
+        LjsCompilerFunctionData functionData,
         ICollection<int>? jumpToTheStartPlaceholdersIndices = null, 
         ICollection<int>? jumpToTheEndPlaceholdersIndices = null)
     {
@@ -718,7 +583,7 @@ public class LjsCompiler
     
     /////////// vars init/load/store
     
-    private void AddVarLoadInstruction(FunctionData data, LjsAstGetVar getVar)
+    private void AddVarLoadInstruction(LjsCompilerFunctionData data, LjsAstGetVar getVar)
     {
         var instructions = data.Instructions;
 
@@ -746,7 +611,7 @@ public class LjsCompiler
         }
     }
 
-    private LjsInstruction CreateVarLoadInstruction(string varName, FunctionData data)
+    private LjsInstruction CreateVarLoadInstruction(string varName, LjsCompilerFunctionData data)
     {
         var localVarIndex = data.GetLocal(varName);
         var isLocal = localVarIndex != -1;
@@ -766,7 +631,7 @@ public class LjsCompiler
                 LjsInstructionCode.ExtLoad, _constants.AddStringConstant(varName));
     }
     
-    private LjsInstruction CreateVarStoreInstruction(string varName, FunctionData data)
+    private LjsInstruction CreateVarStoreInstruction(string varName, LjsCompilerFunctionData data)
     {
         var localVarIndex = data.GetLocal(varName);
         var isLocal = localVarIndex != -1;
@@ -786,7 +651,7 @@ public class LjsCompiler
                 LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
     }
     
-    private LjsInstruction CreateVarInitInstruction(string varName, FunctionData data)
+    private LjsInstruction CreateVarInitInstruction(string varName, LjsCompilerFunctionData data)
     {
         var localVarIndex = data.GetLocal(varName);
         var isLocal = localVarIndex != -1;
@@ -806,7 +671,7 @@ public class LjsCompiler
                 LjsInstructionCode.ExtStore, _constants.AddStringConstant(varName));
     }
     
-    private void AddVarIncrementInstruction(FunctionData data, LjsAstIncrementVar incrementVar)
+    private void AddVarIncrementInstruction(LjsCompilerFunctionData data, LjsAstIncrementVar incrementVar)
     {
         var instructions = data.Instructions;
 
@@ -836,7 +701,7 @@ public class LjsCompiler
         }
     }
 
-    private void AddVarStoreInstructions(FunctionData data, LjsAstSetVar setVar)
+    private void AddVarStoreInstructions(LjsCompilerFunctionData data, LjsAstSetVar setVar)
     {
         var instructions = data.Instructions;
         
