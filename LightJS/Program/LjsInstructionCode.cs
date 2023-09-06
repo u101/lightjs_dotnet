@@ -39,8 +39,7 @@ public enum LjsInstructionCode
     // push undef to stack
     ConstUndef = 0x12,
     
-    JumpIfFalse = 0x13,
-    Jump = 0x14,
+    
 
     // load from stack value b, value a, push a + b
     Add = 0x15,
@@ -96,6 +95,10 @@ public enum LjsInstructionCode
     Decr = 0x2d,
     // load from stack value a, push -a
     Minus = 0x2e,
+
+    Jump = 0x30,
+    JumpIfTrue = 0x31,
+    JumpIfFalse = 0x32,
 
     Return = 0x40,
     FuncCall = 0x41,

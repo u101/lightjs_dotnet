@@ -466,17 +466,8 @@ public class LjsCompiler
                     LjsInstructionCode.JumpIfFalse, whileEndIndex), 
                     whileConditionalJumpIndex);
 
-                foreach (var i in whileContinueIndices)
-                {
-                    instructions.SetAt(new LjsInstruction(
-                        LjsInstructionCode.Jump, whileStartIndex), i);
-                }
-                
-                foreach (var i in whileEndIndices)
-                {
-                    instructions.SetAt(new LjsInstruction(
-                        LjsInstructionCode.Jump, whileEndIndex), i);
-                }
+                SetJumps(whileContinueIndices, whileStartIndex, instructions);
+                SetJumps(whileEndIndices, whileEndIndex, instructions);
                 
                 LjsCompileUtils.ReleaseTemporaryIntList(whileEndIndices);
                 LjsCompileUtils.ReleaseTemporaryIntList(whileContinueIndices);
@@ -595,9 +586,124 @@ public class LjsCompiler
                 
                 break;
             
+            case LjsAstSwitchBlock switchBlock:
+                var body = switchBlock.Body;
+                
+                if (!body.IsEmpty)
+                {
+                    
+
+                    var switchContext = context.CreateLocalContext();
+
+                    var switchBreakIndices = LjsCompileUtils.GetTemporaryIntList();
+                    var caseFalseJumpIndices = LjsCompileUtils.GetTemporaryIntList();
+                    var caseTrueJumpIndices = LjsCompileUtils.GetTemporaryIntList();
+
+                    var defaultIsReached = false;
+                    var blockEnd = false;
+                    var prevNode = LjsAstEmptyNode.Instance;
+                    
+                    for (var i = 0; i < body.Count && !blockEnd; i++)
+                    {
+                        var n = body[i];
+                        switch (n)
+                        {
+                            case LjsAstSwitchCase switchCase:
+                                if (defaultIsReached) 
+                                    ThrowUnexpectedSwitchCase(switchCase);
+
+                                if (prevNode is LjsAstSwitchCase)
+                                {
+                                    caseTrueJumpIndices.Add(instructions.Count);
+                                    instructions.Add(default);
+                                }
+                                
+                                SetFalseJumps(caseFalseJumpIndices, instructions.Count, instructions);
+                                caseFalseJumpIndices.Clear();
+                                
+                                ProcessNode(switchBlock.Expression, context);
+                                ProcessNode(switchCase.Value, switchContext);
+                                instructions.Add(new LjsInstruction(LjsInstructionCode.Eq));
+                                
+                                caseFalseJumpIndices.Add(instructions.Count);
+                                instructions.Add(default);
+                                break;
+                            
+                            case LjsAstBreak _:
+                                if (defaultIsReached)
+                                {
+                                    blockEnd = true;
+                                }
+                                else
+                                {
+                                    SetJumps(caseTrueJumpIndices, instructions.Count, instructions);
+                                    caseTrueJumpIndices.Clear();
+                                    
+                                    switchBreakIndices.Add(instructions.Count);
+                                    instructions.Add(default);
+                                }
+                                break;
+                            
+                            case LjsAstSwitchDefault _:
+                                defaultIsReached = true;
+
+                                SetFalseJumps(caseFalseJumpIndices, instructions.Count, instructions);
+                                caseFalseJumpIndices.Clear();
+                                
+                                SetJumps(caseTrueJumpIndices, instructions.Count, instructions);
+                                caseTrueJumpIndices.Clear();
+                                
+                                break;
+                            
+                            default:
+                                
+                                SetJumps(caseTrueJumpIndices, instructions.Count, instructions);
+                                caseTrueJumpIndices.Clear();
+                                
+                                ProcessNode(
+                                    n, switchContext, 
+                                    null, 
+                                    switchBreakIndices);
+                                
+                                break;
+                        }
+
+                        prevNode = n;
+                    }
+
+                    SetJumps(caseTrueJumpIndices, instructions.Count, instructions);
+                    SetJumps(switchBreakIndices, instructions.Count, instructions);
+                    SetFalseJumps(caseFalseJumpIndices, instructions.Count, instructions);
+                    
+                    LjsCompileUtils.ReleaseTemporaryIntList(caseTrueJumpIndices);
+                    LjsCompileUtils.ReleaseTemporaryIntList(caseFalseJumpIndices);
+                    LjsCompileUtils.ReleaseTemporaryIntList(switchBreakIndices);
+                }
+                break;
+            
             
             default:
                 throw new LjsCompilerError($"unsupported ast node {node.GetType().Name}");
+        }
+    }
+
+    private static void SetFalseJumps(
+        IReadOnlyList<int> indices, int jumpIndex, LjsInstructionsList instructionsList)
+    {
+        for (var i = 0; i < indices.Count; i++)
+        {
+            var j = indices[i];
+            instructionsList.SetAt(new LjsInstruction(LjsInstructionCode.JumpIfFalse, jumpIndex), j);
+        }
+    }
+    
+    private static void SetJumps(
+        IReadOnlyList<int> indices, int jumpIndex, LjsInstructionsList instructionsList)
+    {
+        for (var i = 0; i < indices.Count; i++)
+        {
+            var j = indices[i];
+            instructionsList.SetAt(new LjsInstruction(LjsInstructionCode.Jump, jumpIndex), j);
         }
     }
 
@@ -833,5 +939,9 @@ public class LjsCompiler
 
     private LjsCompilerError CreateUnknownUnaryOperatorException(LjsAstUnaryOperation unaryOperation) => new(
             $"unsupported unary operator type {unaryOperation.OperatorType}");
-    
+
+    private void ThrowUnexpectedSwitchCase(ILjsAstNode node)
+    {
+        throw new LjsCompilerError("unexpected switch case after default");
+    }
 }

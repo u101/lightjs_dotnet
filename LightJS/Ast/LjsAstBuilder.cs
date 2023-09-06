@@ -556,22 +556,36 @@ public class LjsAstBuilder
                 case LjsTokenType.Case:
                     
                     CheckExpectedNextAndMoveForward(LjsTokenType.Case);
+
+                    var caseToken = _tokensIterator.CurrentToken;
                     
                     var e = ProcessExpression(
                         StopSymbolType.Colon, ProcessExpressionMode.StopAtStopSymbol);
+
+                    var switchCase = new LjsAstSwitchCase(e);
+                    RegisterNodePosition(switchCase, caseToken);
                     
-                    seq.AddNode(new LjsAstSwitchCase(e));
+                    seq.AddNode(switchCase);
                     
                     break;
                 
                 case LjsTokenType.Default:
                     CheckExpectedNextAndMoveForward(LjsTokenType.OpColon);
-                    seq.AddNode(new LjsAstSwitchDefault());
+                    
+                    var astSwitchDefault = new LjsAstSwitchDefault();
+                    RegisterNodePosition(astSwitchDefault, _tokensIterator.CurrentToken);
+                    
+                    seq.AddNode(astSwitchDefault);
                     break;
                 case LjsTokenType.Break:
                     CheckExpectedNextAndMoveForward(LjsTokenType.Break);
+                    
+                    var astBreak = new LjsAstBreak();
+                    RegisterNodePosition(astBreak, _tokensIterator.CurrentToken);
+                    
                     SkipRedundantSemicolons();
-                    seq.AddNode(new LjsAstBreak());
+                    
+                    seq.AddNode(astBreak);
                     break;
                 
                 default:
