@@ -80,10 +80,7 @@ public class LjsCompiler
             var p = parameters[i];
             var defaultValue = GetFunctionParameterDefaultValue(p.DefaultValue);
 
-            if (context.Locals.Has(p.Name))
-            {
-                throw new LjsCompilerError($"duplicate argument name {p.Name}");
-            }
+            AssertArgumentNameIsUniq(p.Name, functionDeclaration, context);
             
             context.FunctionArgs.Add(new LjsFunctionArgument(p.Name, defaultValue));
 
@@ -116,7 +113,7 @@ public class LjsCompiler
     private LjsCompilerContext CreateAnonFunction(LjsCompilerContext parentFunction)
     {
         var functionIndex = _functionsList.Count;
-        var func = parentFunction.CreateChild(functionIndex);
+        var func = parentFunction.CreateChildFunctionContext(functionIndex);
 
         _functionsList.Add(func);
         return func;
@@ -184,20 +181,19 @@ public class LjsCompiler
                 // do nothing
                 break;
             
-            case LjsAstBreak _:
+            case LjsAstBreak astBreak:
                 
-                if (jumpToTheEndPlaceholdersIndices == null)
-                    throw new LjsCompilerError("unexpected break statement");
+                AssertBreakStatementHasJumpPoint(astBreak, jumpToTheEndPlaceholdersIndices);
                 
-                jumpToTheEndPlaceholdersIndices.Add(instructions.Count);
+                jumpToTheEndPlaceholdersIndices!.Add(instructions.Count);
                 instructions.Add(default);
                 
                 break;
             
-            case LjsAstContinue _:
-                if (jumpToTheStartPlaceholdersIndices == null)
-                    throw new LjsCompilerError("unexpected continue statement");
-                jumpToTheStartPlaceholdersIndices.Add(instructions.Count);
+            case LjsAstContinue astContinue:
+                AssertContinueStatementHasJumpPoint(astContinue, jumpToTheStartPlaceholdersIndices);
+                
+                jumpToTheStartPlaceholdersIndices!.Add(instructions.Count);
                 instructions.Add(default);
                 break;
             
@@ -263,8 +259,7 @@ public class LjsCompiler
                         break;
                     
                     default:
-                        throw new LjsCompilerError(
-                            $"unsupported unary operator type {unaryOperation.OperatorType}");
+                        throw CreateUnknownUnaryOperatorException(unaryOperation);
                 }
                 
                 break;
@@ -273,10 +268,9 @@ public class LjsCompiler
 
                 var localVarKind = LjsCompileUtils.GetVarKind(variableDeclaration.VariableKind);
 
-                if (context.Locals.Has(variableDeclaration.Name))
-                {
-                    throw new LjsCompilerError($"duplicate var name {variableDeclaration.Name}");
-                }
+                AssertVariableNameIsUniq(variableDeclaration, context);
+                
+                
                 
                 var varIndex = context.Locals.Add(
                     variableDeclaration.Name, 
@@ -662,7 +656,7 @@ public class LjsCompiler
             
             AssertPointerIsWritable(localVarPointer, node);
 
-            return new LjsInstruction(LjsInstructionCode.VarStore, index);
+            return new LjsInstruction(LjsInstructionCode.VarStore, localVarPointer.Index);
         } 
             
         
@@ -701,7 +695,7 @@ public class LjsCompiler
 
             AssertPointerIsWritable(varPointer, node);
             
-            return new LjsInstruction(LjsInstructionCode.VarInit, varIndex);
+            return new LjsInstruction(LjsInstructionCode.VarInit, varPointer.Index);
         }
         
         if (data.HasLocalInHierarchy(varName))
@@ -778,5 +772,56 @@ public class LjsCompiler
         instructions.Add(CreateVarStoreInstruction(setVar.VarName, data, setVar));
     }
     
+    
+    // ERRORS
+
+    private void AssertVariableNameIsUniq(
+        LjsAstVariableDeclaration variableDeclaration, LjsCompilerContext context)
+    {
+        var varKind = LjsCompileUtils.GetVarKind(variableDeclaration.VariableKind);
+
+        if (varKind == LjsLocalVarKind.Let)
+        {
+            if (context.Locals.Has(variableDeclaration.Name))
+            {
+                throw new LjsCompilerError($"duplicate {varKind} name {variableDeclaration.Name}");
+            }
+        }
+        else
+        {
+            if (context.Locals.Has(variableDeclaration.Name)) // TODO check parent context hierarchy
+            {
+                throw new LjsCompilerError($"duplicate {varKind} name {variableDeclaration.Name}");
+            }
+        }
+
+        
+    }
+
+    private void AssertArgumentNameIsUniq(
+        string argumentName,
+        LjsAstFunctionDeclaration functionDeclaration,
+        LjsCompilerContext context)
+    {
+        if (context.Locals.Has(argumentName))
+        {
+            throw new LjsCompilerError($"duplicate argument name {argumentName}");
+        }
+    }
+
+    private void AssertBreakStatementHasJumpPoint(LjsAstBreak node, ICollection<int>? jumpIndices)
+    {
+        if (jumpIndices == null)
+            throw new LjsCompilerError("unexpected break statement");
+    }
+    
+    private void AssertContinueStatementHasJumpPoint(LjsAstContinue node, ICollection<int>? jumpIndices)
+    {
+        if (jumpIndices == null)
+            throw new LjsCompilerError("unexpected continue statement");
+    }
+
+    private LjsCompilerError CreateUnknownUnaryOperatorException(LjsAstUnaryOperation unaryOperation) => new(
+            $"unsupported unary operator type {unaryOperation.OperatorType}");
     
 }

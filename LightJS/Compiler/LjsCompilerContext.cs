@@ -26,12 +26,13 @@ internal sealed class LjsCompilerContext
         _parentContext = null;
     }
 
-    private LjsCompilerContext(int functionIndex, List<LjsCompilerContext> functionsList,
-        LjsCompilerContext parentData)
+    private LjsCompilerContext(
+        int functionIndex, List<LjsCompilerContext> functionsList,
+        LjsCompilerContext parentContext)
     {
         FunctionIndex = functionIndex;
         _functionsContextList = functionsList;
-        _parentContext = parentData;
+        _parentContext = parentContext;
     }
 
     internal bool HasLocalInHierarchy(string name) => Locals.Has(name) ||
@@ -51,7 +52,7 @@ internal sealed class LjsCompilerContext
                throw new Exception($"local with name:{name} not found in hierarchy");
     }
 
-    internal LjsCompilerContext CreateChild(int functionIndex) =>
+    internal LjsCompilerContext CreateChildFunctionContext(int functionIndex) =>
         new(functionIndex, _functionsContextList, this);
 
     internal LjsCompilerContext CreateNamedFunctionContext(
@@ -63,7 +64,7 @@ internal sealed class LjsCompilerContext
             throw new LjsCompilerError($"duplicate function names {funcName}");
 
         var namedFunctionIndex = _functionsContextList.Count;
-        var namedFunc = CreateChild(namedFunctionIndex);
+        var namedFunc = CreateChildFunctionContext(namedFunctionIndex);
 
         _functionsContextList.Add(namedFunc);
         _namedFunctionsMap[funcName] = namedFunctionIndex;
