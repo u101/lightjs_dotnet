@@ -590,7 +590,7 @@ public class LjsAstBuilder
                     break;
                 
                 default:
-                    var c = ProcessCodeLine(StopSymbolType.Semicolon);
+                    var c = ProcessCodeLine(StopSymbolType.Semicolon | StopSymbolType.BracketClose);
                     SkipRedundantSemicolons();
                     seq.AddNode(c);
                     break;
