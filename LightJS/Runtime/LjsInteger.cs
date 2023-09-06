@@ -1,7 +1,11 @@
 namespace LightJS.Runtime;
 
-public sealed class LjsInteger : LjsNumber 
+public sealed class LjsInteger : LjsNumber
 {
+    public static readonly LjsInteger Zero = new(0);
+    public static readonly LjsInteger One = new(1);
+    public static readonly LjsInteger MinusOne = new(-1);
+    
     public int Value { get; }
 
     public override double NumericValue => Value;

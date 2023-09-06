@@ -366,11 +366,29 @@ public sealed class LjsRuntime
                 case LjsInstructionCode.ConstInt:
                     _stack.Push(new LjsInteger(instruction.Argument));
                     break;
+                case LjsInstructionCode.ConstIntZero:
+                    _stack.Push(LjsInteger.Zero);
+                    break;
+                case LjsInstructionCode.ConstIntOne:
+                    _stack.Push(LjsInteger.One);
+                    break;
+                case LjsInstructionCode.ConstIntMinusOne:
+                    _stack.Push(LjsInteger.MinusOne);
+                    break;
                 case LjsInstructionCode.ConstDouble:
                     _stack.Push(new LjsDouble(_constants.GetDoubleConstant(instruction.Argument)));
                     break;
+                case LjsInstructionCode.ConstDoubleZero:
+                    _stack.Push(LjsDouble.Zero);
+                    break;
+                case LjsInstructionCode.ConstDoubleNaN:
+                    _stack.Push(LjsDouble.NaN);
+                    break;
                 case LjsInstructionCode.ConstString:
                     _stack.Push(new LjsString(_constants.GetStringConstant(instruction.Argument)));
+                    break;
+                case LjsInstructionCode.ConstStringEmpty:
+                    _stack.Push(LjsString.Empty);
                     break;
                 case LjsInstructionCode.ConstTrue:
                     _stack.Push(LjsBoolean.True);

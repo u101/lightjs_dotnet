@@ -113,6 +113,19 @@ public class LjsCompiler
         LjsAstLiteral<bool> i => i.Value ? LjsBoolean.True : LjsBoolean.False,
         _ => LjsObject.Undefined
     };
+
+    private LjsInstruction GetIntLiteralInstruction(LjsAstLiteral<int> lit) => lit.Value switch
+    {
+        0 => new LjsInstruction(LjsInstructionCode.ConstIntZero),
+        1 => new LjsInstruction(LjsInstructionCode.ConstIntOne),
+        -1 => new LjsInstruction(LjsInstructionCode.ConstIntMinusOne),
+        _ => new LjsInstruction(LjsInstructionCode.ConstInt, lit.Value)
+    };
+    private LjsInstruction GetDoubleLiteralInstruction(LjsAstLiteral<double> lit) => lit.Value switch
+    {
+        0.0 => new LjsInstruction(LjsInstructionCode.ConstDoubleZero),
+        _ => new LjsInstruction(LjsInstructionCode.ConstDouble, _constants.AddDoubleConstant(lit.Value))
+    };
     
 
     private void ProcessNode(
@@ -194,14 +207,11 @@ public class LjsCompiler
                 break;
             
             case LjsAstLiteral<int> lit:
-                instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.ConstInt, lit.Value));
+                instructions.Add(GetIntLiteralInstruction(lit));
                 break;
             
             case LjsAstLiteral<double> lit:
-                instructions.Add(new LjsInstruction(
-                    LjsInstructionCode.ConstDouble, 
-                    _constants.AddDoubleConstant(lit.Value)));
+                instructions.Add(GetDoubleLiteralInstruction(lit));
                 break;
             
             case LjsAstLiteral<string> lit:
@@ -585,9 +595,9 @@ public class LjsCompiler
         }
     }
 
-    private LjsInstruction GetStringConstInstruction(string s) => new(
-        LjsInstructionCode.ConstString,
-        _constants.AddStringConstant(s));
+    private LjsInstruction GetStringConstInstruction(string s) => !string.IsNullOrEmpty(s)
+        ? new LjsInstruction(LjsInstructionCode.ConstString, _constants.AddStringConstant(s))
+        : new LjsInstruction(LjsInstructionCode.ConstStringEmpty);
     
     
     /////////// vars init/load/store

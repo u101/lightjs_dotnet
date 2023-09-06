@@ -3,84 +3,99 @@ namespace LightJS.Program;
 public enum LjsInstructionCode
 {
     Halt = 0x00,
+    
     // similar to VarStore except value is not pushed to the stack
     VarInit = 0x02, 
     // load local var and push to the stack, argument = local index
     VarLoad = 0x03, 
     // store last value from the stack in local var, argument = local index
     VarStore = 0x04, 
+    
     // load int const, followed by const index byte
     ConstInt = 0x05,
-    // load double const, followed by const index byte
-    ConstDouble = 0x06,
-    // load double const, followed by const index byte
-    ConstString = 0x07,
-    // push const to stack
-    ConstTrue = 0x08, 
-    // push const to stack
-    ConstFalse = 0x09, 
-    // push null to stack
-    ConstNull = 0x0a,
-    // push undef to stack
-    ConstUndef = 0x0b,
+    // push specified value on the stack, no arguments 
+    ConstIntZero = 0x06,
+    ConstIntOne = 0x07,
+    ConstIntMinusOne = 0x08,
     
-    JumpIfFalse = 0x0e,
-    Jump = 0x0f,
+    // load double const, followed by const index byte
+    ConstDouble = 0x09,
+    // push specified value on the stack, no arguments 
+    ConstDoubleZero = 0x0a,
+    ConstDoubleNaN = 0x0b,
+    
+    
+    // load double const, followed by const index byte
+    ConstString = 0x0d,
+    // push specified value on the stack, no arguments 
+    ConstStringEmpty = 0x0e,
+    
+    // push const to stack
+    ConstTrue = 0x0f, 
+    // push const to stack
+    ConstFalse = 0x10, 
+    // push null to stack
+    ConstNull = 0x11,
+    // push undef to stack
+    ConstUndef = 0x12,
+    
+    JumpIfFalse = 0x13,
+    Jump = 0x14,
 
     // load from stack value b, value a, push a + b
-    Add = 0x10,
+    Add = 0x15,
     // load from stack value b, value a, push a - b
-    Sub = 0x11,
+    Sub = 0x16,
     // load from stack value b, value a, push a * b
-    Mul = 0x12,
+    Mul = 0x17,
     // load from stack value b, value a, push a / b
-    Div = 0x13,
+    Div = 0x18,
     // load from stack value b, value a, push a / b
-    Mod = 0x14,
+    Mod = 0x19,
     // load from stack value b, value a, push a & b
-    BitAnd = 0x15,
+    BitAnd = 0x1a,
     // load from stack value b, value a, push a | b
-    BitOr = 0x16,
+    BitOr = 0x1b,
     // load from stack value b, value a, push a ^ b
-    BitXor = 0x17,
+    BitXor = 0x1c,
     // load from stack value b, value a, push a << b
-    BitShiftLeft = 0x18,
+    BitShiftLeft = 0x1d,
     // load from stack value b, value a, push a >> b
-    BitSShiftRight = 0x19,
+    BitSShiftRight = 0x1e,
     // load from stack value b, value a, push a >>> b
-    BitUShiftRight = 0x1a,
+    BitUShiftRight = 0x1f,
     
     // load from stack value b, value a, push a > b ? 1:0
-    Gt = 0x1b,
+    Gt = 0x20,
     // load from stack value b, value a, push a >= b ? 1:0
-    Gte = 0x1c,
+    Gte = 0x21,
     // load from stack value b, value a, push a < b ? 1:0
-    Lt = 0x1d,
+    Lt = 0x22,
     // load from stack value b, value a, push a <= b ? 1:0
-    Lte = 0x1e,
+    Lte = 0x23,
     // load from stack value b, value a, push a == b ? 1:0
-    Eq = 0x1f,
+    Eq = 0x24,
     // load from stack value b, value a, push a === b ? 1:0
-    Eqs = 0x20,
+    Eqs = 0x25,
     // load from stack value b, value a, push a != b ? 1:0
-    Neq = 0x21,
+    Neq = 0x26,
     // load from stack value b, value a, push a !== b ? 1:0
-    Neqs = 0x22,
+    Neqs = 0x27,
     // load from stack value b, value a, push a && b ? 1:0
-    And = 0x23,
+    And = 0x28,
     // load from stack value b, value a, push a || b ? 1:0
-    Or = 0x24,
+    Or = 0x29,
     
     // load from stack value a, push !a
-    Not = 0x25,
-    // load from stack value a, push !a
-    BitNot = 0x26,
+    Not = 0x2a,
+    // load from stack value a, push ~a
+    BitNot = 0x2b,
     // load from stack value a, push a + 1
-    Incr = 0x27,
-    // load from stack value a, push a + 1
-    Decr = 0x28,
+    Incr = 0x2c,
+    // load from stack value a, push a - 1
+    Decr = 0x2d,
     // load from stack value a, push -a
-    Minus = 0x29,
+    Minus = 0x2e,
 
     Return = 0x40,
     FuncCall = 0x41,
