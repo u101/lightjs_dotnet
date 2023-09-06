@@ -9,18 +9,21 @@ internal sealed class LjsCompilerLocals
     private readonly LjsCompilerLocals? _parent;
     
     private readonly Dictionary<string, int> _indices = new();
-    private readonly List<LjsLocalVarPointer> _pointers = new();
+    private readonly List<LjsLocalVarPointer> _pointers;
     
     internal List<LjsLocalVarPointer> Pointers => _pointers;
 
     internal LjsCompilerLocals()
     {
         _parent = null;
+        _pointers = new List<LjsLocalVarPointer>();
     }
 
     private LjsCompilerLocals(LjsCompilerLocals parent)
     {
         _parent = parent;
+        _pointers = parent.Pointers;
+        _indices = new Dictionary<string, int>(parent._indices);
     }
     
     internal int Add(string name, LjsLocalVarKind varKind)
@@ -50,4 +53,6 @@ internal sealed class LjsCompilerLocals
 
         throw new Exception($"var {name} not found");
     }
+
+    public LjsCompilerLocals CreateChild() => new(this);
 }

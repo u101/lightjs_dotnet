@@ -12,9 +12,9 @@ internal sealed class LjsCompilerContext
 
     public LjsCompilerFunctionContext FunctionContext { get; }
     
-    internal LjsCompilerLocals Locals { get; } = new();
+    internal LjsCompilerLocals Locals { get; }
     
-    private readonly Dictionary<string, int> _namedFunctionsMap = new();
+    private readonly Dictionary<string, int> _namedFunctionsMap;
 
     internal Dictionary<string, int> NamedFunctionsMap => _namedFunctionsMap;
 
@@ -23,8 +23,12 @@ internal sealed class LjsCompilerContext
         List<LjsCompilerContext> functionsContextList)
     {
         FunctionContext = functionContext;
+        
         _functionsContextList = functionsContextList;
         _parentContext = null;
+        
+        Locals = new LjsCompilerLocals();
+        _namedFunctionsMap = new Dictionary<string, int>();
     }
 
     private LjsCompilerContext(
@@ -33,8 +37,28 @@ internal sealed class LjsCompilerContext
         LjsCompilerContext parentContext)
     {
         FunctionContext = functionContext;
+        
         _functionsContextList = functionsContextList;
         _parentContext = parentContext;
+        
+        Locals = new LjsCompilerLocals();
+        _namedFunctionsMap = new Dictionary<string, int>();
+    }
+    
+    private LjsCompilerContext(
+        LjsCompilerFunctionContext functionContext,
+        List<LjsCompilerContext> functionsContextList,
+        LjsCompilerContext parentContext,
+        LjsCompilerLocals locals,
+        Dictionary<string, int> namedFunctionsMap)
+    {
+        FunctionContext = functionContext;
+        
+        _functionsContextList = functionsContextList;
+        _parentContext = parentContext;
+        
+        Locals = locals;
+        _namedFunctionsMap = namedFunctionsMap;
     }
 
     internal bool HasLocalInHierarchy(string name) => Locals.Has(name) ||
@@ -105,7 +129,7 @@ internal sealed class LjsCompilerContext
         }
     }
     
-    public LjsCompilerContext CreateAnonFunction()
+    internal LjsCompilerContext CreateAnonFunctionContext()
     {
         var functionIndex = _functionsContextList.Count;
         var func = CreateChildFunctionContext(functionIndex);
@@ -113,4 +137,8 @@ internal sealed class LjsCompilerContext
         _functionsContextList.Add(func);
         return func;
     }
+
+    internal LjsCompilerContext CreateLocalContext() => new(
+        FunctionContext, _functionsContextList,
+        this, Locals.CreateChild(), _namedFunctionsMap);
 }

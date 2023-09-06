@@ -127,7 +127,7 @@ public class LjsCompiler
         {
             case LjsAstAnonymousFunctionDeclaration funcDeclaration:
                 
-                var anonFunc = context.CreateAnonFunction();
+                var anonFunc = context.CreateAnonFunctionContext();
                 
                 ProcessFunction(funcDeclaration, anonFunc);
                 
@@ -310,7 +310,7 @@ public class LjsCompiler
                 // if false jump to next condition or to the else block or to the end
                 instructions.Add(default);
                 
-                ProcessNode(ifBlock.MainBlock.Expression, context, 
+                ProcessNode(ifBlock.MainBlock.Expression, context.CreateLocalContext(), 
                     jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 
                 ifEndIndices.Add(instructions.Count);
@@ -330,7 +330,7 @@ public class LjsCompiler
                         ifConditionalJumpIndex = instructions.Count;
                         instructions.Add(default);
                         
-                        ProcessNode(alternative.Expression, context,
+                        ProcessNode(alternative.Expression, context.CreateLocalContext(),
                             jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                         
                         ifEndIndices.Add(instructions.Count);
@@ -346,7 +346,7 @@ public class LjsCompiler
 
                     ifConditionalJumpIndex = -1;
                     
-                    ProcessNode(ifBlock.ElseBlock, context,
+                    ProcessNode(ifBlock.ElseBlock, context.CreateLocalContext(),
                         jumpToTheStartPlaceholdersIndices, jumpToTheEndPlaceholdersIndices);
                 }
                 
@@ -370,15 +370,17 @@ public class LjsCompiler
                 break;
             
             case LjsAstForLoop forLoop:
+
+                var forLoopContext = context.CreateLocalContext();
                 
-                ProcessNode(forLoop.InitExpression, context);
+                ProcessNode(forLoop.InitExpression, forLoopContext);
                 
                 var loopStartIndex = instructions.Count;
                 var loopConditionalJumpIndex = -1;
                 
                 if (forLoop.Condition != LjsAstEmptyNode.Instance)
                 {
-                    ProcessNode(forLoop.Condition, context);
+                    ProcessNode(forLoop.Condition, forLoopContext);
                 
                     loopConditionalJumpIndex = instructions.Count;
                     instructions.Add(default);
@@ -388,12 +390,12 @@ public class LjsCompiler
                 var loopEndIndices = LjsCompileUtils.GetTemporaryIntList();
                 var loopContinueIndices = LjsCompileUtils.GetTemporaryIntList();
 
-                ProcessNode(forLoop.Body, context,
+                ProcessNode(forLoop.Body, forLoopContext,
                     loopContinueIndices, loopEndIndices);
 
                 var loopIteratorIndex = instructions.Count;
                 
-                ProcessNode(forLoop.IterationExpression, context);
+                ProcessNode(forLoop.IterationExpression, forLoopContext);
                 
                 instructions.Add(new LjsInstruction(
                     LjsInstructionCode.Jump, loopStartIndex));
@@ -436,7 +438,7 @@ public class LjsCompiler
                 var whileEndIndices = LjsCompileUtils.GetTemporaryIntList();
                 var whileContinueIndices = LjsCompileUtils.GetTemporaryIntList();
                 
-                ProcessNode(whileLoop.Body, context, 
+                ProcessNode(whileLoop.Body, context.CreateLocalContext(), 
                     whileContinueIndices, whileEndIndices);
                 
                 instructions.Add(new LjsInstruction(
