@@ -570,6 +570,7 @@ public class LjsAstBuilder
                     break;
                 
                 case LjsTokenType.Default:
+                    CheckExpectedNextAndMoveForward(LjsTokenType.Default);
                     CheckExpectedNextAndMoveForward(LjsTokenType.OpColon);
                     
                     var astSwitchDefault = new LjsAstSwitchDefault();
