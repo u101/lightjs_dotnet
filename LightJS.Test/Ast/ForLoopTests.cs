@@ -31,4 +31,24 @@ public class ForLoopTests
         
         Match(node, expected);
     }
+    
+    [Test]
+    public void LoopWithTwoIteratorsTest()
+    {
+        var code = """
+        for (var i = 0, j = 0; i < ln; i++, j++) {
+            foo(i)
+        }
+        """;
+        
+        var node = BuildAstNode(code);
+
+        var expected = For(
+            Sequence(Var("i", 0.ToLit()), Var("j", 0.ToLit())),
+            "i".LessThen("ln"),
+            Sequence("i".WithPostfixIncrement(), "j".WithPostfixIncrement()), 
+            "foo".FuncCall("i".ToVar()));
+        
+        Match(node, expected);
+    }
 }

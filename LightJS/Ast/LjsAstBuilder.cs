@@ -380,6 +380,32 @@ public class LjsAstBuilder
         _tokensIterator.MoveForward();
     }
 
+    private ILjsAstNode ProcessCommaSeparatedExpressions(StopSymbolType stopSymbol)
+    {
+        var stopSymbolType = stopSymbol | StopSymbolType.Comma;
+        
+        var exp = ProcessExpression(stopSymbolType);
+
+        if (_tokensIterator.NextToken.TokenType != LjsTokenType.OpComma)
+        {
+            return exp;
+        }
+        
+        var seq = new LjsAstSequence();
+        seq.AddNode(exp);
+
+        while (_tokensIterator.NextToken.TokenType == LjsTokenType.OpComma)
+        {
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpComma);
+
+            var nextExp = ProcessExpression(stopSymbolType);
+            
+            seq.AddNode(nextExp);
+        }
+
+        return seq;
+    }
+
     private ILjsAstNode ProcessVariableDeclaration(StopSymbolType stopSymbol, LjsTokenType tokenType)
     {
         CheckExpectedNextAndMoveForward(tokenType);
@@ -481,7 +507,7 @@ public class LjsAstBuilder
         
         if (_tokensIterator.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
         {
-            iterExpr = ProcessExpression(StopSymbolType.ParenthesesClose);
+            iterExpr = ProcessCommaSeparatedExpressions(StopSymbolType.ParenthesesClose);
         }
         
         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
