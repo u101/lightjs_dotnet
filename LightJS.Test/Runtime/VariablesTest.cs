@@ -1,3 +1,5 @@
+using LightJS.Compiler;
+using LightJS.Errors;
 using LightJS.Runtime;
 
 namespace LightJS.Test.Runtime;
@@ -16,6 +18,43 @@ public class VariablesTest
         var runtime = CreateRuntime(code);
         var result = runtime.Execute();
         CheckResult(result, 123);
+    }
+    
+    [Test]
+    public void ConstDeclarationTest()
+    {
+        const string code = """
+        const a = 123;
+        a
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        CheckResult(result, 123);
+    }
+    
+    [Test]
+    public void LetDeclarationTest()
+    {
+        const string code = """
+        let a = 123;
+        a
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        CheckResult(result, 123);
+    }
+    
+    [Test]
+    public void ConstBadAssignmentTest()
+    {
+        const string code = """
+        const a = 123;
+        a = 456;
+        """;
+
+        Assert.Throws<LjsCompilerError>(() => CreateRuntime(code));
     }
     
     [Test]

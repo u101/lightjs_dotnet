@@ -34,19 +34,21 @@ internal sealed class LjsCompilerFunctionData
         _parentData = parentData;
     }
 
-    internal bool HasLocalInHierarchy(string name) => Locals.HasLocal(name) ||
+    internal bool HasLocalInHierarchy(string name) => Locals.Has(name) ||
                                                       (_parentData != null &&
                                                        _parentData.HasLocalInHierarchy(name));
 
-    internal (int, int) GetLocalInHierarchy(string name)
+    internal (LjsLocalVarPointer, int) GetLocalInHierarchy(string name)
     {
-        if (Locals.HasLocal(name))
+        if (Locals.Has(name))
         {
-            var localIndex = Locals.GetLocal(name);
-            return (localIndex, FunctionIndex);
+            var localIndex = Locals.GetIndex(name);
+            var pointer = Locals.GetPointer(localIndex);
+            return (pointer, FunctionIndex);
         }
 
-        return _parentData?.GetLocalInHierarchy(name) ?? (-1, -1);
+        return _parentData?.GetLocalInHierarchy(name) ?? 
+               throw new Exception($"local with name:{name} not found in hierarchy");
     }
 
     internal LjsCompilerFunctionData CreateChild(int functionIndex) =>

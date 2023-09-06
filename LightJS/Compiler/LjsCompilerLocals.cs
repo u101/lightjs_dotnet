@@ -6,23 +6,25 @@ namespace LightJS.Compiler;
 internal sealed class LjsCompilerLocals
 {
     
-    private readonly Dictionary<string, int> _localVarIndices = new();
-    private readonly List<LjsLocalVarPointer> _localVars = new();
+    private readonly Dictionary<string, int> _indices = new();
+    private readonly List<LjsLocalVarPointer> _pointers = new();
     
-    internal List<LjsLocalVarPointer> LocalVars => _localVars;
+    internal List<LjsLocalVarPointer> Pointers => _pointers;
     
-    internal int AddLocal(string name, LjsLocalVarKind varKind)
+    internal int Add(string name, LjsLocalVarKind varKind)
     {
-        if (_localVarIndices.ContainsKey(name))
+        if (_indices.ContainsKey(name))
             throw new LjsCompilerError($"duplicate var name {name}");
 
-        var index = _localVars.Count;
-        _localVars.Add(new LjsLocalVarPointer(index, name, varKind));
-        _localVarIndices[name] = index;
+        var index = _pointers.Count;
+        _pointers.Add(new LjsLocalVarPointer(index, name, varKind));
+        _indices[name] = index;
         return index;
     }
 
-    internal bool HasLocal(string name) => _localVarIndices.ContainsKey(name);
+    internal bool Has(string name) => _indices.ContainsKey(name);
 
-    internal int GetLocal(string name) => _localVarIndices.TryGetValue(name, out var i) ? i : -1;
+    internal int GetIndex(string name) => _indices.TryGetValue(name, out var i) ? i : -1;
+
+    internal LjsLocalVarPointer GetPointer(int localIndex) => _pointers[localIndex];
 }
