@@ -75,6 +75,7 @@ public static class LjsAstBuilderUtils
     private static readonly HashSet<LjsTokenType> KeywordsSet = new()
     {
         LjsTokenType.Var,
+        LjsTokenType.Let,
         LjsTokenType.Const,
         LjsTokenType.Function,
     

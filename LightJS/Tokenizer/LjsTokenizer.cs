@@ -127,6 +127,7 @@ public class LjsTokenizer
         {"false", LjsTokenType.False},
         
         {"var", LjsTokenType.Var},
+        {"let", LjsTokenType.Let},
         {"const", LjsTokenType.Const},
         {"function", LjsTokenType.Function},
         

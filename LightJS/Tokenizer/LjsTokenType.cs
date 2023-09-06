@@ -81,6 +81,7 @@ public enum LjsTokenType
     
     Var,
     Const,
+    Let,
     Function,
     
     Return,

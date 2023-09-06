@@ -287,9 +287,8 @@ public class LjsAstBuilder
         switch (nextToken.TokenType)
         {
             case LjsTokenType.Const:
-                return ProcessVariableDeclaration(expressionStopSymbolType, nextToken.TokenType);
-            
             case LjsTokenType.Var:
+            case LjsTokenType.Let:
                 return ProcessVariableDeclaration(expressionStopSymbolType, nextToken.TokenType);
             
             case LjsTokenType.If:
@@ -396,11 +395,11 @@ public class LjsAstBuilder
             firstVarValue = ProcessExpression(stopSymbol | StopSymbolType.Comma);
         }
 
-        var mutable = tokenType == LjsTokenType.Var;
+        var variableKind = GetVariableDeclarationKind(tokenType);
         
         var firstVar = new LjsAstVariableDeclaration(
             LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, firstVarNameToken),
-            firstVarValue, mutable);
+            firstVarValue, variableKind);
         
         RegisterNodePosition(firstVar, firstVarNameToken);
         
@@ -430,7 +429,7 @@ public class LjsAstBuilder
             
             var nextVar = new LjsAstVariableDeclaration(
                 LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, nextVarToken),
-                nextVarValue, mutable);
+                nextVarValue, variableKind);
             
             RegisterNodePosition(nextVar, nextVarToken);
             
@@ -441,6 +440,19 @@ public class LjsAstBuilder
         return seq;
 
     }
+
+    private static bool IsVariableDeclaration(LjsTokenType tokenType) =>
+        tokenType == LjsTokenType.Var ||
+        tokenType == LjsTokenType.Let ||
+        tokenType == LjsTokenType.Const;
+
+    private static LjsAstVariableKind GetVariableDeclarationKind(LjsTokenType tokenType) => tokenType switch
+    {
+        LjsTokenType.Var => LjsAstVariableKind.Var,
+        LjsTokenType.Let => LjsAstVariableKind.Let,
+        LjsTokenType.Const => LjsAstVariableKind.Const,
+        _ => throw new Exception($"invalid variable declaration token type {tokenType}")
+    };
 
     private ILjsAstNode ProcessForLoop(StopSymbolType stopSymbol)
     {
@@ -453,7 +465,7 @@ public class LjsAstBuilder
 
         if (_tokensIterator.NextToken.TokenType != LjsTokenType.OpSemicolon)
         {
-            initExpr = _tokensIterator.NextToken.TokenType == LjsTokenType.Var
+            initExpr = IsVariableDeclaration(_tokensIterator.NextToken.TokenType)
                 ? ProcessVariableDeclaration(StopSymbolType.Semicolon, _tokensIterator.NextToken.TokenType)
                 : ProcessExpression(StopSymbolType.Semicolon);
         }

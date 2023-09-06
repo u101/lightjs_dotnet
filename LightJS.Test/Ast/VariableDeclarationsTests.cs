@@ -23,6 +23,15 @@ public class VariableDeclarationsTests
     }
     
     [Test]
+    public void SimpleLetTest()
+    {
+        var node = BuildAstNode("let a = 123");
+
+        var expected = Let("a", 123.ToLit());
+        Match(node, expected);
+    }
+    
+    [Test]
     public void MultipleVarTest()
     {
         var node = BuildAstNode("var a = 123, b\n, c = 'hi'");
@@ -33,6 +42,20 @@ public class VariableDeclarationsTests
             );
         Match(node, expected);
     }
+    
+    [Test]
+    public void MultipleLetTest()
+    {
+        var node = BuildAstNode("let a = 123, b\n, c = 'hi'");
+
+        var expected = Sequence(Let("a", 123.ToLit()),
+            Let("b"),
+            Let("c", "hi".ToLit())
+            );
+        Match(node, expected);
+    }
+    
+    
     
     [Test]
     public void VarDeclarationInCodeTest()

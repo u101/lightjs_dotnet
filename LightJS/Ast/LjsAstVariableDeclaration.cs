@@ -3,21 +3,21 @@ namespace LightJS.Ast;
 public sealed class LjsAstVariableDeclaration : ILjsAstNode
 {
     public string Name { get; }
-    public bool Mutable { get; }
     public ILjsAstNode Value { get; }
+    public LjsAstVariableKind VariableKind { get; }
 
-    public LjsAstVariableDeclaration(string name, ILjsAstNode value, bool mutable)
+    public LjsAstVariableDeclaration(string name, ILjsAstNode value, LjsAstVariableKind variableKind)
     {
         Name = name;
         Value = value;
-        Mutable = mutable;
+        VariableKind = variableKind;
     }
     
-    public LjsAstVariableDeclaration(string name, bool mutable)
+    public LjsAstVariableDeclaration(string name, LjsAstVariableKind variableKind)
     {
         Name = name;
-        Mutable = mutable;
         Value = LjsAstEmptyNode.Instance;
+        VariableKind = variableKind;
     }
     
 }

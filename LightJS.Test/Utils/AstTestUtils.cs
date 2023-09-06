@@ -135,11 +135,14 @@ public static class AstTestUtils
     public static LjsAstReturn Return(ILjsAstNode returnValue) => new(returnValue);
     public static LjsAstReturn Return() => new();
 
-    public static LjsAstVariableDeclaration Var(string name) => new(name, true);
-    public static LjsAstVariableDeclaration Var(string name, ILjsAstNode value) => new(name, value, true);
+    public static LjsAstVariableDeclaration Var(string name) => new(name, LjsAstVariableKind.Var);
+    public static LjsAstVariableDeclaration Var(string name, ILjsAstNode value) => new(name, value, LjsAstVariableKind.Var);
     
-    public static LjsAstVariableDeclaration Const(string name) => new(name, false);
-    public static LjsAstVariableDeclaration Const(string name, ILjsAstNode value) => new(name, value, false);
+    public static LjsAstVariableDeclaration Let(string name) => new(name, LjsAstVariableKind.Let);
+    public static LjsAstVariableDeclaration Let(string name, ILjsAstNode value) => new(name, value, LjsAstVariableKind.Let);
+    
+    public static LjsAstVariableDeclaration Const(string name) => new(name, LjsAstVariableKind.Const);
+    public static LjsAstVariableDeclaration Const(string name, ILjsAstNode value) => new(name, value, LjsAstVariableKind.Const);
 
     public static LjsAstArrayLiteral ArrayLit() => new();
     public static LjsAstArrayLiteral ArrayLit(params ILjsAstNode[] nodes) => new(nodes);
