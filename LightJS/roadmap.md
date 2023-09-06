@@ -51,7 +51,6 @@
 * Add extended info in exception (pointer to the token that caused an Exception) 
 
 ### Ast features
-* 'let' variable definition
 * arrow functions () => {}
 * switch(x) {case y:...} branching
 * Try catch block
