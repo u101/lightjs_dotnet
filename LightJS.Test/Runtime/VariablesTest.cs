@@ -56,6 +56,80 @@ public class VariablesTest
 
         Assert.Throws<LjsCompilerError>(() => CreateRuntime(code));
     }
+
+    [Test]
+    public void DuplicateVarNames_ShouldThrowCompileError()
+    {
+        const string code = """
+        var a = 123;
+        var a = 456;
+        """;
+        Assert.Throws<LjsCompilerError>(() => CreateRuntime(code));
+    }
+    
+    [Test]
+    public void DuplicateArgumentNames_ShouldThrowCompileError()
+    {
+        const string code = """
+        var a = function(x,x) {}
+        """;
+        Assert.Throws<LjsCompilerError>(() => CreateRuntime(code));
+    }
+
+    [Test]
+    public void LetTestInForLoop()
+    {
+        const string code = """
+        var s = '';
+        for (let i = 0; i < 5; ++i) {
+            s += i.toString();
+        }
+        for (let i = 9; i >= 5; --i) {
+            s += i.toString();
+        }
+        s;
+        """;
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        CheckResult(result, "0123498765");
+    }
+    
+    [Test]
+    public void LetTestInForLoop_CheckCompiledProgram()
+    {
+        const string code = """
+        var s = '';
+        for (let i = 0; i < 5; ++i) {
+            s += i.toString();
+        }
+        for (let i = 9; i >= 5; --i) {
+            s += i.toString();
+        }
+        s;
+        """;
+        
+        var compiler = new LjsCompiler(code);
+        var program = compiler.Compile();
+        
+        Assert.That(program.MainFunctionData.Locals.Count(
+            x => x.Name == "i"), Is.EqualTo(2));
+    }
+    
+    [Test]
+    public void DuplicateVarNamesInForLoop_ShouldThrowError()
+    {
+        const string code = """
+        var s = '';
+        for (var i = 0; i < 5; ++i) {
+            s += i.toString();
+        }
+        for (var i = 9; i >= 5; --i) {
+            s += i.toString();
+        }
+        s;
+        """;
+        Assert.Throws<LjsCompilerError>(() => CreateRuntime(code));
+    }
     
     [Test]
     public void MultipleVarDeclarationsTest()

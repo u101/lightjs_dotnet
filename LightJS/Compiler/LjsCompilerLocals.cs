@@ -28,6 +28,11 @@ internal sealed class LjsCompilerLocals
     
     internal int Add(string name, LjsLocalVarKind varKind)
     {
+        if (_parent != null && (varKind == LjsLocalVarKind.Var))
+        {
+            return _parent.Add(name, varKind);
+        }
+        
         if (_indices.ContainsKey(name))
             throw new LjsCompilerError($"duplicate var name {name}");
 
@@ -36,8 +41,9 @@ internal sealed class LjsCompilerLocals
         _indices[name] = index;
         return index;
     }
-
-    internal bool Has(string name) => _indices.ContainsKey(name) || (_parent != null && _parent.Has(name));
+    
+    internal bool Has(string name, bool parentSearch = true) => 
+        _indices.ContainsKey(name) || (parentSearch && _parent != null && _parent.Has(name));
 
     internal LjsLocalVarPointer GetPointer(string name)
     {

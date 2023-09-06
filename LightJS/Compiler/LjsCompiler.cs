@@ -776,14 +776,14 @@ public class LjsCompiler
 
         if (varKind == LjsLocalVarKind.Let)
         {
-            if (context.Locals.Has(variableDeclaration.Name))
+            if (context.Locals.Has(variableDeclaration.Name, false))
             {
                 throw new LjsCompilerError($"duplicate {varKind} name {variableDeclaration.Name}");
             }
         }
         else
         {
-            if (context.Locals.Has(variableDeclaration.Name)) // TODO check parent context hierarchy
+            if (context.Locals.Has(variableDeclaration.Name))
             {
                 throw new LjsCompilerError($"duplicate {varKind} name {variableDeclaration.Name}");
             }

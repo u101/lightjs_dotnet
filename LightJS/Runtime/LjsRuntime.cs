@@ -176,7 +176,7 @@ public sealed class LjsRuntime
 
     private void ExtStore(string varName, LjsObject v)
     {
-        throw new NotImplementedException($"ExtStore {varName}");
+        throw new LjsRuntimeError($"ExtStore {varName} not supported");
     }
     
     private LjsObject ExtLoad(string varName)
