@@ -140,6 +140,8 @@ public class LjsTokenizer
         {"if", LjsTokenType.If},
         {"else", LjsTokenType.Else},
         {"switch", LjsTokenType.Switch},
+        {"case", LjsTokenType.Case},
+        {"default", LjsTokenType.Default},
         {"while", LjsTokenType.While},
         {"do", LjsTokenType.Do},
         {"for", LjsTokenType.For},

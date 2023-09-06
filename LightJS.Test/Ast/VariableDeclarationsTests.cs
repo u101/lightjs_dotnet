@@ -60,7 +60,7 @@ public class VariableDeclarationsTests
     [Test]
     public void VarDeclarationInCodeTest()
     {
-        var code = """
+        const string code = """
         function foo() {
             var a,b,c = 123
             if (a) return b

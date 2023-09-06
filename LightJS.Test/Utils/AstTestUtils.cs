@@ -27,6 +27,8 @@ public static class AstTestUtils
     {
         return new LjsAstForLoop(init, cond, iter, body);
     }
+
+    public static LjsAstSwitchBlock Switch(ILjsAstNode expression) => new(expression);
     
     public static LjsAstIfBlock IfBlock(ILjsAstNode condition, ILjsAstNode expression)
     {

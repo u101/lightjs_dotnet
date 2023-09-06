@@ -92,9 +92,14 @@ public enum LjsTokenType
     If,
     ElseIf,
     Else,
+    
     Switch,
+    Case,
+    Default,
+    
     While,
     Do,
+    
     For,
     In,
     Identifier

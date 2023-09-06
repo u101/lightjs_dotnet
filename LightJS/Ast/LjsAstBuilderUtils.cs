@@ -87,6 +87,8 @@ public static class LjsAstBuilderUtils
         LjsTokenType.ElseIf,
         LjsTokenType.Else,
         LjsTokenType.Switch,
+        LjsTokenType.Case,
+        LjsTokenType.Default,
         LjsTokenType.While,
         LjsTokenType.Do,
         LjsTokenType.For,

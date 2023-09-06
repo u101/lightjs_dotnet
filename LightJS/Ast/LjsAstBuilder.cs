@@ -120,6 +120,7 @@ public class LjsAstBuilder
         Colon = 1 << 4,
         SquareBracketsClose = 1 << 5,
         BracketClose = 1 << 6,
+        SwitchExpressionElement = 1 << 7,
         
         Auto = 1 << 8,
 
@@ -146,7 +147,10 @@ public class LjsAstBuilder
                  tokenType == LjsTokenType.OpBracketClose) ||
 
                 ((terminationType & StopSymbolType.Colon) != 0 &&
-                 tokenType == LjsTokenType.OpColon)
+                 tokenType == LjsTokenType.OpColon) ||
+                
+                ((terminationType & StopSymbolType.SwitchExpressionElement) != 0 &&
+                 (tokenType == LjsTokenType.Break || tokenType == LjsTokenType.Case || tokenType == LjsTokenType.Default))
             ;
     }
 
@@ -295,8 +299,7 @@ public class LjsAstBuilder
                 return ProcessIfBlock(stopSymbolType);
             
             case LjsTokenType.Switch:
-                // todo ast switch block
-                throw new NotImplementedException();
+                return ProcessSwitchBlock(stopSymbolType);
             
             case LjsTokenType.While:
                 return ProcessWhileBlock(stopSymbolType);
@@ -525,6 +528,29 @@ public class LjsAstBuilder
             initExpr, condExpr, iterExpr, mainBody);
 
         return forLoop;
+    }
+
+    private ILjsAstNode ProcessSwitchBlock(StopSymbolType terminationType)
+    {
+        CheckExpectedNextAndMoveForward(LjsTokenType.Switch);
+
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
+        
+        var condition =
+            ProcessExpression(StopSymbolType.ParenthesesClose);
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketOpen);
+
+        var isEmpty = _tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketClose;
+
+        if (isEmpty)
+        {
+            CheckExpectedNextAndMoveForward(LjsTokenType.OpBracketClose);
+        }
+
+        return new LjsAstSwitchBlock(condition);
     }
 
     private ILjsAstNode ProcessWhileBlock(StopSymbolType terminationType)
