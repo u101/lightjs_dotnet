@@ -52,7 +52,7 @@
 
 ### Ast features
 * arrow functions () => {}
-* switch(x) {case y:...} branching
+* ~~switch(x) {case y:...} branching~~
 * Try catch block
 * 'new' operator
 * for (x in y) loop
