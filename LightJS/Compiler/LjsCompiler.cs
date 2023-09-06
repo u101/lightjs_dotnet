@@ -121,11 +121,17 @@ public class LjsCompiler
         -1 => new LjsInstruction(LjsInstructionCode.ConstIntMinusOne),
         _ => new LjsInstruction(LjsInstructionCode.ConstInt, lit.Value)
     };
-    private LjsInstruction GetDoubleLiteralInstruction(LjsAstLiteral<double> lit) => lit.Value switch
+
+    private LjsInstruction GetDoubleLiteralInstruction(LjsAstLiteral<double> lit)
     {
-        0.0 => new LjsInstruction(LjsInstructionCode.ConstDoubleZero),
-        _ => new LjsInstruction(LjsInstructionCode.ConstDouble, _constants.AddDoubleConstant(lit.Value))
-    };
+        var v = lit.Value;
+        return v switch
+        {
+            double.NaN => new LjsInstruction(LjsInstructionCode.ConstDoubleNaN),
+            0 => new LjsInstruction(LjsInstructionCode.ConstDoubleZero),
+            _ => new LjsInstruction(LjsInstructionCode.ConstDouble, _constants.AddDoubleConstant(v))
+        };
+    }
     
 
     private void ProcessNode(

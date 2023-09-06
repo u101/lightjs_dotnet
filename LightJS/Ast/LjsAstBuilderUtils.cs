@@ -102,6 +102,7 @@ public static class LjsAstBuilderUtils
         LjsTokenType.IntHex,
         LjsTokenType.Float, 
         LjsTokenType.FloatE, 
+        LjsTokenType.FloatNaN, 
         LjsTokenType.Null,
         LjsTokenType.Undefined, 
         LjsTokenType.StringLiteral
@@ -222,6 +223,9 @@ public static class LjsAstBuilderUtils
                 return new LjsAstLiteral<int>(
                     LjsTokenizerUtils.GetTokenIntValue(sourceCodeString, token));
                     
+            case LjsTokenType.FloatNaN:
+                return new LjsAstLiteral<double>(double.NaN);
+            
             case LjsTokenType.Float:
             case LjsTokenType.FloatE:
 

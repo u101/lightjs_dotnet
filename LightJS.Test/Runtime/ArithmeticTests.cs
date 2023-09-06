@@ -7,6 +7,20 @@ public class ArithmeticTests
 {
     
     [Test]
+    public void NanValueTest()
+    {
+        var code = """
+        var a = NaN;
+        a
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, double.NaN);
+    }
+    
+    [Test]
     public void PostfixDecrementTest()
     {
         var code = """

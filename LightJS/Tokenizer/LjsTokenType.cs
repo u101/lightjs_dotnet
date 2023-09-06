@@ -13,6 +13,7 @@ public enum LjsTokenType
     
     Float,
     FloatE,
+    FloatNaN,
     
     StringLiteral,
     

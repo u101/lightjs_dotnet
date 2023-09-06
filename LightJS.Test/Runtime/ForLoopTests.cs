@@ -4,6 +4,21 @@ namespace LightJS.Test.Runtime;
 public class ForLoopTests
 {
     [Test]
+    public void EmptyLoopTest()
+    {
+        const string code = """
+        var a = 0;
+        for(let i = 0; i < 10; ++i) {}
+        a
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, 0);
+    }
+    
+    [Test]
     public void SimpleForLoopTest()
     {
         const string code = """

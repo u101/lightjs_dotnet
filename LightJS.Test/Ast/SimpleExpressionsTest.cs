@@ -8,6 +8,16 @@ namespace LightJS.Test.Ast;
 public class SimpleExpressionsTest
 {
     [Test]
+    public void NanLiteralTest()
+    {
+        var rootNode = BuildAstNode("a = NaN");
+
+        var expected = "a".Assign(NaN);
+        
+        Match(rootNode, expected);
+    }
+    
+    [Test]
     public void BuildPostfixIncrementExpression()
     {
         var rootNode = BuildAstNode("a++ + b--");

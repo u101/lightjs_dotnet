@@ -126,6 +126,8 @@ public class LjsTokenizer
         {"true", LjsTokenType.True},
         {"false", LjsTokenType.False},
         
+        {"NaN", LjsTokenType.FloatNaN},
+        
         {"var", LjsTokenType.Var},
         {"let", LjsTokenType.Let},
         {"const", LjsTokenType.Const},

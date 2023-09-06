@@ -161,6 +161,7 @@ public static class AstTestUtils
     public static LjsAstGetThis This => new();
     
     public static ILjsAstNode Nothing => LjsAstEmptyNode.Instance;
+    public static ILjsAstNode NaN => new LjsAstLiteral<double>(double.NaN);
 
     public static ILjsAstNode Break => new LjsAstBreak();
     public static ILjsAstNode Continue => new LjsAstContinue();
