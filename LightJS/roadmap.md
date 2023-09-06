@@ -1,7 +1,7 @@
 ### Runtime/Compiler features
 
 * ~~'let' variables support~~
-* Named functions inside functions
+* ~~Named functions inside functions~~
 * ~~external api, attributes, reflection~~ 
 * ~~'this' reference support~~
 
