@@ -62,7 +62,7 @@ public class LjsCompiler
             fd.FunctionIndex,
             fd.Instructions.Instructions.ToArray(), 
             fd.Args.ToArray(), 
-            fd.LocalVars.ToArray()
+            fd.Locals.LocalVars.ToArray()
         )).ToArray();
         
         return new LjsProgram(
@@ -79,10 +79,15 @@ public class LjsCompiler
         {
             var p = parameters[i];
             var defaultValue = GetFunctionParameterDefaultValue(p.DefaultValue);
+
+            if (functionData.Locals.HasLocal(p.Name))
+            {
+                throw new LjsCompilerError($"duplicate argument name {p.Name}");
+            }
             
             functionData.Args.Add(new LjsFunctionArgument(p.Name, defaultValue));
 
-            functionData.AddLocal(p.Name, LjsLocalVarKind.Argument);
+            functionData.Locals.AddLocal(p.Name, LjsLocalVarKind.Argument);
         }
         
         ProcessNode(functionDeclaration.FunctionBody, functionData);
@@ -270,12 +275,12 @@ public class LjsCompiler
 
                 var localVarKind = LjsCompileUtils.GetVarKind(variableDeclaration.VariableKind);
 
-                if (functionData.HasLocal(variableDeclaration.Name))
+                if (functionData.Locals.HasLocal(variableDeclaration.Name))
                 {
                     throw new LjsCompilerError($"duplicate var name {variableDeclaration.Name}");
                 }
                 
-                var varIndex = functionData.AddLocal(
+                var varIndex = functionData.Locals.AddLocal(
                     variableDeclaration.Name, 
                     localVarKind);
 
@@ -601,10 +606,10 @@ public class LjsCompiler
     {
         var instructions = data.Instructions;
 
-        if (data.HasLocal(getVar.VarName))
+        if (data.Locals.HasLocal(getVar.VarName))
         {
             instructions.Add(new LjsInstruction(
-                LjsInstructionCode.VarLoad, data.GetLocal(getVar.VarName)));
+                LjsInstructionCode.VarLoad, data.Locals.GetLocal(getVar.VarName)));
         }
         else if (data.HasFunctionWithName(getVar.VarName))
         {
@@ -627,7 +632,7 @@ public class LjsCompiler
 
     private LjsInstruction CreateVarLoadInstruction(string varName, LjsCompilerFunctionData data)
     {
-        var localVarIndex = data.GetLocal(varName);
+        var localVarIndex = data.Locals.GetLocal(varName);
         var isLocal = localVarIndex != -1;
 
         if (isLocal) 
@@ -647,7 +652,7 @@ public class LjsCompiler
     
     private LjsInstruction CreateVarStoreInstruction(string varName, LjsCompilerFunctionData data)
     {
-        var localVarIndex = data.GetLocal(varName);
+        var localVarIndex = data.Locals.GetLocal(varName);
         var isLocal = localVarIndex != -1;
         
         if (isLocal) 
@@ -667,7 +672,7 @@ public class LjsCompiler
     
     private LjsInstruction CreateVarInitInstruction(string varName, LjsCompilerFunctionData data)
     {
-        var localVarIndex = data.GetLocal(varName);
+        var localVarIndex = data.Locals.GetLocal(varName);
         var isLocal = localVarIndex != -1;
         
         if (isLocal) 
@@ -719,7 +724,7 @@ public class LjsCompiler
     {
         var instructions = data.Instructions;
         
-        var localVarIndex = data.GetLocal(setVar.VarName);
+        var localVarIndex = data.Locals.GetLocal(setVar.VarName);
         var isLocal = localVarIndex != -1;
                 
         if (!isLocal && data.HasFunctionWithName(setVar.VarName))

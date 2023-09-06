@@ -12,10 +12,9 @@ internal sealed class LjsCompilerFunctionData
     internal int FunctionIndex { get; }
 
     internal List<LjsFunctionArgument> Args { get; } = new();
-    internal List<LjsLocalVarPointer> LocalVars => _localVars;
 
-    private readonly Dictionary<string, int> _localVarIndices = new();
-    private readonly List<LjsLocalVarPointer> _localVars = new();
+    internal LjsCompilerLocals Locals { get; } = new();
+    
     private readonly Dictionary<string, int> _namedFunctionsMap = new();
 
     internal Dictionary<string, int> NamedFunctionsMap => _namedFunctionsMap;
@@ -35,30 +34,16 @@ internal sealed class LjsCompilerFunctionData
         _parentData = parentData;
     }
 
-    internal int AddLocal(string name, LjsLocalVarKind varKind)
-    {
-        if (_localVarIndices.ContainsKey(name))
-            throw new LjsCompilerError($"duplicate var name {name}");
-
-        var index = _localVars.Count;
-        _localVars.Add(new LjsLocalVarPointer(index, name, varKind));
-        _localVarIndices[name] = index;
-        return index;
-    }
-
-    internal bool HasLocal(string name) => _localVarIndices.ContainsKey(name);
-
-    internal int GetLocal(string name) => _localVarIndices.TryGetValue(name, out var i) ? i : -1;
-
-    internal bool HasLocalInHierarchy(string name) => _localVarIndices.ContainsKey(name) ||
+    internal bool HasLocalInHierarchy(string name) => Locals.HasLocal(name) ||
                                                       (_parentData != null &&
                                                        _parentData.HasLocalInHierarchy(name));
 
     internal (int, int) GetLocalInHierarchy(string name)
     {
-        if (_localVarIndices.TryGetValue(name, out var i))
+        if (Locals.HasLocal(name))
         {
-            return (i, FunctionIndex);
+            var localIndex = Locals.GetLocal(name);
+            return (localIndex, FunctionIndex);
         }
 
         return _parentData?.GetLocalInHierarchy(name) ?? (-1, -1);
