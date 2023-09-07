@@ -807,7 +807,7 @@ public sealed class LjsRuntime
         return ExecuteFunctionAndGetResult();
     }
     
-    public LjsObject Invoke(string functionName, LjsObject[] args)
+    public LjsObject Invoke(string functionName, params LjsObject[] args)
     {
         if (!CanInvoke(functionName)) 
             ThrowFunctionInvocationError(functionName);
