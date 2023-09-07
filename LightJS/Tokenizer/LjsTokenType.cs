@@ -21,7 +21,7 @@ public enum LjsTokenType
     Undefined,
     
     // binary operators ->
-    // todo Exponentiation ** operator returns the result of raising the first operand to the power of the second operand
+    OpExponent,
     OpGreater,
     OpLess,
     OpPlus,

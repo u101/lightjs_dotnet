@@ -45,6 +45,10 @@ public class LjsTokenizer
             new OpCompositionEntry(LjsTokenType.OpMultAssign, true)
         },
         {
+            new OpCompositionKey(LjsTokenType.OpMultiply, LjsTokenType.OpMultiply),
+            new OpCompositionEntry(LjsTokenType.OpExponent, true)
+        },
+        {
             new OpCompositionKey(LjsTokenType.OpDiv, LjsTokenType.OpAssign),
             new OpCompositionEntry(LjsTokenType.OpDivAssign, true)
         },

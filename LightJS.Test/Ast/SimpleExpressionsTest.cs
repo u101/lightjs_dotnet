@@ -16,6 +16,15 @@ public class SimpleExpressionsTest
         
         Match(rootNode, expected);
     }
+
+    [Test]
+    public void ExponentOperationTest()
+    {
+        var rootNode = BuildAstNode("a = b **c");
+        var expected = "a".Assign("b".Exponent("c"));
+        
+        Match(rootNode, expected);
+    }
     
     [Test]
     public void BuildPostfixIncrementExpression()

@@ -8,6 +8,7 @@ public static class LjsAstBuilderUtils
     public const int FuncCallOperatorPriority = 17000;
     public const int PropertyAccessOperatorsPriority = 17000;
     private const int UnaryOperatorPriority = 14000;
+    private const int TopCalculationPriority = 13000;
     private const int HighCalculationPriority = 12000;
     private const int MiddleCalculationPriority = 11000;
     private const int BitwiseCalculationPriority = 10000;
@@ -28,6 +29,8 @@ public static class LjsAstBuilderUtils
         { LjsTokenType.OpBitNot, UnaryOperatorPriority},
         { LjsTokenType.OpIncrement, UnaryOperatorPriority},
         { LjsTokenType.OpDecrement, UnaryOperatorPriority},
+        
+        { LjsTokenType.OpExponent, TopCalculationPriority},
         
         { LjsTokenType.OpMultiply, HighCalculationPriority},
         { LjsTokenType.OpDiv, HighCalculationPriority},
@@ -132,6 +135,7 @@ public static class LjsAstBuilderUtils
         
         {LjsTokenType.OpGreater, LjsAstBinaryOperationType.Greater},
         {LjsTokenType.OpLess, LjsAstBinaryOperationType.Less},
+        {LjsTokenType.OpExponent, LjsAstBinaryOperationType.Exponent},
         {LjsTokenType.OpMultiply, LjsAstBinaryOperationType.Multiply},
         {LjsTokenType.OpDiv, LjsAstBinaryOperationType.Div},
         {LjsTokenType.OpModulo, LjsAstBinaryOperationType.Modulo},

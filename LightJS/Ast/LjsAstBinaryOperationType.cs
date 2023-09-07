@@ -7,6 +7,7 @@ public enum LjsAstBinaryOperationType
     Multiply,
     Div,
     Modulo,
+    Exponent,
     
     BitAnd,
     BitOr,
