@@ -95,6 +95,7 @@ public enum LjsInstructionCode
     Decr = 0x2d,
     // load from stack value a, push -a
     Minus = 0x2e,
+    Pow = 0x2f,
 
     Jump = 0x30,
     JumpIfTrue = 0x31,

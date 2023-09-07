@@ -5,11 +5,20 @@ namespace LightJS.Test.Runtime;
 [TestFixture]
 public class ArithmeticTests
 {
+
+    [Test]
+    public void PowOperatorTest()
+    {
+        var runtime = CreateRuntime("10000 ** 0.5");
+        var result = runtime.Execute();
+        
+        CheckResult(result, 100.0);
+    }
     
     [Test]
     public void NanValueTest()
     {
-        var code = """
+        const string code = """
         var a = NaN;
         a
         """;

@@ -135,7 +135,7 @@ public static class LjsAstBuilderUtils
         
         {LjsTokenType.OpGreater, LjsAstBinaryOperationType.Greater},
         {LjsTokenType.OpLess, LjsAstBinaryOperationType.Less},
-        {LjsTokenType.OpExponent, LjsAstBinaryOperationType.Exponent},
+        {LjsTokenType.OpExponent, LjsAstBinaryOperationType.Pow},
         {LjsTokenType.OpMultiply, LjsAstBinaryOperationType.Multiply},
         {LjsTokenType.OpDiv, LjsAstBinaryOperationType.Div},
         {LjsTokenType.OpModulo, LjsAstBinaryOperationType.Modulo},

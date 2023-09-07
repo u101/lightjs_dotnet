@@ -64,8 +64,8 @@ public static class AstNodesExtensions
     public static LjsAstBinaryOperation Minus(this string x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Minus);
     public static LjsAstBinaryOperation Minus(this string x, int y) => BinOp(x,y,LjsAstBinaryOperationType.Minus);
     
-    public static LjsAstBinaryOperation Exponent(this string x, int y) => BinOp(x,y,LjsAstBinaryOperationType.Exponent);
-    public static LjsAstBinaryOperation Exponent(this string x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Exponent);
+    public static LjsAstBinaryOperation Exponent(this string x, int y) => BinOp(x,y,LjsAstBinaryOperationType.Pow);
+    public static LjsAstBinaryOperation Exponent(this string x, string y) => BinOp(x,y,LjsAstBinaryOperationType.Pow);
     
     public static LjsAstBinaryOperation LessThen(this ILjsAstNode x, ILjsAstNode y) => BinOp(x,y,LjsAstBinaryOperationType.Less);
     

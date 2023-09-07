@@ -57,6 +57,8 @@ internal static class LjsBasicOperationsHelper
                 return new LjsInteger(left / right);
             case LjsInstructionCode.Mod:
                 return new LjsInteger(left % right);
+            case LjsInstructionCode.Pow:
+                return new LjsDouble(Math.Pow(left, right));
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
         }
@@ -76,6 +78,8 @@ internal static class LjsBasicOperationsHelper
                 return new LjsDouble(left / right);
             case LjsInstructionCode.Mod:
                 return new LjsDouble(left % right);
+            case LjsInstructionCode.Pow:
+                return new LjsDouble(Math.Pow(left, right));
             default:
                 throw new LjsInternalError($"unsupported arithmetic op code {opCode}");
         }

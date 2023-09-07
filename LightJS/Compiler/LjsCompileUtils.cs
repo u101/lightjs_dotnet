@@ -19,7 +19,10 @@ internal static class LjsCompileUtils
                 return LjsInstructionCode.Sub;
 
             case LjsAstBinaryOperationType.Multiply:
-                return LjsInstructionCode.Mul;
+                return LjsInstructionCode.Mul; 
+            
+            case LjsAstBinaryOperationType.Pow:
+                return LjsInstructionCode.Pow;
 
             case LjsAstBinaryOperationType.Div:
                 return LjsInstructionCode.Div;
