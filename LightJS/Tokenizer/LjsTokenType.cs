@@ -78,6 +78,8 @@ public enum LjsTokenType
     OpSquareBracketsOpen,
     OpSquareBracketsClose,
     
+    OpArrow,
+    
     This,
     
     Var,

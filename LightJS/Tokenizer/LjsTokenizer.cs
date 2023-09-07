@@ -113,6 +113,11 @@ public class LjsTokenizer
             new OpCompositionKey(LjsTokenType.OpBitOr, LjsTokenType.OpBitOr),
             new OpCompositionEntry(LjsTokenType.OpLogicalOr, true)
         },
+        
+        {
+            new OpCompositionKey(LjsTokenType.OpEquals, LjsTokenType.OpGreater),
+            new OpCompositionEntry(LjsTokenType.OpArrow, true)
+        },
 
         { new OpCompositionKey(LjsTokenType.Else, LjsTokenType.If), new OpCompositionEntry(LjsTokenType.ElseIf, false) },
     };
