@@ -51,10 +51,11 @@
 * Add extended info in exception (pointer to the token that caused an Exception) 
 
 ### Ast features
-* arrow functions () => {}
-* ~~switch(x) {case y:...} branching~~
-* Try catch block
 * 'new' operator
+* for (x of y) loop
 * for (x in y) loop
-* Exponentiation operator **
+* Try catch block
+* ~~arrow functions () => {}~~
+* ~~switch(x) {case y:...} branching~~
+* ~~Exponentiation operator **~~
 
