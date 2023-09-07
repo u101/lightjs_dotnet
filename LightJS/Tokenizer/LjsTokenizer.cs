@@ -119,7 +119,7 @@ public class LjsTokenizer
         },
         
         {
-            new OpCompositionKey(LjsTokenType.OpEquals, LjsTokenType.OpGreater),
+            new OpCompositionKey(LjsTokenType.OpAssign, LjsTokenType.OpGreater),
             new OpCompositionEntry(LjsTokenType.OpArrow, true)
         },
 

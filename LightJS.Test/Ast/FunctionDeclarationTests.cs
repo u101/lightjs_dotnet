@@ -6,6 +6,40 @@ namespace LightJS.Test.Ast;
 
 public class FunctionDeclarationTests
 {
+
+    [Test]
+    public void SimpleArrowFunctionTest()
+    {
+        var node = BuildAstNode(
+            "x = (y) => 1");
+        var expected = "x".Assign(
+            Func("y", Return(1.ToLit()))
+        );
+        Match(node, expected);
+    }
+    
+    [Test]
+    public void SimpleArrowFunctionWithSquareBracketsTest()
+    {
+        var node = BuildAstNode(
+            "x = (y) => { console.log(y); }");
+        var expected = "x".Assign(
+            Func("y", "console".GetProp("log").FuncCall("y".ToVar()))
+        );
+        Match(node, expected);
+    }[Test]
+    public void ArrowFunctionDeclarationInFunctionCallTest()
+    {
+        var node = BuildAstNode(
+            "foo(x,y, () => 1)");
+        var expected = "foo".FuncCall(
+            "x".ToVar(),
+            "y".ToVar(),
+            Func(Return(1.ToLit()))
+        );
+        Match(node, expected);
+    }
+    
     [Test]
     public void FunctionAsParameterInFunctionCallTest()
     {

@@ -944,7 +944,16 @@ public class LjsAstBuilder
             
             else if (token.TokenType == LjsTokenType.OpParenthesesOpen)
             {
-                if (IsFunctionCall(prevToken.TokenType))
+                if (LookForwardForArrowFunction())
+                {
+                    var functionDeclaration = ProcessArrowFunctionDeclaration(stopSymbolType);
+                    RegisterNodePosition(functionDeclaration, token);
+                
+                    _postfixExpression.Add(functionDeclaration);
+                }
+                    
+                
+                else if (IsFunctionCall(prevToken.TokenType))
                 {
                     var argumentsList = new LjsAstFunctionCallArguments();
                     
@@ -1273,6 +1282,51 @@ public class LjsAstBuilder
                 
         _operatorsStack.Push(op);
     }
+
+    private bool LookForwardForArrowFunction()
+    {
+        var stepsCount = 0;
+        var prevTokenType = LjsTokenType.OpParenthesesOpen;
+        var stop = false;
+        var result = false;
+        
+        while (_tokensIterator.HasNextToken && !stop)
+        {
+            _tokensIterator.MoveForward();
+            stepsCount++;
+            
+            var tokenType = _tokensIterator.CurrentToken.TokenType;
+            
+            switch (prevTokenType)
+            {
+                case LjsTokenType.OpParenthesesOpen:
+                    // expecting ) or argument
+                    stop = tokenType != LjsTokenType.Identifier && tokenType != LjsTokenType.OpParenthesesClose;
+                    break;
+                
+                case LjsTokenType.Identifier:
+                    // expecting ) or ,
+                    stop = tokenType != LjsTokenType.OpComma && tokenType != LjsTokenType.OpParenthesesClose;
+                    break;
+                case LjsTokenType.OpComma:
+                    // expecting argument
+                    stop = tokenType != LjsTokenType.Identifier;
+                    break;
+                case LjsTokenType.OpParenthesesClose:
+                    result = tokenType == LjsTokenType.OpArrow;
+                    stop = true;
+                    break;
+            }
+
+            prevTokenType = tokenType;
+        }
+        
+        if (stepsCount > 0)
+            _tokensIterator.MoveBackward(stepsCount);
+
+        return result;
+    }
+    
     
     private static bool IsFunctionCall(LjsTokenType prevTokenType) => prevTokenType is
         LjsTokenType.Identifier or
@@ -1292,6 +1346,32 @@ public class LjsAstBuilder
         
         CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesOpen);
 
+        ProcessFunctionDeclarationArguments(_functionDeclarationParameters);
+        
+        CheckEarlyEof();
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpParenthesesClose);
+
+        var parameters = new LjsAstFunctionDeclarationParameter[_functionDeclarationParameters.Count];
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            parameters[i] = _functionDeclarationParameters[i];
+        }
+
+        var functionBody = ProcessBlockInBrackets();
+
+        ILjsAstNode funcDeclaration = string.IsNullOrEmpty(functionName) ? 
+            new LjsAstAnonymousFunctionDeclaration(parameters, functionBody) : 
+            new LjsAstNamedFunctionDeclaration(functionName, parameters, functionBody);
+
+        return funcDeclaration;
+
+    }
+
+    private void ProcessFunctionDeclarationArguments(
+        ICollection<LjsAstFunctionDeclarationParameter> functionDeclarationParameters)
+    {
         while (_tokensIterator.HasNextToken && 
                _tokensIterator.NextToken.TokenType != LjsTokenType.OpParenthesesClose)
         {
@@ -1318,10 +1398,10 @@ public class LjsAstBuilder
                     _tokensIterator.CurrentToken, _sourceCodeString);
             }
             
-            _functionDeclarationParameters.Add(new LjsAstFunctionDeclarationParameter(
+            functionDeclarationParameters.Add(new LjsAstFunctionDeclarationParameter(
                 LjsTokenizerUtils.GetTokenStringValue(_sourceCodeString, argNameToken),
                 defaultValue
-                ));
+            ));
 
             if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpComma)
             {
@@ -1336,6 +1416,13 @@ public class LjsAstBuilder
                 throw new LjsSyntaxError("unexpected token", _tokensIterator.NextToken.Position);
             }
         }
+    }
+    
+    private ILjsAstNode ProcessArrowFunctionDeclaration(StopSymbolType stopSymbolType)
+    {
+        _functionDeclarationParameters.Clear();
+        
+        ProcessFunctionDeclarationArguments(_functionDeclarationParameters);
         
         CheckEarlyEof();
         
@@ -1347,14 +1434,26 @@ public class LjsAstBuilder
         {
             parameters[i] = _functionDeclarationParameters[i];
         }
+        
+        CheckExpectedNextAndMoveForward(LjsTokenType.OpArrow);
 
-        var functionBody = ProcessBlockInBrackets();
 
-        ILjsAstNode funcDeclaration = string.IsNullOrEmpty(functionName) ? 
-            new LjsAstAnonymousFunctionDeclaration(parameters, functionBody) : 
-            new LjsAstNamedFunctionDeclaration(functionName, parameters, functionBody);
+        ILjsAstNode functionBody;
 
-        return funcDeclaration;
+        if (_tokensIterator.NextToken.TokenType == LjsTokenType.OpBracketOpen)
+        {
+            functionBody = ProcessBlockInBrackets();
+        }
+        else
+        {
+            var returnExpression = ProcessExpression(stopSymbolType);
+
+            var returnNode = new LjsAstReturn(returnExpression);
+
+            functionBody = returnNode;
+        }
+
+        return new LjsAstAnonymousFunctionDeclaration(parameters, functionBody);
 
     }
 
@@ -1393,14 +1492,17 @@ public class LjsAstBuilder
             ++_currentIndex;
         }
         
-        public void MoveBackward()
+        public void MoveBackward(int stepsCount = 1)
         {
-            if (_currentIndex <= 0)
+            if (stepsCount < 1)
+                throw new ArgumentException($"invalid staeps count {stepsCount}");
+            
+            if (_currentIndex - stepsCount < 0)
             {
                 throw new IndexOutOfRangeException();
             }
         
-            --_currentIndex;
+            _currentIndex -= stepsCount;
         }
         
     }
