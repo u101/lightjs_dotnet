@@ -67,33 +67,35 @@ All keywords are reserved, meaning that they cannot be used as an identifier for
 * break
 * case
 * catch
-* class
+* class ( not supported yet )
 * const
 * continue
 * default
-* do
+* do ( not supported yet )
 * else
-* extends
+* extends ( not supported yet )
 * false
-* finally
+* finally ( not supported yet )
 * for
 * function
 * if
-* import
-* in
-* instanceof
+* import ( not supported yet )
+* in ( not supported yet )
+* instanceof ( not supported yet )
 * let
-* new
+* NaN
+* new ( not supported yet )
 * null
-* of
+* of ( not supported yet )
 * return
-* super
+* super ( not supported yet )
 * switch
 * this
-* throw
+* throw ( not supported yet )
 * true
-* try
-* typeof
+* try ( not supported yet )
+* typeof ( not supported yet )
+* undefined
 * var
 * while
 
