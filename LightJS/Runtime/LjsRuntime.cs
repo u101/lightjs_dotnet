@@ -37,7 +37,7 @@ public sealed class LjsRuntime
         _externals[name] = obj;
     }
 
-    public bool HasLocal(string name) => IsValidLocalIndex(GetLocalIndex(name));
+    internal bool HasLocal(string name) => IsValidLocalIndex(GetLocalIndex(name));
 
     private int GetLocalIndex(string name)
     {
@@ -66,7 +66,7 @@ public sealed class LjsRuntime
     /// Returns LjsObject.Undefined if local var not found or not on the stack;
     /// Please use HasLocal to check if var with specified name exists in current context
     /// </summary>
-    public LjsObject GetLocal(string name)
+    internal LjsObject GetLocal(string name)
     {
         var localIndex = GetLocalIndex(name);
 
@@ -76,7 +76,7 @@ public sealed class LjsRuntime
     /// <summary>
     /// Returns true if local var is successfully set, false otherwise
     /// </summary>
-    public bool SetLocal(string name, LjsObject value)
+    internal bool SetLocal(string name, LjsObject value)
     {
         if (string.IsNullOrEmpty(name))
             throw new ArgumentException("name is null or empty", nameof(name));
