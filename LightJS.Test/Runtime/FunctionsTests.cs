@@ -8,7 +8,7 @@ public class FunctionsTests
     [Test]
     public void FactorialTest()
     {
-        var code = """
+        const string code = """
         fact(8)
         
         function fact(n) {
@@ -25,9 +25,23 @@ public class FunctionsTests
     }
     
     [Test]
+    public void ArrowFunctionTest()
+    {
+        const string code = """
+        var f = (x,y) => x ** y;
+        f(2,8)
+        """;
+        
+        var runtime = CreateRuntime(code);
+        var result = runtime.Execute();
+        
+        CheckResult(result, 256.0);
+    }
+    
+    [Test]
     public void FactorialIterationsCountTest()
     {
-        var code = """
+        const string code = """
         
         var iterations = 0
         
@@ -54,7 +68,7 @@ public class FunctionsTests
     [Test]
     public void FactorialTest2()
     {
-        var code = """
+        const string code = """
         var fact = function(n) {
             if (n <= 0) return 0;
             if (n == 1) return 1;
@@ -72,7 +86,7 @@ public class FunctionsTests
     [Test]
     public void NestedFunctionsTest()
     {
-        var code = """
+        const string code = """
         function bar(y) { return 12345; }
         function foo(n) {
             return bar(n + 1);
