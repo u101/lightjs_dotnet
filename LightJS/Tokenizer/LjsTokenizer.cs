@@ -546,6 +546,7 @@ public class LjsTokenizer
 
         // (see ascii_chars.txt)
         return charCode == 36 || // $ sign
+               charCode == 95 || // _ sign
                (charCode >= 65 && charCode <= 90) || // uppercase letters 
                (charCode >= 97 && charCode <= 122); //lower case letters
     }

@@ -51,8 +51,8 @@ function fn() {} // Function declaration
 const obj = { key: "value" }; // Object keys
 ```
 
-In LightJS, identifiers are made of alphanumeric characters and
-underscores (_). 
+In LightJS, identifiers are made of alphanumeric characters, dollar sign ($)  and
+underscores (_). [0-9a-bA-B$_]
 Identifiers are not allowed to start with numbers. 
 Identifiers are only limited to ASCII.
 
