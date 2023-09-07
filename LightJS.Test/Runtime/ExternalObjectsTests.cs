@@ -7,6 +7,95 @@ public class ExternalObjectsTests
 {
 
     [Test]
+    public void AddExternalApiTest()
+    {
+        const string code = """
+        function foo() {
+            someApi.Foo();
+            
+            if (someApi.Bar()) {
+                return someApi.ApiVersion;
+            }
+            return -1;
+        }
+        """;
+        
+        var runtime = CreateRuntime(code);
+        
+        var someApi = new SomeApi();
+        
+        runtime.AddExternal("someApi", LjsTypesConverter.ToLjsObject(someApi));
+
+        runtime.Execute();
+        
+        var result = runtime.Invoke("foo");
+
+        CheckResult(result, 123);
+    }
+    
+    public class SomeApi
+    {
+        [LjsField] public int ApiVersion => 123;
+        
+        [LjsMethod] public void Foo() {/* */}
+
+        [LjsMethod] public bool Bar() => true;
+    }
+
+    [Test]
+    public void PassObjectToFunctionTest()
+    {
+        const string code = """
+        function getPersonInfo(p) {
+            let fullName = p.Name + " " + p.Surname;
+            let address = p.GetAddress();
+            
+            return fullName + "," + address.City + "," + address.PostalCode;
+        }
+        """;
+        
+        var runtime = CreateRuntime(code);
+        runtime.Execute();
+
+        var person = new Person("John", "Doe");
+        
+        var result = runtime.Invoke(
+            "getPersonInfo", LjsTypesConverter.ToLjsObject(person));
+        
+        CheckResult(result, "John Doe,London,123456");
+    }
+    
+    public class Person
+    {
+        [LjsField] public string Name;
+        [LjsField] public string Surname;
+
+        public Person(string name, string surname)
+        {
+            Name = name;
+            Surname = surname;
+        }
+
+        [LjsMethod]
+        public Address GetAddress() => new("London", 123456);
+    }
+    
+    public class Address
+    {
+        [LjsField] public string City;
+        [LjsField] public int PostalCode;
+
+        public Address(string city, int postalCode)
+        {
+            City = city;
+            PostalCode = postalCode;
+        }
+    }
+    
+    
+    
+
+    [Test]
     public void FieldsTest()
     {
         const string code = """
