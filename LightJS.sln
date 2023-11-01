@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightJS", "LightJS\LightJS.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightJS.Test", "LightJS.Test\LightJS.Test.csproj", "{C8B0CB40-1070-4808-9496-F1F61FDEC94E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App16.ALang", "App16.ALang\App16.ALang.csproj", "{B566286B-AFA4-4637-905B-19B4A730F800}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App16.ALang.Tests", "App16.ALang.Tests\App16.ALang.Tests.csproj", "{130AEDBD-93A5-44DB-9996-A2F22440218D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,13 @@ Global
 		{C8B0CB40-1070-4808-9496-F1F61FDEC94E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8B0CB40-1070-4808-9496-F1F61FDEC94E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8B0CB40-1070-4808-9496-F1F61FDEC94E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B566286B-AFA4-4637-905B-19B4A730F800}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B566286B-AFA4-4637-905B-19B4A730F800}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B566286B-AFA4-4637-905B-19B4A730F800}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B566286B-AFA4-4637-905B-19B4A730F800}.Release|Any CPU.Build.0 = Release|Any CPU
+		{130AEDBD-93A5-44DB-9996-A2F22440218D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{130AEDBD-93A5-44DB-9996-A2F22440218D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{130AEDBD-93A5-44DB-9996-A2F22440218D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{130AEDBD-93A5-44DB-9996-A2F22440218D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
