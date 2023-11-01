@@ -5,21 +5,14 @@ using App16.ALang.Tokenizers;
 
 namespace App16.LightJS.Compiler;
 
-public sealed class LjsCompilerFactory
+public static class LjsCompilerFactory
 {
 
-    public static readonly LjsCompilerFactory Instance = CreateFactory();
+    private static readonly ILjsCompilerNodeProcessor _nodeProcessor = CreateNodeProcessor();
     
-    private readonly ILjsCompilerNodeProcessor _nodeProcessor;
+    public static LjsCompiler CreateCompiler(IAstNode astModel) => new(astModel, _nodeProcessor);
 
-    private LjsCompilerFactory(ILjsCompilerNodeProcessor nodeProcessor)
-    {
-        _nodeProcessor = nodeProcessor;
-    }
-    
-    public LjsCompiler CreateCompiler(IAstNode astModel) => new(astModel, _nodeProcessor);
-
-    public LjsCompiler CreateCompiler(string sourceCodeString)
+    public static LjsCompiler CreateCompiler(string sourceCodeString)
     {
         if (string.IsNullOrEmpty(sourceCodeString))
         {
@@ -33,7 +26,7 @@ public sealed class LjsCompilerFactory
         return CreateCompiler(astModel);
     }
     
-    public LjsCompiler CreateCompiler(string sourceCodeString, List<Token> tokens)
+    public static LjsCompiler CreateCompiler(string sourceCodeString, List<Token> tokens)
     {
         if (string.IsNullOrEmpty(sourceCodeString))
         {
@@ -53,7 +46,7 @@ public sealed class LjsCompilerFactory
         return CreateCompiler(astModel);
     }
 
-    private static LjsCompilerFactory CreateFactory()
+    private static ILjsCompilerNodeProcessor CreateNodeProcessor()
     {
         var nodesProcessorDefault = new LjsCompilerNodeSelectorDefault();
         var nodesProcessorByType = new LjsCompilerNodeSelectorByType(nodesProcessorDefault);
@@ -135,7 +128,7 @@ public sealed class LjsCompilerFactory
             typeof(JsNamedFunctionDeclaration),  new LjsNamedFunctionDeclarationProcessor(nodesProcessor));
 
 
-        return new LjsCompilerFactory(nodesProcessor);
+        return nodesProcessor;
 
     }
 }

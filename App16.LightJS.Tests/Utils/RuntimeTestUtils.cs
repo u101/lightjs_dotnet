@@ -20,7 +20,7 @@ public static class RuntimeTestUtils
     
     public static LjsRuntime CreateRuntime(string sourceCode)
     {
-        var compiler = LjsCompilerFactory.Instance.CreateCompiler(sourceCode);
+        var compiler = LjsCompilerFactory.CreateCompiler(sourceCode);
         var program = compiler.Compile();
         return new LjsRuntime(program);
     }

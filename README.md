@@ -7,12 +7,12 @@ LightJS has no external dependencies
 
 This is the Preview version, not everything well tested, some features are not implemented yet
 
-[LightJS lexical grammar page](LightJS/Docs/lexical_grammar.md)
+[LightJS lexical grammar page](App16.LightJS/Docs/lexical_grammar.md)
 
 ### Hello world program
 
 ```csharp
-var compiler = new LjsCompiler("console.log('hello world')");
+var compiler = LjsCompilerFactory.CreateCompiler("console.log('hello world')");
 var program = compiler.Compile();
 var runtime = new LjsRuntime(program);
 
@@ -44,7 +44,7 @@ function fact(n) {
 }
 """;
 
-var compiler = new LjsCompiler(code);
+var compiler = LjsCompilerFactory.CreateCompiler(code);
 var program = compiler.Compile();
 var runtime = new LjsRuntime(program);
 
@@ -63,7 +63,7 @@ function fact(n) {
 }
 """;
 
-var compiler = new LjsCompiler(code);
+var compiler = LjsCompilerFactory.CreateCompiler(code);
 var program = compiler.Compile();
 var runtime = new LjsRuntime(program);
 // we need to call execute to initailize all things
@@ -120,7 +120,7 @@ function getPersonInfo(p) {
 }
 """;
 
-var compiler = new LjsCompiler(code);
+var compiler = LjsCompilerFactory.CreateCompiler(code);
 var program = compiler.Compile();
 var runtime = new LjsRuntime(program);
 runtime.Execute();
@@ -160,7 +160,7 @@ function foo() {
 }
 """;
 
-var compiler = new LjsCompiler(code);
+var compiler = LjsCompilerFactory.CreateCompiler(code);
 var program = compiler.Compile();
 var runtime = new LjsRuntime(program);
 

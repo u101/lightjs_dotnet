@@ -48,7 +48,7 @@ public class CompilerTests
         }
         """;
         
-        var compiler = LjsCompilerFactory.Instance.CreateCompiler(code);
+        var compiler = LjsCompilerFactory.CreateCompiler(code);
 
         var program = compiler.Compile();
         
@@ -88,7 +88,7 @@ public class CompilerTests
         }
         """;
         
-        var compiler = LjsCompilerFactory.Instance.CreateCompiler(code);
+        var compiler = LjsCompilerFactory.CreateCompiler(code);
 
         var program = compiler.Compile();
 
@@ -124,7 +124,7 @@ public class CompilerTests
         }
         """;
         
-        var compiler = LjsCompilerFactory.Instance.CreateCompiler(code);
+        var compiler = LjsCompilerFactory.CreateCompiler(code);
 
         var program = compiler.Compile();
         
@@ -155,7 +155,7 @@ public class CompilerTests
         c = a + b;
         """;
 
-        var compiler = LjsCompilerFactory.Instance.CreateCompiler(code);
+        var compiler = LjsCompilerFactory.CreateCompiler(code);
 
         var program = compiler.Compile();
         

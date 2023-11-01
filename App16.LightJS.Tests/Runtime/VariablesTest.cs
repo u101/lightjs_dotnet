@@ -109,7 +109,7 @@ public class VariablesTest
         s;
         """;
         
-        var compiler = LjsCompilerFactory.Instance.CreateCompiler(code);
+        var compiler = LjsCompilerFactory.CreateCompiler(code);
         var program = compiler.Compile();
         
         Assert.That(program.MainFunctionData.Locals.Count(
