@@ -1,8 +1,6 @@
 # Light JS
 LightJS is a javascript-like language compiler and runtime written in C#
 
-All LightJS code is valid javascript code, but not all javascript is valid LightJS code
-
 LightJS has no external dependencies 
 
 This is the Preview version, not everything well tested, some features are not implemented yet
@@ -35,13 +33,13 @@ For example:
 
 ```csharp
 const string code = """
-fact(8)
-
 function fact(n) {
     if (n <= 0) return 0;
     if (n == 1) return 1;
     return n * fact(n - 1); 
 }
+
+fact(8);
 """;
 
 var compiler = LjsCompilerFactory.CreateCompiler(code);
@@ -75,7 +73,7 @@ for (var i = 1; i <= 6; i++)
     var result = runtime.Invoke("fact", i); // 1, 2, 6, 24, 120, 720
 }
 ```
-You can also pass regular objects and interact with them in script
+You can pass regular c# objects and interact with them in script
 
 You can either pass reference to your object via LjsRuntime.Invoke()
 
@@ -181,7 +179,7 @@ Everything in LightJS is LjsObject
 
 All primitive types are boxed
 
-Main types are 
+List of LjsObject types
 * LjsInteger
 * LjsDouble
 * LjsBoolean

@@ -9,14 +9,12 @@ public class FunctionsTests
     public void FactorialTest()
     {
         const string code = """
-        let result = fact(8);
-        
         function fact(n) {
             if (n <= 0) return 0;
             if (n == 1) return 1;
             return n * fact(n - 1); 
         }
-        result;
+        fact(8);
         """;
         
         var runtime = CreateRuntime(code);
