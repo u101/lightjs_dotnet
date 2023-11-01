@@ -1,5 +1,5 @@
 # Light JS
-LightJS is a javascript-like language compiler and runtime written in C#
+LightJS is a javascript-like language compiler and runtime written and running in C#
 
 LightJS has no external dependencies 
 
